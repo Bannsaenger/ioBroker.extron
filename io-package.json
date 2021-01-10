@@ -1,0 +1,104 @@
+{
+    "common": {
+        "name": "extron",
+        "version": "0.0.1",
+        "news": {
+            "0.0.1": {
+                "en": "initial release",
+                "de": "Erstveröffentlichung",
+                "ru": "Начальная версия",
+                "pt": "lançamento inicial",
+                "nl": "Eerste uitgave",
+                "fr": "Première version",
+                "it": "Versione iniziale",
+                "es": "Versión inicial",
+                "pl": "Pierwsze wydanie",
+                "zh-cn": "首次出版"
+            }
+        },
+        "title": "Extron SIS",
+        "titleLang": {
+            "en": "Extron SIS",
+            "de": "Extron SIS",
+            "ru": "Extron SIS",
+            "pt": "Extron SIS",
+            "nl": "Extron SIS",
+            "fr": "Extron SIS",
+            "it": "Extron SIS",
+            "es": "Extron SIS",
+            "pl": "Extron SIS",
+            "zh-cn": "Extron SIS"
+        },
+        "desc": {
+            "en": "Extron SIS adapter",
+            "de": "Extron SIS-Adapter",
+            "ru": "Адаптер Extron SIS",
+            "pt": "Adaptador Extron SIS",
+            "nl": "Extron SIS-adapter",
+            "fr": "Adaptateur SIS Extron",
+            "it": "Adattatore SIS di Extron",
+            "es": "Adaptador SIS de Extron",
+            "pl": "Adapter Extron SIS",
+            "zh-cn": "Extron SIS适配器"
+        },
+        "authors": [
+            "Bannsaenger <bannsaenger@gmx.de>"
+        ],
+        "keywords": [
+            "extron"
+        ],
+        "license": "CC BY-NC 4.0",
+        "platform": "Javascript/Node.js",
+        "main": "main.js",
+        "icon": "extron.png",
+        "enabled": true,
+        "extIcon": "https://raw.githubusercontent.com/Bannsaenger/ioBroker.extron/master/admin/extron.png",
+        "readme": "https://github.com/Bannsaenger/ioBroker.extron/blob/master/README.md",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "hardware",
+        "compact": true,
+        "materialize": true,
+        "dependencies": [
+            {
+                "js-controller": ">=1.4.2"
+            }
+        ]
+    },
+    "native": {
+        "host": "127.0.0.1",
+        "type": "ssh",
+        "port": "22023",
+        "device": "",
+        "user": "admin",
+        "pass": "",
+        "pollDelay": 10000,
+        "reconnectDelay": 30000,
+        "answerTimeout": 500,
+        "inactivityTimeout": 100000
+    },
+    "objects": [],
+    "instanceObjects": [
+        {
+            "_id": "info",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id": "info.connection",
+            "type": "state",
+            "common": {
+                "role": "indicator.connected",
+                "name": "Device or service connected",
+                "type": "boolean",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        }
+    ]
+}

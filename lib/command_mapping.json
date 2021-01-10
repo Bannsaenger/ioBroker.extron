@@ -1,0 +1,17 @@
+{
+    "VER" : {
+        "mapping" : "device.version",
+        "type" : "value",
+        "value" : "ext2"
+    },
+    "IPN" : {
+        "mapping" : "device.name",
+        "type" : "value",
+        "value" : "ext2"
+    },
+    "INF" : {
+        "mapping" : "device.model",
+        "type" : "value",
+        "value" : "ext2"
+    }
+}

@@ -1,0 +1,204 @@
+<html>
+
+<head>
+
+    <!-- Load ioBroker scripts and styles-->
+    <link rel="stylesheet" type="text/css" href="../../css/adapter.css" />
+    <link rel="stylesheet" type="text/css" href="../../lib/css/materialize.css">
+
+    <script type="text/javascript" src="../../lib/js/jquery-3.2.1.min.js"></script>
+    <script type="text/javascript" src="../../socket.io/socket.io.js"></script>
+
+    <script type="text/javascript" src="../../js/translate.js"></script>
+    <script type="text/javascript" src="../../lib/js/materialize.js"></script>
+    <script type="text/javascript" src="../../js/adapter-settings.js"></script>
+
+    <!-- Load our own files -->
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    <script type="text/javascript" src="words.js"></script>
+
+    <script type="text/javascript">
+        // This will be called by the admin adapter when the settings page loads
+        function load(settings, onChange) {
+            // example: select elements with id=key and class=value and insert value
+            if (!settings) return;
+
+            if (settings.host === undefined) {
+                settings.host = '127.0.0.1';
+            }
+            if (settings.type === undefined) {
+                settings.type = 'ssh';
+            }
+            if (settings.port === undefined) {
+                settings.port = '22023';
+            }
+            if (settings.device === undefined) {
+                settings.device = '';
+            }
+            if (settings.device !== '') {
+                console.log("diabling device:" + JSON.stringify($("#device")));
+                $("#device").prop('disabled', true);
+            }
+            if (settings.user === undefined) {
+                settings.user = '';
+            }
+            if (settings.pass === undefined) {
+                settings.pass = '';
+            }
+            if (settings.pollDelay === undefined) {
+                settings.pollDelay = 10000;
+            }
+            if (settings.reconnectDelay === undefined) {
+                settings.reconnectDelay = 30000;
+            }
+            if (settings.answerTimeout === undefined) {
+                settings.answerTimeout = 500;
+            }
+            if (settings.inactivityTimeout === undefined) {
+                settings.inactivityTimeout = 100000;
+            }
+            $('.value').each(function () {
+                var $key = $(this);
+                var id = $key.attr('id');
+                if ($key.attr('type') === 'checkbox') {
+                    // do not call onChange direct, because onChange could expect some arguments
+                    $key.prop('checked', settings[id])
+                        .on('change', () => onChange())
+                        ;
+                } else {
+                    // do not call onChange direct, because onChange could expect some arguments
+                    $key.val(settings[id])
+                        .on('change', () => onChange())
+                        .on('keyup', () => onChange())
+                        ;
+                }
+            });
+            onChange(false);
+            // reinitialize all the Materialize labels on the page if you are dynamically adding inputs:
+            if (M) M.updateTextFields();
+        }
+
+        // load the models from devices.json
+        $(document).ready(function (){
+            //console.log("going to read values on ready for language: " + JSON. stringify(document) );
+            $.getJSON("devices.json", function (data){
+                if (data){
+                    for (key in data.devices) {
+                        //console.log("text: " + data.devices[key].en + " key: " + key);
+                        $('#device').append($("<option>").attr('value', key).text(data.devices[key].en));
+                    }
+                }
+            });
+        });
+
+        // This will be called by the admin adapter when the user presses the save button
+        function save(callback) {
+            // example: select elements with class=value and build settings object
+            var obj = {};
+            $('.value').each(function () {
+                var $this = $(this);
+                if ($this.attr('type') === 'checkbox') {
+                    obj[$this.attr('id')] = $this.prop('checked');
+                } else {
+                    obj[$this.attr('id')] = $this.val();
+                }
+            });
+            callback(obj);
+        }
+    </script>
+
+</head>
+
+<body>
+
+    <div class="m adapter-container">
+
+        <div class="row">
+            <div class="col s12 m4 l2">
+                <img src="extron.png" class="logo">
+            </div>
+        </div>
+
+        <!-- Put your content here -->
+        <!--
+            "host": "127.0.0.1",
+            "type": "ssh",
+            "port": "22023",
+            "device": "",
+            "pollDelay": 10000,
+            "reconnectDelay": 30000,
+            "answerTimeout": 500,
+            "inactivityTimeout": 100000
+
+        -->
+        <!-- For example columns with settings: -->
+        <div class="row">
+            <div class="col s12 m12 l6 input-field">
+                <select id="device" class="value">
+                    <option value="" class="translate">select_device_type</option>
+                </select>
+            </div>
+            <div class="col s12 m12 l4 input-field">
+                <label class="translate">attention</label>
+            </div>
+        </div>
+    
+        <div class="row">
+            <div class="col s12 m12 l6 input-field">
+                <input type= "text" class="value" id="host">
+                <label for="host" class="translate">host</label>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col s12 m6 l4 input-field">
+                <select id="type" class="value">
+                    <option value="ssh" class="translate">Secure Shell (ssh)</option>
+                    <option value="telnet" class="translate">telnet (not implemented yet)</option>
+                </select>
+                <label for="type" class="translate">type</label>
+            </div>
+            <div class="col s12 m6 l4 input-field">
+                <input type="number" min="1" max="65565" class="value" id="port" />
+                <label for="port" class="translate">Port</label>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col s12 m6 l4 input-field">
+                <input type="text" class="value" id="user" />
+                <label for="user" class="translate">user</label>
+            </div>
+            <div class="col s12 m6 l4 input-field">
+                <input type="password" class="value" id="pass" />
+                <label for="pass" class="translate">password</label>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col s12 m6 l4 input-field">
+                <input type="number" min="1000" max="100000" class="value" id="pollDelay" />
+                <label for="pollDelay" class="translate">pollDelay</label>
+            </div>
+            <div class="col s12 m6 l4 input-field">
+                <input type="number" min="3000" max="300000" class="value" id="reconnectDelay" />
+                <label for="reconnectDelay" class="translate">reconnectDelay</label>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col s12 m6 l4 input-field">
+                <input type="number" min="100" max="500" class="value" id="answerTimeout" />
+                <label for="answerTimeout" class="translate">answerTimeout</label>
+            </div>
+            <div class="col s12 m6 l4 input-field">
+                <input type="number" min="10000" max="100000" class="value" id="inactivityTimeout" />
+                <label for="inactivityTimeout" class="translate">inactivityTimeout</label>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+
+</html>

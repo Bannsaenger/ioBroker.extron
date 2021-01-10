@@ -1,0 +1,24 @@
+{
+    "devices": {
+        "DTP2_CrossPoint_82" : {
+            "en" : "8x2 Presentation Matrix Switcher (DTP2 CrossPoint 82)",
+            "de" : "8x2 Präsentationskreuzschiene (DTP2 CrossPoint 82)"
+        },
+        "SMD202" : {
+            "en" : "H.264 Streaming Media Player and Decoder (SMD 202)",
+            "de" : "H.264-Player und Dekodierer (SMD 202)"
+        },
+        "SME211" : {
+            "en" : "Streaming Media Encoder (SME 211)",
+            "de" : "Kodierer für Medien-Streaming (SME 211)"
+        },
+        "DMP128Plus_AT" : {
+            "en" : "12x8 ProDSP Processor w/Dante (DMP 128 Plus AT)",
+            "de" : "12x8 Matrix-Prozessoren mit ProDSP und Dante (DMP 128 Plus AT)"
+        },
+        "DMP128Plus_C_V_AT" : {
+            "en" : "12x8 ProDSP Processor w/AEC, VoIP, and Dante (DMP 128 Plus C V AT)",
+            "de" : "12x8 Matrix-Prozessoren mit ProDSP, AEC, VoIP und Dante (DMP 128 Plus C V AT)"
+        }
+    }    
+}
