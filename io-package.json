@@ -59,7 +59,7 @@
         "keywords": [
             "extron"
         ],
-        "license": "CC BY-NC 4.0",
+        "license": "CC-BY-NC-4.0",
         "platform": "Javascript/Node.js",
         "main": "main.js",
         "icon": "extron.png",
@@ -69,6 +69,8 @@
         "loglevel": "info",
         "mode": "daemon",
         "type": "hardware",
+        "connectionType": "local",
+        "dataSource": "push",
         "compact": true,
         "materialize": true,
         "dependencies": [
