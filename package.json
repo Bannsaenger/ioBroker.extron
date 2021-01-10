@@ -2,18 +2,15 @@
   "name": "iobroker.extron",
   "version": "0.0.2",
   "description": "Extron SIS adapter",
-  "author": {
-    "name": "Bannsaenger",
-    "email": "bannsaenger@gmx.de"
-  },
+  "author": "Bannsaenger <bannsaenger@gmx.de>",
   "homepage": "https://github.com/Bannsaenger/ioBroker.extron",
-  "license": "MIT",
+  "license": "CC-BY-NC-4.0",
   "keywords": [
     "extron"
   ],
   "repository": {
     "type": "git",
-    "url": "https://github.com/Bannsaenger/ioBroker.extron"
+    "url": "git+https://github.com/Bannsaenger/ioBroker.extron.git"
   },
   "dependencies": {
     "@iobroker/adapter-core": "^2.4.0"
@@ -52,5 +49,8 @@
   "bugs": {
     "url": "https://github.com/Bannsaenger/ioBroker.extron/issues"
   },
-  "readmeFilename": "README.md"
+  "directories": {
+    "lib": "lib",
+    "test": "test"
+  }
 }
