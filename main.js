@@ -1,30 +1,20 @@
-/* ***************************************************************
- * Project:     ioBroker.extron
- * File:        main.js
- * Author:      Ralf Boeckle
- * Created:     03.11.2020
- * Changed:     11.11.2020, RB
- * Version:     0.0.1
- * License:     CC BY-NC 4.0
- * Copyright:   Copyright (c) 2020 Bannsaenger <bannsaenger@gmx.de>
+/**
  *
- * Template created with @iobroker/create-adapter v1.26.3
- * ***************************************************************/
-
-/*
-  * ToDo:
-  *     -
-  */
+ *      iobroker extron (SIS) Adapter
+ *
+ *      Copyright (c) 2020-2021, Bannsaenger <bannsaenger@gmx.de>
+ *
+ *      CC-NC-BY 4.0 License
+ *
+ */
 
 // The adapter-core module gives you access to the core ioBroker functions
-// you need to create an adapter
 const utils = require('@iobroker/adapter-core');
-//const { match } = require('assert');
 
 // Load your modules here, e.g.:
 // @ts-ignore
 const fs = require('fs');
-const ssh = require('ssh2');
+const Client = require('ssh2').Client;
 const errCodes = {
     'E01' : 'Invalid input channel number (out of range)',
     'E10' : 'Unrecognized command',
@@ -73,7 +63,7 @@ class Extron extends utils.Adapter {
         // first implementation only ssh
         this.debugSSH = false;
         // debug option for full ssh debug log on adapter.log.silly
-        this.client = new ssh.Client();
+        this.client = new Client();
         // the shell stream
         this.stream = undefined;
         this.streamAvailable = true;    // if false wait for continue event

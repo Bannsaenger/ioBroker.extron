@@ -46,6 +46,9 @@ If you are a non commercial organisation or use it for private use you can get a
 ### 0.0.2
 * (Bannsaenger) prepared for checkin to iobroker.latest
 
+### 0.0.3
+* (Bannsaenger) fix dependencies for integration test
+
 ## License
 Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
 

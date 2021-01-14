@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "extron",
-        "version": "0.0.2",
+        "version": "0.0.3",
         "news": {
             "0.0.1": {
                 "en": "initial release",
@@ -26,6 +26,18 @@
                 "es": "cambios menores para la publicación del primer lanzamiento",
                 "pl": "drobne zmiany dotyczące publikacji pierwszego wydania",
                 "zh-cn": "对第一个发行版的微小更改"
+            },
+            "0.0.3": {
+                "en": "fix dependencies for integration test",
+                "de": "Abhängigkeiten für den Integrationstest korrigieren",
+                "ru": "исправить зависимости для интеграционного теста",
+                "pt": "corrigir dependências para teste de integração",
+                "nl": "afhankelijkheden repareren voor integratietest",
+                "fr": "corriger les dépendances pour le test d'intégration",
+                "it": "correggere le dipendenze per il test di integrazione",
+                "es": "arreglar dependencias para la prueba de integración",
+                "pl": "napraw zależności dla testu integracji",
+                "zh-cn": "修复依赖关系以进行集成测试"
             }
         },
         "title": "Extron SIS",
