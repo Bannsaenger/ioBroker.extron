@@ -75,7 +75,7 @@
         "platform": "Javascript/Node.js",
         "main": "main.js",
         "icon": "extron.png",
-        "enabled": true,
+        "enabled": false,
         "extIcon": "https://raw.githubusercontent.com/Bannsaenger/ioBroker.extron/master/admin/extron.png",
         "readme": "https://github.com/Bannsaenger/ioBroker.extron/blob/master/README.md",
         "loglevel": "info",
