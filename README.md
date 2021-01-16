@@ -17,7 +17,7 @@ Extron SIS adapter
 Control devices from Extron. 
 This Adapter is designed to control some of the Extron Audio Video Products via the 
 **S**imple **I**nstruction **S**et Protocol.
-The functional scope of the devices is tremendous. Not all all of the features makes sense
+The functional scope of the devices is tremendous. Not all of the features makes sense
 to be supported with the adapter and the interaction with iobroker.
 
 **Be aware:** When the device type is chosen in the adapter configuration it cannot be changed in the future !
