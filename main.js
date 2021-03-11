@@ -147,7 +147,6 @@ class Extron extends utils.Adapter {
                 'readyTimeout': 5000,
                 'tryKeyboard': true
             });
-            self.log.info('Extron connected');
         } catch (err) {
             self.errorHandler(err, 'clientConnect');
         }
@@ -188,6 +187,7 @@ class Extron extends utils.Adapter {
                     self.stream.on('data', self.onStreamData.bind(self));
                     self.stream.on('continue', self.onStreamContinue.bind(self));
                     // Set the connection indicator after authentication and an open stream
+                    self.log.info('Extron connected');
                     self.setState('info.connection', true, true);
                 } catch (err) {
                     self.errorHandler(err, 'onClientReady');
@@ -866,13 +866,25 @@ class Extron extends utils.Adapter {
 	 * @param {string} module
 	 */
     errorHandler(err, module = '') {
+        let errorStack = err.stack;
+//        if (err.stack) errorStack = err.stack.replace(/\n/g, '<br>');
         if (err.name === 'ResponseError') {     // gerade nicht benötigt, template ....
             if (err.message.includes('Permission denied') || err.message.includes('Keine Berechtigung')) {
                 this.log.error(`Permisson denied. Check the permission rights of your user on your device!`);
             }
-            this.log.error(`Extron error in method: [${module}] response error: ${err.message.replace(module, '')}, stack: ${err.stack}`);
+            this.log.error(`Extron error in method: [${module}] response error: ${err.message.replace(module, '')}, stack: ${errorStack}`);
         } else {
-            this.log.error(`Extron error in method: [${module}] error: ${err.message}, stack: ${err.stack}`);
+            if (module === 'onClientError') {
+                if (err.level === 'client-socket') {
+                    this.log.error(`Extron error in ssh client (sockel level): ${err.message}, stack: ${errorStack}`);
+                } else if (err.level === 'client-ssh') {
+                    this.log.error(`Extron error in ssh client (ssh): ${err.message}, stack: ${errorStack}, description: ${err.description}`);
+                } else {
+                    this.log.error(`Extron error in ssh client (unknown): ${err.message}, stack: ${errorStack}`);
+                }
+            } else {
+                this.log.error(`Extron error in method: [${module}] error: ${err.message}, stack: ${errorStack}`);
+            }
         }
     }
 
