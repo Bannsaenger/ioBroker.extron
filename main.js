@@ -866,8 +866,8 @@ class Extron extends utils.Adapter {
 	 * @param {string} module
 	 */
     errorHandler(err, module = '') {
-        let errorStack = err.stack;
-//        if (err.stack) errorStack = err.stack.replace(/\n/g, '<br>');
+        const errorStack = err.stack;
+        //        if (err.stack) errorStack = err.stack.replace(/\n/g, '<br>');
         if (err.name === 'ResponseError') {     // gerade nicht benötigt, template ....
             if (err.message.includes('Permission denied') || err.message.includes('Keine Berechtigung')) {
                 this.log.error(`Permisson denied. Check the permission rights of your user on your device!`);
