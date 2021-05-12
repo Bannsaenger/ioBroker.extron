@@ -56,6 +56,8 @@ class Extron extends utils.Adapter {
         this.isVerboseMode = false;         // will be true if verbose mode 3 is active
         this.initDone = false;              // will be true if all init is done
         this.versionSet = false;            // will be true if the version is once set in the db
+        this.statusRequested = false;       // will be true if device status has been requested after init
+        this.clientReady = false;           // will be true if device connection is ready
         // Some timers and intervalls
         //this.intervallQueryStatus = class Timer {};
         this.timers = {};
@@ -189,6 +191,9 @@ class Extron extends utils.Adapter {
                     // Set the connection indicator after authentication and an open stream
                     self.log.info('Extron connected');
                     self.setState('info.connection', true, true);
+                    self.clientReady = true;
+                    // get device status
+                    self.getDeviceStatus();
                 } catch (err) {
                     self.errorHandler(err, 'onClientReady');
                 }
@@ -216,6 +221,7 @@ class Extron extends utils.Adapter {
             self.log.info('Extron client closed');
             // Reset the connection indicator
             self.setState('info.connection', false, true);
+            self.clientReady = false;
         } catch (err) {
             self.errorHandler(err, 'onClientClose');
         }
@@ -333,13 +339,36 @@ class Extron extends utils.Adapter {
                             break;
 
                         case 'DSM':             // received a mute command
-                        case 'DSG':             // received a gain gain
+                        case 'DSG':             // received a gain level
                             self.log.silly(`Extron got mute/gain ${command} from OID: "${ext1}" value: ${ext2}`);
-                            self.setGainBlock(command, ext1, ext2);
+                            self.setGain(command, ext1, ext2);
                             break;
+
+                        case 'DSD':             //received a set source command
+                            self.log.silly(`Extron got source ${command} from OID: "${ext1}" value: "${ext2}"`);
+                            self.setIpSource(ext1, ext2);
+                            break;
+
+                        case 'PLAY':             //received a play mode command
+                            self.log.silly(`Extron got play mode ${command} for Player: "${ext1}" value: "${ext2}"`);
+                            self.setPlayMode(ext1, ext2);
+                            break;
+
+                        case 'CPLYA':           //received a file association to a player
+                            self.log.silly(`Extron got filename for Player: "${ext1}" value: "${ext2}"`);
+                            self.setFileName(ext1, ext2);
+                            break;
+
+                        case 'CPLYM':           //received a set repeat mode command
+                            self.log.silly(`Extron got repeat mode ${command} for Player: "${ext1}" value: "${ext2}"`);
+                            self.setRepeatMode(ext1, ext2);
+                            break;
+
                     }
                 } else {
-                    self.log.silly('Extron received data which cannot be handled "' + answer + '"');
+                    if (answer != 'Q') {
+                        self.log.silly('Extron received data which cannot be handled "' + answer + '"');
+                    }
                 }
             }
         } catch (err) {
@@ -482,9 +511,16 @@ class Extron extends utils.Adapter {
                         const actInput = `in.${inputs}.${('00' + i.toString()).slice(-2)}`;
                         // create the input folder
                         await self.setObjectNotExistsAsync(actInput, self.objectsTemplate.input);
-                        // and the common structure of an input
-                        for (const element of self.objectsTemplate.inputs) {
-                            await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                        // and the common structure of an input depending on type
+                        if (self.devices[self.config.device].in[inputs].name === 'Aux Inputs') {
+                            for (const element of self.objectsTemplate.auxinputs) {
+                                await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                            }
+                        }
+                        else {
+                            for (const element of self.objectsTemplate.inputs) {
+                                await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                            }
                         }
                         // now the mixpoints are created
                         for (const outType of Object.keys(self.devices[self.config.device].out)) {
@@ -509,18 +545,114 @@ class Extron extends utils.Adapter {
                     }
                 }
             }
+            if (self.devices[self.config.device] && self.devices[self.config.device].ply) {
+                // at this point the device has players
+                await self.setObjectNotExistsAsync('ply', {
+                    'type': 'folder',
+                    'common': {
+                        'name': 'All players'
+                    },
+                    'native': {}
+                });
+                for (const players of Object.keys(self.devices[self.config.device].ply)) {
+                    // create player folder, key name is the folder id
+                    await self.setObjectNotExistsAsync(`ply.${players}`, {
+                        'type': 'folder',
+                        'common': {
+                            'name': self.devices[self.config.device].ply[players].name
+                        },
+                        'native': {}
+                    });
+                    // create the amount of players
+                    for (let i = 1; i <= self.devices[self.config.device].ply[players].amount; i++) {
+                        const actPlayer = `ply.${players}.${i}`;
+                        // create the player folder
+                        await self.setObjectNotExistsAsync(actPlayer, self.objectsTemplate.player);
+                        // and the common structure of a player
+                        for (const element of self.objectsTemplate.players) {
+                            await self.setObjectNotExistsAsync(actPlayer + '.' + element._id, element);
+                        }
+                    }
+                }
+            }
         } catch (err) {
             self.errorHandler(err, 'createDatabase');
         }
     }
     /**
+     * called to get all database item status from device
+     */
+    getDeviceStatus() {
+        const self = this;
+        try {
+            // if status has not been requested
+            if (!self.statusRequested && self.clientReady) {
+                if (self.devices[self.config.device] && self.devices[self.config.device].in) {
+                // at this point the device has inputs
+                    for (const inputs of Object.keys(self.devices[self.config.device].in)) {
+                    // for each input type
+                        for (let i = 1; i <= self.devices[self.config.device].in[inputs].amount; i++) {
+                            const actInput = `in.${inputs}.${('00' + i.toString()).slice(-2)}`;
+                            // request common elements status depending on input on type
+                            if (self.devices[self.config.device].in[inputs].name === 'Aux Inputs') {
+                                for (const element of self.objectsTemplate.auxinputs) {
+                                    self.getMuteStatus(actInput + '.' + element._id);
+                                    self.getIpSource(actInput + '.' + element._id);
+                                }
+                            }
+                            else {
+                                for (const element of self.objectsTemplate.inputs) {
+                                    self.getMuteStatus(actInput + '.' + element._id);
+                                }
+                            }
+                            // now the mixpoints are created
+                            for (const outType of Object.keys(self.devices[self.config.device].out)) {
+                                for (let j = 1; j <= self.devices[self.config.device].out[outType].amount; j++) {
+                                    if (i === j && outType === 'virtualSendBus') {
+                                        continue;       // these points cannot be set
+                                    }
+                                    const actMixPoint = actInput + '.mixPoints.' + self.devices[self.config.device].out[outType].short + ('00' + j.toString()).slice(-2);
+                                    for (const element of self.objectsTemplate.mixPoints) {
+                                        self.getGainLevel(actMixPoint + '.' + element._id);
+                                        self.getMuteStatus(actMixPoint + '.' + element._id);
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+                /** if (self.devices[self.config.device] && self.devices[self.config.device].ply) {
+                    // at this point the device has players
+                    for (const players of Object.keys(self.devices[self.config.device].ply)) {
+                        // create the amount of players
+                        for (let i = 1; i <= self.devices[self.config.device].ply[players].amount; i++) {
+                            for (const element of self.objectsTemplate.players) {
+                                self.getPlayMode(actPlayer + '.' + element._id);
+                                self.getRepeatMode(actPlayer + '.' + element._id);
+                                self.getFilename(actPlayer + '.' + element._id);
+                            }
+                        }
+                    }
+                } */
+                self.statusRequested = true;
+            }
+        } catch (err) {
+            self.errorHandler(err, 'getDeviceStatus');
+        }
+    }
+    /**
      * calculate linValue -> logValue -> devValue and back
      * @param {number | string | undefined} value
-     * @param {string} type         Type of value provided
-     * devValue, linValue, logValue
+     * @param {string} type
+     * Type of value provided:
+     * devValue,  linValue, logValue (-1000 .. 120, 0 .. 1000, -100 .. 12)
+     * devValueIp, linValueIp, logValueIp (-180 .. 800, 0 .. 1000, -18 .. 80)
+     * devValueIpAux, linValueIpAux, logValueIpAux (-180 .. 240, 0.. 1000, -18 .. 24)
+     * devValueTrim, linValueTrim, logValueTrim (-120 .. 120, 0 .. 1000, -12 .. 12)
+     * devValueAtt, linValueAtt, logValueAtt (-1000 .. 0, 0 .. 1000, -100 .. 0)
      * returns: Object with all 3 value types
      */
-    calculateFaderValue(value, type = 'devValue') {
+    calculateFaderValue(value, type) {
         const self = this;
         const locObj = {};
 
@@ -565,6 +697,85 @@ class Extron extends utils.Adapter {
                     }
                     break;
 
+                case 'linValueIp':      // linear value from database 0 .. 1000 for Input
+                    value = value > 1000 ? 1000 : value;
+                    value = value < 0 ? 0 : value;
+
+                    locObj.linValue = value.toFixed(0);
+                    locObj.devValue = ((value * 980 / 1000) - 180).toFixed(0);
+                    locObj.logValue = ((value * 98 / 1000) - 18).toFixed(1);
+                    break;
+
+                case 'logValueIp':      // value from database -18.0 .. 80.0 for input
+                case 'devValueIp':      // value from device -180 .. 800 for input
+                    value = value > 800 ? 800 : value;
+                    value = value < -180 ? -180 : value;
+                    if (type === 'logValueIp') value = value * 10;
+
+                    locObj.logValue = (value / 10).toFixed(1);
+                    locObj.devValue = (value).toFixed(0);
+                    locObj.linValue = ((value + 180) * 1000 / 980).toFixed(0);
+                    break;
+
+                case 'linValueIpAux':   //linear value from database 0 .. 1000 for AuxInput
+                    value = value > 1000 ? 1000 : value;
+                    value = value < 0 ? 0 : value;
+
+                    locObj.linValue = value.toFixed(0);
+                    locObj.devValue = ((value * 420 / 1000) - 180).toFixed(0);
+                    locObj.logValue = ((value * 42 / 1000) - 18).toFixed(1);
+                    break;
+
+                case 'logValueIpAux':      // value from database -18.0 .. 24.0 for input
+                case 'devValueIpAux':      // value from device -180 .. 240 for input
+                    value = value > 240 ? 240 : value;
+                    value = value < -180 ? -180 : value;
+                    if (type === 'logValueIpAux') value = value * 10;
+
+                    locObj.logValue = (value / 10).toFixed(1);
+                    locObj.devValue = (value).toFixed(0);
+                    locObj.linValue = ((value + 180) * 1000 / 420).toFixed(0);
+                    break;
+
+                case 'logValueTrim' :       // value from database -12.0 .. 12.0 for PostMix Trim
+                case 'devValueTrim' :       // value from device -120 .. 120 for PostMix Trim
+                    value = value > 120 ? 120 : value;
+                    value = value < -120 ? -120 : value;
+                    if (type === 'logValueTrim') value = value * 10;
+
+                    locObj.logValue = (value / 10).toFixed(1);
+                    locObj.devValue = (value).toFixed(0);
+                    locObj.linValue = ((value + 120) * 1000 / 240).toFixed(0);
+                    break;
+
+                case 'linValueTrim' :       // linear value from database 0 ..1000 for PostMix Trim
+                    value = value > 1000 ? 1000 : value;
+                    value = value < 0 ? 0 : value;
+
+                    locObj.linValue = value.toFixed(0);
+                    locObj.devValue = ((value * 240 / 1000) - 120).toFixed(0);
+                    locObj.logValue = ((value * 24 / 1000) - 12).toFixed(1);
+                    break;
+
+                case 'logValueAtt' :        // value from database -100 .. 0 for output attenuation
+                case 'devValueAtt' :        //  value from device -1000 .. 0 for output attenuation
+                    value = value > 0 ? 0 : value;
+                    value = value < -1000 ? -1000 : value;
+                    if (type === 'logValueAtt') value = value * 10;
+
+                    locObj.logValue = (value / 10).toFixed(1);
+                    locObj.devValue = (value).toFixed(0);
+                    locObj.linValue = (value + 1000).toFixed(0);
+                    break;
+
+                case 'linValueAtt' :        // value from database 0 .. 1000 for output attenuation
+                    value = value > 1000 ? 1000 : value;
+                    value = value < 0 ? 0 : value;
+
+                    locObj.linValue = value.toFixed(0);
+                    locObj.devValue = (value - 1000).toFixed(0);
+                    locObj.logValue = ((value / 10) - 100).toFixed(1);
+                    break;
 
             }
         } catch (err) {
@@ -573,6 +784,7 @@ class Extron extends utils.Adapter {
 
         return locObj;
     }
+    /** BEGIN Input and Mix control */
     /**
      * Set the database values for a mixpoint or channel
      * @param {string} cmd
@@ -580,21 +792,22 @@ class Extron extends utils.Adapter {
      * @param {string | boolean} value
      * cmd = DSM (mute), DSG (gain)
      */
-    setGainBlock(cmd, oid, value) {
+    setGain(cmd, oid, value) {
         const self = this;
         try {
             const mixPoint = self.oid2id(oid);
+            const idArray = mixPoint.split('.');
             if (cmd === 'DSM') {
-                self.setState(`${mixPoint}.mute`, value === '1' ? true : false, true);
+                self.setState(`${mixPoint}mute`, value === '1' ? true : false, true);
             } else {
-                const faderVal = self.calculateFaderValue(value.toString(), 'devValue');
+                const faderVal = self.calculateFaderValue(value.toString(), `devValue${ idArray[4]==='ip' ? idArray[1]=== 'auxInputs' ? 'IpAux' : 'Ip' : ''}`);
                 if (faderVal) {
-                    self.setState(`${mixPoint}.level_db`, faderVal.logValue, true);
-                    self.setState(`${mixPoint}.level`, faderVal.linValue, true);
+                    self.setState(`${mixPoint}level_db`, faderVal.logValue, true);
+                    self.setState(`${mixPoint}level`, faderVal.linValue, true);
                 }
             }
         } catch (err) {
-            this.errorHandler(err, 'setMixpoint');
+            this.errorHandler(err, 'setGain');
         }
     }
     /**
@@ -614,6 +827,21 @@ class Extron extends utils.Adapter {
         }
     }
     /**
+     * request the mute status from device
+     * @param {string} baseId
+     */
+    getMuteStatus(baseId) {
+        const self = this;
+        try {
+            const oid = self.id2oid(baseId);
+            if (oid) {
+                self.streamSend(`WM${oid}AU\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'getMuteStatus');
+        }
+    }
+    /**
      * Send the gain level to the device
      * @param {string} baseId
      * @param {string | any} value
@@ -630,6 +858,227 @@ class Extron extends utils.Adapter {
         }
     }
     /**
+     * get the gain level from device
+     * @param {string} baseId
+     */
+    getGainLevel(baseId) {
+        const self = this;
+        try {
+            const oid = self.id2oid(baseId);
+            if (oid) {
+                self.streamSend(`WG${oid}AU\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendGainLevel');
+        }
+    }
+    /**
+     * Set the source for a auxinput
+     * @param {string} oid
+     * @param {string | number} value
+     * cmd = DSD (source)
+     */
+    setIpSource(oid, value) {
+        const self = this;
+        try {
+            const channel = self.oid2id(oid);
+            self.setState(`${channel}ipsource`, value, true);
+        } catch (err) {
+            this.errorHandler(err, 'setIpSource');
+        }
+    }
+    /**
+     * Send the source mode to the device
+     * @param {string} baseId
+     * @param {string | number} value
+     */
+    sendIpSource(baseId, value) {
+        const self = this;
+        try {
+            const oid = self.id2oid(`${baseId}.ipsource`);
+            if (oid) {
+                self.streamSend(`WD${oid}*${value}AU\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendIpSource');
+        }
+    }
+    /**
+     * get the source mode from device
+     * @param {string} baseId
+     */
+    getIpSource(baseId) {
+        const self = this;
+        try {
+            const oid = self.id2oid(`${baseId}.ipsource`);
+            if (oid) {
+                self.streamSend(`WD${oid}AU\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'getIpSource');
+        }
+    }
+    /** END Input and Mix control */
+    /** BEGIN integrated audio player control */
+    /**
+     * Set the database values for a player
+     * @param {string} oid
+     * @param {string | boolean} value
+     * cmd = PLAY (playmode)
+     */
+    setPlayMode(oid, value) {
+        const self = this;
+        try {
+            const player = self.oid2id(oid);
+            self.setState(`${player}.playmode`, value === '1' ? true : false, true);
+        } catch (err) {
+            this.errorHandler(err, 'setPlayMode');
+        }
+    }
+    /**
+     * control playback on the device.player
+     * @param {string} baseId
+     * @param {string | boolean} value
+     */
+    sendPlayMode(baseId, value) {
+        const self = this;
+        try {
+            const oid = self.id2oid(baseId);
+            if (oid) {
+                self.streamSend(`W${oid}*${(value?'1':'0')}PLAY\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendPlayMode');
+        }
+    }
+    /**
+     * request playback mode from the device.player
+     * @param {string} baseId
+     * cmd = PLAY
+     */
+    getPlayMode(baseId) {
+        const self = this;
+        try {
+            const oid = self.id2oid(baseId);
+            if (oid) {
+                self.streamSend(`W${oid}PLAY\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'getPlayMode');
+        }
+    }
+    /**
+     * Set the database values for a player
+     * @param {string} oid
+     * @param {string | boolean} value
+     * cmd = CPLYM (repeatmode)
+     */
+    setRepeatMode(oid, value) {
+        const self = this;
+        try {
+            const player = self.oid2id(oid);
+            self.setState(`${player}.repeatMode`, value === '1' ? true : false, true);
+        } catch (err) {
+            this.errorHandler(err, 'setRepeatMode');
+        }
+    }
+    /**
+     * control repeatmode on the device.player
+     * @param {string} baseId
+     * @param {string | boolean} value
+     */
+    sendRepeatMode(baseId, value) {
+        const self = this;
+        try {
+            const oid = self.id2oid(baseId);
+            if (oid) {
+                self.streamSend(`WM${oid}*${(value?'1':'0')}CPLY\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendPlayMode');
+        }
+    }
+    /**
+     * request repeatmode on the device.player
+     * @param {string} baseId
+     * cmd = CPLY
+     */
+    getRepeatMode(baseId) {
+        const self = this;
+        try {
+            const oid = self.id2oid(baseId);
+            if (oid) {
+                self.streamSend(`WM${oid}CPLY\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendPlayMode');
+        }
+    }
+    /**
+     * Send the Player filename to device
+     * @param {string} baseId
+     * @param {string} value
+     */
+    sendFileName(baseId, value) {
+        const self = this;
+        try {
+            const oid = self.id2oid(baseId);
+            if (oid) {
+                self.streamSend(`WA${oid}*${value}CPLY\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendFileName');
+        }
+    }
+    /**
+     * Send clear Player filename to device
+     * @param {string} baseId
+     * cmd = CPLY
+     */
+    clearFileName(baseId) {
+        const self = this;
+        try {
+            const oid = self.id2oid(baseId);
+            if (oid) {
+                self.streamSend(`WA${oid}* CPLY\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendFileName');
+        }
+    }
+    /**
+     * Set the Player filename in the database
+     * @param {string} oid
+     * @param {string} value
+     * cmd = CPLYA (associate file to player)
+     */
+    setFileName(oid, value) {
+        const self = this;
+        try {
+            const player = self.oid2id(oid);
+            self.setState(`${player}.filename`, value, true);
+        } catch (err) {
+            this.errorHandler(err, 'setFileName');
+        }
+    }
+    /**
+     * request current filename from player
+     * @param {string} baseId
+     * cmd = CPLY
+     */
+    getCurrentFileName(baseId) {
+        const self = this;
+        try {
+            const oid = self.id2oid(baseId);
+            if (oid) {
+                self.streamSend(`WA${oid}CPLY\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendFileName');
+        }
+    }
+    /** END integrated audio player control */
+    /**
      * determine the database id from oid e.g. 20002 -> in.inputs.01.mixPoints.O03
      * @param {string} oid
      * returns: String with complete base id to mixPoint or the gainBlock
@@ -638,64 +1087,77 @@ class Extron extends utils.Adapter {
         const self = this;
         let retId = '';
         try {
-            const what = Number(oid.substr(0,1));
-            const where = Number(oid.substr(1,2));
-            const val = Number(oid.substr(3,2));
-            switch (what) {
-                case 2:                         // mixpoints
-                    if (where <= 11) {          // from input 1 - 12
-                        retId = `in.inputs.${('00' + (where + 1).toString()).slice(-2)}.mixPoints.`;
-                    } else if (where <= 19) {   // aux input 1 - 8
-                        retId = `in.auxInputs.${('00' + (where - 11).toString()).slice(-2)}.mixPoints.`;
-                    } else if (where <= 35) {   // virtual return 1 - 16 (A-P)
-                        retId = `in.virtualReturns.${('00' + (where - 19).toString()).slice(-2)}.mixPoints.`;
-                    } else if (where <= 83) {   // AT input 1 - 48
-                        retId = `in.expansionBus.${('00' + (where - 35).toString()).slice(-2)}.mixPoints.`;
-                    } else {
+            if (Number(oid) < 9) {
+                retId = `ply.players.${Number(oid)}.common`;
+            }
+            else {
+                const what = Number(oid.substr(0,1));
+                const where = Number(oid.substr(1,2));
+                const val = Number(oid.substr(3,2));
+                switch (what) {
+                    case 2:                         // mixpoints
+                        if (where <= 11) {          // from input 1 - 12
+                            retId = `in.inputs.${('00' + (where + 1).toString()).slice(-2)}.mixPoints.`;
+                        } else if (where <= 19) {   // aux input 1 - 8
+                            retId = `in.auxInputs.${('00' + (where - 11).toString()).slice(-2)}.mixPoints.`;
+                        } else if (where <= 35) {   // virtual return 1 - 16 (A-P)
+                            retId = `in.virtualReturns.${('00' + (where - 19).toString()).slice(-2)}.mixPoints.`;
+                        } else if (where <= 83) {   // AT input 1 - 48
+                            retId = `in.expansionBus.${('00' + (where - 35).toString()).slice(-2)}.mixPoints.`;
+                        } else {
+                            throw { 'message': 'no known input',
+                                'stack'  : `oid: ${oid}` };
+                        }
+                        // now determine the output
+                        if (val <= 7) {             // output 1 -8
+                            retId += `O${('00' + (val + 1).toString()).slice(-2)}`;
+                        } else if (val <= 15) {     // aux output 1 - 8
+                            retId += `A${('00' + (val - 7).toString()).slice(-2)}`;
+                        } else if (val <= 31) {     // virtual send bus 1 - 16
+                            retId += `V${('00' + (val - 15).toString()).slice(-2)}`;
+                        } else if (val <= 47) {     // expansion output 1 - 16
+                            retId += `E${('00' + (val - 31).toString()).slice(-2)}`;
+                        }
+                        break;
+
+                    case 4:                         // input block
+                        if (where === 0) {          // Input gain block
+                            if (val <= 11) {        // input 1 - 12
+                                return `in.inputs.${('00' + (val + 1).toString()).slice(-2)}.common.ip`;
+                            }
+                            if (val <= 19) {        // aux input 1 - 8
+                                return `in.auxInputs.${('00' + (val - 11).toString()).slice(-2)}.common.ip`;
+                            }
+                        }
+                        if (where === 1) {          // premix gain block
+                            if (val <= 11) {        // input 1 - 12
+                                return `in.inputs.${('00' + (val + 1).toString()).slice(-2)}.common.`;
+                            }
+                            if (val <= 19) {        // aux input 1 - 8
+                                return `in.auxInputs.${('00' + (val - 11).toString()).slice(-2)}.common.`;
+                            }
+                        }
                         throw { 'message': 'no known input',
                             'stack'  : `oid: ${oid}` };
-                    }
-                    // now determine the output
-                    if (val <= 7) {             // output 1 -8
-                        retId += `O${('00' + (val + 1).toString()).slice(-2)}`;
-                    } else if (val <= 15) {     // aux output 1 - 8
-                        retId += `A${('00' + (val - 7).toString()).slice(-2)}`;
-                    } else if (val <= 31) {     // virtual send bus 1 - 16
-                        retId += `V${('00' + (val - 15).toString()).slice(-2)}`;
-                    } else if (val <= 47) {     // expansion output 1 - 16
-                        retId += `E${('00' + (val - 31).toString()).slice(-2)}`;
-                    }
-                    break;
 
-                case 4:                         // input block
-                    if (where === 1) {          // premix gain block
-                        if (val <= 11) {        // input 1 - 12
-                            return `in.inputs.${('00' + (val + 1).toString()).slice(-2)}.common`;
+                    case 5:                         // virtual return and ext input
+                        if (where === 1) {          // virtual return
+                            if (val <= 15) {        // virtual return 1 - 16 (A-P)
+                                return `in.virtualReturns.${('00' + (val + 1).toString()).slice(-2)}.common.`;
+                            }
                         }
-                        if (val <= 19) {        // aux input 1 - 8
-                            return `in.auxInputs.${('00' + (val - 11).toString()).slice(-2)}.common`;
+                        if (where === 2) {          // expansion bus (AT inputs)
+                            if (val <= 47) {        // AT input 1 - 48
+                                return `in.expansionBus.${('00' + (val + 1).toString()).slice(-2)}.common.`;
+                            }
                         }
-                    }
-                    throw { 'message': 'no known input',
-                        'stack'  : `oid: ${oid}` };
+                        throw { 'message': 'no known input',
+                            'stack'  : `oid: ${oid}` };
 
-                case 5:                         // virtual return and ext input
-                    if (where === 1) {          // virtual return
-                        if (val <= 15) {        // virtual return 1 - 16 (A-P)
-                            return `in.virtualReturns.${('00' + (val + 1).toString()).slice(-2)}.common`;
-                        }
-                    }
-                    if (where === 2) {          // expansion bus (AT inputs)
-                        if (val <= 47) {        // AT input 1 - 48
-                            return `in.expansionBus.${('00' + (val + 1).toString()).slice(-2)}.common`;
-                        }
-                    }
-                    throw { 'message': 'no known input',
-                        'stack'  : `oid: ${oid}` };
-
-                default:
-                    throw { 'message': 'no known input',
-                        'stack'  : `oid: ${oid}` };
+                    default:
+                        throw { 'message': 'no known input',
+                            'stack'  : `oid: ${oid}` };
+                }
             }
         } catch (err) {
             self.errorHandler(err, 'oid2id');
@@ -715,80 +1177,116 @@ class Extron extends utils.Adapter {
             const idArray = id.split('.');
             const inputType = idArray[3];
             const inputNumber = Number(idArray[4]);
+            const inputState = idArray[6];
             let outputType = 'O';
             let outputNumber = 1;
             if (idArray.length >= 7) {
                 outputType = idArray[6].substr(0,1);
                 outputNumber = Number(idArray[6].substr(1,2));
             }
-            switch (idArray.length) {
-                case 6:     // input
-                    switch (inputType) {
-                        case 'inputs':
-                            retOid = `401${('00' + (inputNumber - 1).toString()).slice(-2)}`;
-                            break;
+            if (inputType === 'Player') {
+                retOid = inputNumber.toString();
+            }
+            else
+            {
+                switch (idArray.length) {
+                    case 4:     // input
+                        switch (inputType) {
+                            case 'inputs' :
+                                retOid = `400${('00' + (inputNumber - 1).toString()).slice(-2)}`;
+                                break;
 
-                        case 'auxInputs':
-                            retOid = `401${('00' + (inputNumber + 11).toString()).slice(-2)}`;
-                            break;
+                            case 'auxInputs' :
+                                retOid = `400${('00' + (inputNumber + 11).toString()).slice(-2)}`;
+                                break;
+                        }
+                        break;
+                    case 6:     // pre mix
+                        switch (inputType) {
+                            case 'inputs':
+                                if (inputState === 'iplevel') {
+                                    retOid = `400${('00' + (inputNumber - 1).toString()).slice(-2)}`;
+                                } else {
+                                    retOid = `401${('00' + (inputNumber - 1).toString()).slice(-2)}`;
+                                }
+                                break;
 
-                        case 'virtualReturns':
-                            retOid = `501${('00' + (inputNumber - 1).toString()).slice(-2)}`;
-                            break;
+                            case 'auxInputs':
+                                if (inputState === 'iplevel') {
+                                    retOid = `400${('00' + (inputNumber + 11).toString()).slice(-2)}`;
+                                } else {
+                                    retOid = `401${('00' + (inputNumber + 11).toString()).slice(-2)}`;
+                                }
+                                break;
 
-                        case 'expansionBus':
-                            retOid = `502${('00' + (inputNumber - 1).toString()).slice(-2)}`;
-                            break;
+                            case 'virtualReturns':
+                                retOid = `501${('00' + (inputNumber - 1).toString()).slice(-2)}`;
+                                break;
 
-                        default:
-                            retOid = '';
-                    }
-                    break;
+                            case 'expansionBus':
+                                retOid = `502${('00' + (inputNumber - 1).toString()).slice(-2)}`;
+                                break;
 
-                case 7:     // mixpoint
-                    switch (inputType) {
-                        case 'inputs':
-                            retOid = `2${('00' + (inputNumber - 1).toString()).slice(-2)}`;
-                            break;
+                            default:
+                                retOid = '';
+                        }
+                        break;
 
-                        case 'auxInputs':
-                            retOid = `2${('00' + (inputNumber + 11).toString()).slice(-2)}`;
-                            break;
+                    case 7:     // mixpoint
+                        switch (inputType) {
+                            case 'inputs':
+                                if (inputState === 'ipsource' || inputState === 'ipmute' || inputState === 'iplevel' || inputState === 'iplevel_db' ) {
+                                    retOid = `400${('00' + (inputNumber - 1).toString()).slice(-2)}`;
+                                } else {
+                                    retOid = `2${('00' + (inputNumber + 11).toString()).slice(-2)}`;
+                                }
+                                break;
 
-                        case 'virtualReturns':
-                            retOid = `2${('00' + (inputNumber + 19).toString()).slice(-2)}`;
-                            break;
+                            case 'auxInputs':
+                                if (inputState === 'ipsource'|| inputState === 'ipmute' || inputState === 'iplevel' || inputState === 'iplevel_db') {
+                                    retOid = `400${('00' + (inputNumber + 11).toString()).slice(-2)}`;
+                                } else {
+                                    retOid = `2${('00' + (inputNumber + 11).toString()).slice(-2)}`;
+                                }
+                                break;
 
-                        case 'expansionBus':
-                            retOid = `2${('00' + (inputNumber + 35).toString()).slice(-2)}`;
-                            break;
+                            case 'virtualReturns':
+                                retOid = `2${('00' + (inputNumber + 19).toString()).slice(-2)}`;
+                                break;
 
-                        default:
-                            retOid = '';
-                    }
-                    switch (outputType) {
-                        case 'O':
-                            retOid += ('00' + (outputNumber - 1).toString()).slice(-2);
-                            break;
+                            case 'expansionBus':
+                                retOid = `2${('00' + (inputNumber + 35).toString()).slice(-2)}`;
+                                break;
 
-                        case 'A':
-                            retOid += ('00' + (outputNumber + 7).toString()).slice(-2);
-                            break;
+                            default:
+                                retOid = '';
+                        }
+                        switch (outputType) {
+                            case 'O':
+                                retOid += ('00' + (outputNumber - 1).toString()).slice(-2);
+                                break;
 
-                        case 'V':
-                            retOid += ('00' + (outputNumber + 15).toString()).slice(-2);
-                            break;
+                            case 'A':
+                                retOid += ('00' + (outputNumber + 7).toString()).slice(-2);
+                                break;
 
-                        case 'E':
-                            retOid += ('00' + (outputNumber + 31).toString()).slice(-2);
-                            break;
+                            case 'V':
+                                retOid += ('00' + (outputNumber + 15).toString()).slice(-2);
+                                break;
 
-                        default:
-                            retOid = '';
-                    }
-                    break;
+                            case 'E':
+                                retOid += ('00' + (outputNumber + 31).toString()).slice(-2);
+                                break;
+                            case 's':
+                                break;
 
-                default:
+                            default:
+                                // retOid = '';
+                        }
+                        break;
+
+                    default:
+                }
             }
         } catch (err) {
             self.errorHandler(err, 'id2oid');
@@ -840,12 +1338,33 @@ class Extron extends utils.Adapter {
                         switch (locRole) {
                             case 'input.channel':
                                 if (stateName === 'mute') self.sendMuteStatus(baseId, state.val);
+                                if (stateName === 'ipmute') self.sendMuteStatus(id, state.val);
+                                if (stateName === 'ipsource') self.sendIpSource(id, state.val.toString());
+                                if (stateName === 'level') self.sendGainLevel(baseId, self.calculateFaderValue(state.val.toString(), 'linValue'));
+                                if (stateName === 'level_db') self.sendGainLevel(baseId, self.calculateFaderValue(state.val.toString(), 'logValue'));
+                                if (stateName === 'iplevel') self.sendGainLevel(id, self.calculateFaderValue(state.val.toString(), 'linValueIp'));
+                                if (stateName === 'iplevel_db') self.sendGainLevel(id, self.calculateFaderValue(state.val.toString(), 'logValueIp'));
+                                break;
+
+                            case 'input.aux':
+                                if (stateName === 'mute') self.sendMuteStatus(baseId, state.val);
+                                if (stateName === 'ipmute') self.sendMuteStatus(id, state.val);
+                                if (stateName === 'ipsource') self.sendIpSource(id, state.val.toString());
+                                if (stateName === 'level') self.sendGainLevel(baseId, self.calculateFaderValue(state.val.toString(), 'linValue'));
+                                if (stateName === 'level_db') self.sendGainLevel(baseId, self.calculateFaderValue(state.val.toString(), 'logValue'));
+                                if (stateName === 'iplevel') self.sendGainLevel(id, self.calculateFaderValue(state.val.toString(), 'linValueIpAux'));
+                                if (stateName === 'iplevel_db') self.sendGainLevel(id, self.calculateFaderValue(state.val.toString(), 'logValueIpAux'));
                                 break;
 
                             case 'mixpoint':
                                 if (stateName === 'mute') self.sendMuteStatus(baseId, state.val);
                                 if (stateName === 'level') self.sendGainLevel(baseId, self.calculateFaderValue(state.val.toString(), 'linValue'));
                                 if (stateName === 'level_db') self.sendGainLevel(baseId, self.calculateFaderValue(state.val.toString(), 'logValue'));
+                                break;
+
+                            case 'player.channel':
+                                if (stateName === 'playmode') self.sendPlayMode(id, state.val.toString());
+                                if (stateName === 'filename') self.sendFileName(id, state.val.toString());
                                 break;
 
                         }
@@ -867,7 +1386,7 @@ class Extron extends utils.Adapter {
 	 */
     errorHandler(err, module = '') {
         let errorStack = err.stack;
-//        if (err.stack) errorStack = err.stack.replace(/\n/g, '<br>');
+        //        if (err.stack) errorStack = err.stack.replace(/\n/g, '<br>');
         if (err.name === 'ResponseError') {     // gerade nicht benötigt, template ....
             if (err.message.includes('Permission denied') || err.message.includes('Keine Berechtigung')) {
                 this.log.error(`Permisson denied. Check the permission rights of your user on your device!`);

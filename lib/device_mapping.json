@@ -67,18 +67,22 @@
         "in" : {
             "inputs" : {
                 "name" : "Inputs",
+                "short" : "I",
                 "amount" : 12
             },
             "auxInputs" : {
                 "name" : "Aux Inputs",
+                "short" : "X",
                 "amount" : 8
             },
             "virtualReturns" : {
                 "name" : "Virtual Returns",
+                "short" : "R",
                 "amount" : 16
             },
             "expansionBus" : {
                 "name" : "Expansion Bus (AT Inputs)",
+                "short" : "D",
                 "amount" : 48
             }
         },
@@ -98,6 +102,13 @@
             "virtualSendBus" : {
                 "short" : "V",
                 "amount" : 16
+            }
+        },
+        "ply" : {
+            "players": {
+                "name" : "Audio Player",
+                "short" : "P",
+                "amount" : 8
             }
         }
     }
