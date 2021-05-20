@@ -50,7 +50,7 @@ If you are a non commercial organisation or use it for private use you can get a
 * (Bannsaenger) fix dependencies for integration test
 
 ### 0.1.0
-* (mschlgl) extend device/database structure to cover all controlleble elements
+* (mschlgl) extend device/database structure to cover all controllable elements
 
 ## License
 Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
