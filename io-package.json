@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "extron",
-        "version": "0.0.3",
+        "version": "0.1.0",
         "news": {
             "0.0.1": {
                 "en": "initial release",
@@ -38,6 +38,10 @@
                 "es": "arreglar dependencias para la prueba de integración",
                 "pl": "napraw zależności dla testu integracji",
                 "zh-cn": "修复依赖关系以进行集成测试"
+            },
+            "0.1.0": {
+                "en": "extend device/database structure to cover all controllable elements",
+                "de": "Datenbankstruktur erweitert um alle steuerbaren Elemente abzubilden"
             }
         },
         "title": "Extron SIS",
@@ -66,7 +70,8 @@
             "zh-cn": "Extron SIS适配器"
         },
         "authors": [
-            "Bannsaenger <bannsaenger@gmx.de>"
+            "Bannsaenger <bannsaenger@gmx.de>",
+            "mschlg <mschlgl@gmail.com>"
         ],
         "keywords": [
             "extron"
