@@ -2,7 +2,8 @@
     "DTP2_CrossPoint_82" : {
         "name" : "DTP2 CrossPoint 82",
         "objects" : [
-            "common"
+            "common",
+            "cp82"
         ]
     },
     "SMD202" : {
@@ -38,7 +39,7 @@
                 "short" : "R",
                 "amount" : 2
             },
-            "expansionBus" : {
+            "expansionInputs" : {
                 "name" : "Expansion Bus (AT Inputs)",
                 "short" : "D",
                 "amount" : 2
@@ -84,7 +85,7 @@
                 "short" : "R",
                 "amount" : 16
             },
-            "expansionBus" : {
+            "expansionInputs" : {
                 "name" : "Expansion Bus (AT Inputs)",
                 "short" : "D",
                 "amount" : 48
