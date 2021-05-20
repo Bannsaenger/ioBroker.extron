@@ -36,7 +36,7 @@
                 settings.device = '';
             }
             if (settings.device !== '') {
-                console.log("diabling device:" + JSON.stringify($("#device")));
+                console.log("disabling device:" + JSON.stringify($("#device")));
                 $("#device").prop('disabled', true);
             }
             if (settings.user === undefined) {
@@ -121,7 +121,7 @@
 
         <!-- Put your content here -->
         <!--
-            "host": "127.0.0.1",
+            "host": "172.0.0.1",
             "type": "ssh",
             "port": "22023",
             "device": "",

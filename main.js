@@ -690,7 +690,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'filename' :
-                                //self.getFileName(id);
+                                self.getFileName(id);
                                 break;
                         }
                     }
@@ -1147,7 +1147,7 @@ class Extron extends utils.Adapter {
      * @param {string} baseId
      * cmd = CPLY
      */
-    getCurrentFileName(baseId) {
+    getFileName(baseId) {
         const self = this;
         try {
             const oid = self.id2oid(baseId);
