@@ -57,6 +57,9 @@
             if (settings.inactivityTimeout === undefined) {
                 settings.inactivityTimeout = 100000;
             }
+            if (settings.pushDeviceStatus === undefined) {
+                settings.pushDeviceStatus = true;
+            }
             $('.value').each(function () {
                 var $key = $(this);
                 var id = $key.attr('id');
@@ -128,7 +131,8 @@
             "pollDelay": 10000,
             "reconnectDelay": 30000,
             "answerTimeout": 500,
-            "inactivityTimeout": 100000
+            "inactivityTimeout": 100000,
+            "pushDeviceStatus" : true
 
         -->
         <!-- For example columns with settings: -->
@@ -194,6 +198,13 @@
             <div class="col s12 m6 l4 input-field">
                 <input type="number" min="10000" max="100000" class="value" id="inactivityTimeout" />
                 <label for="inactivityTimeout" class="translate">inactivityTimeout</label>
+            </div>
+        </div>
+        
+        <div class="row">
+            <div class="col s12 m6 l4 input-field">
+                <input type="boolean" class="value" id="pushDeviceStatus" />
+                <label for="pushDeviceStatus" class="translate">pushDeviceStatus</label>
             </div>
         </div>
 

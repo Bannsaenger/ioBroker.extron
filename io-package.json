@@ -106,7 +106,8 @@
         "pollDelay": 10000,
         "reconnectDelay": 30000,
         "answerTimeout": 500,
-        "inactivityTimeout": 100000
+        "inactivityTimeout": 100000,
+        "pushDeviceStatus": true
     },
     "objects": [],
     "instanceObjects": [

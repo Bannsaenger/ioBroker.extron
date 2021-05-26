@@ -305,9 +305,13 @@ class Extron extends utils.Adapter {
                         this.streamSend('1I');      // query Model
                         this.streamSend('WCN\r');   // query deviceName
                         self.initDone = true;
-                        self.timers.intervallQueryStatus = setInterval(self.extronQueryStatus.bind(self), self.config.pollDelay);
-                        // await self.getDeviceStatusAsync();
-                        await self.setDeviceStatusAsync();
+                        //self.timers.intervallQueryStatus = setInterval(self.extronQueryStatus.bind(self), self.config.pollDelay);
+                        self.timers.timeoutQueryStatus = setTimeout(self.extronQueryStatus.bind(self), self.config.pollDelay);
+                        if (self.config.pushDeviceStatus === true) {
+                            await self.setDeviceStatusAsync();
+                        } else {
+                            await self.getDeviceStatusAsync();
+                        }
                     }
                     return;
                 }
@@ -481,9 +485,11 @@ class Extron extends utils.Adapter {
             self.log.debug('Extron send a status query');
             self.streamSend('Q');
             self.pollCount += 1;
-            if (self.pollCount >= maxPollCount) {
-                self.log.debug('maxPollCount exceeded');
+            if (self.pollCount > maxPollCount) {
+                self.log.debug('maxPollCount exceeded, polling stopped');
                 self.pollCount = 0;
+            } else {
+                self.timers.timeoutQueryStatus = setTimeout(self.extronQueryStatus.bind(self), self.config.pollDelay);
             }
         } catch (err) {
             this.errorHandler(err, 'extronQueryStatus');

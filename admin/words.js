@@ -110,6 +110,10 @@ systemDictionary = {
         "pl": "maksymalny czas oczekiwania na poprawną odpowiedź. W przeciwnym razie połączenie zostanie przerwane i ponownie połączone (w ms)",
         "zh-cn": "等待正确答案的最长时间。否则，连接将被切断并重新连接（以毫秒为单位）"
     },
+    "pushDeviceStatus" : {
+        "en": "if true, current database states will be pushed to device on startup, otherwise database will be updated with current device states",
+        "de": "wenn true, dann werden beim Anlauf die aktuellen Datenbankwerte in das Gerät geschrieben, andernfalls wird die Datenbank mit dem aktuellen Gerätestatus aktualisiert"
+    },
     "user": {
         "en": "user name",
         "de": "Benutzername",
