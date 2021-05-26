@@ -33,6 +33,7 @@ const errCodes = {
     'E28' : 'Bad filename or file not found',
     'E31' : 'Attempt to break port passthrough when not set'
 };
+const maxPollCount = 4;
 
 class Extron extends utils.Adapter {
 
@@ -58,6 +59,7 @@ class Extron extends utils.Adapter {
         this.initDone = false;              // will be true if all init is done
         this.versionSet = false;            // will be true if the version is once set in the db
         this.statusRequested = false;       // will be true if device status has been requested after init
+        this.statusSended = false;          // will be true once database settings have been sended to device
         this.clientReady = false;           // will be true if device connection is ready
         // Some timers and intervalls
         //this.intervallQueryStatus = class Timer {};
@@ -70,7 +72,8 @@ class Extron extends utils.Adapter {
         // the shell stream
         this.stream = undefined;
         this.streamAvailable = true;    // if false wait for continue event
-        this.stateList = [];             // will be filled with all existing states
+        this.stateList = [];            // will be filled with all existing states
+        this.pollCount = 0;             // count sent status query
     }
 
     /**
@@ -303,7 +306,8 @@ class Extron extends utils.Adapter {
                         this.streamSend('WCN\r');   // query deviceName
                         self.initDone = true;
                         self.timers.intervallQueryStatus = setInterval(self.extronQueryStatus.bind(self), self.config.pollDelay);
-                        self.getDeviceStatus();
+                        // await self.getDeviceStatusAsync();
+                        await self.setDeviceStatusAsync();
                     }
                     return;
                 }
@@ -319,6 +323,8 @@ class Extron extends utils.Adapter {
                     const command = matchArray[1].toUpperCase();
                     const ext1 = matchArray[2] ? matchArray[2] : '';
                     const ext2 = matchArray[3] ? matchArray[3] : '';
+
+                    self.pollCount = 0;     // reset pollcounter as valid data has been received
 
                     switch (command) {
                         case 'VER':             // received a Version (answer to status query)
@@ -474,6 +480,11 @@ class Extron extends utils.Adapter {
         try {
             self.log.debug('Extron send a status query');
             self.streamSend('Q');
+            self.pollCount += 1;
+            if (self.pollCount >= maxPollCount) {
+                self.log.debug('maxPollCount exceeded');
+                self.pollCount = 0;
+            }
         } catch (err) {
             this.errorHandler(err, 'extronQueryStatus');
         }
@@ -655,7 +666,7 @@ class Extron extends utils.Adapter {
     /**
      * called to get all database item status from device
      */
-    getDeviceStatus() {
+    async getDeviceStatusAsync() {
         const self = this;
         try {
             // if status has not been requested
@@ -701,6 +712,79 @@ class Extron extends utils.Adapter {
             }
         } catch (err) {
             self.errorHandler(err, 'getDeviceStatus');
+        }
+    }
+    /**
+     * called to set all database item states to device
+     */
+    async setDeviceStatusAsync() {
+        const self = this;
+        let value = {};
+        try {
+            // if status has not been requested
+            if (!self.statusSended && self.isVerboseMode) {
+                self.log.info('Extron set device status started');
+                // iterate through stateList to send status to device
+                for (let index = 0; index < self.stateList.length; index++) {
+                    const id = self.stateList[index];
+                    const baseId = id.substr(0, id.lastIndexOf('.'));
+                    const idArray = id.split('.');
+                    const idType = idArray[3];
+                    const idBlock = idArray[5];
+                    const stateName = id.substr(id.lastIndexOf('.') + 1);
+                    let calcMode ='lin';
+
+                    if (typeof(baseId) !== 'undefined' && baseId !== null) {
+                        // @ts-ignore
+                        const stateobj = await self.getStateAsync(id);
+                        const state = stateobj.val;
+                        if (state !== null) switch (stateName) {
+                            case 'mute' :
+                                self.sendMuteStatus(baseId, state);
+                                break;
+
+                            case 'source' :
+                                self.sendSource(id, Number(state));
+                                break;
+
+                            case 'level' :
+                                switch (idBlock) {
+                                    case 'gain' :
+                                        calcMode = 'linGain';
+                                        if (idType === 'auxInputs') calcMode = 'linAux';
+                                        break;
+
+                                    case 'postmix' :
+                                        calcMode = 'linTrim';
+                                        break;
+
+                                    case 'attenuation' :
+                                        calcMode = 'linAtt';
+                                        break;
+                                }
+                                value = self.calculateFaderValue(Number(state),calcMode);
+                                self.sendGainLevel(id,value);
+                                break;
+
+                            case 'playmode' :
+                                self.sendPlayMode(baseId, state);
+                                break;
+
+                            case 'repeatmode' :
+                                self.sendRepeatMode(baseId, state);
+                                break;
+
+                            case 'filename' :
+                                self.sendFileName(baseId, state.toString());
+                                break;
+                        }
+                    }
+                }
+                self.statusSended = true;
+                self.log.info('Extron set device status completed');
+            }
+        } catch (err) {
+            self.errorHandler(err, 'setDeviceStatus');
         }
     }
     /**
@@ -883,8 +967,8 @@ class Extron extends utils.Adapter {
 
                 const faderVal = self.calculateFaderValue(value.toString(), calcMode);
                 if (faderVal) {
-                    self.setState(`${mixPoint}level_db`, faderVal.logValue, true);
-                    self.setState(`${mixPoint}level`, faderVal.linValue, true);
+                    self.setState(`${mixPoint}level_db`, Number(faderVal.logValue), true);
+                    self.setState(`${mixPoint}level`, Number(faderVal.linValue), true);
                 }
             }
         } catch (err) {
@@ -964,7 +1048,7 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             const channel = self.oid2id(oid);
-            self.setState(`${channel}source`, value, true);
+            self.setState(`${channel}source`, Number(value), true);
         } catch (err) {
             this.errorHandler(err, 'setSource');
         }
