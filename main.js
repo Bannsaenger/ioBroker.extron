@@ -74,6 +74,8 @@ class Extron extends utils.Adapter {
         this.streamAvailable = true;    // if false wait for continue event
         this.stateList = [];            // will be filled with all existing states
         this.pollCount = 0;             // count sent status query
+        this.playerLoaded = [false, false, false, false, false, false, false,false];
+        this.auxOutEnabled = [false, false, false, false, false, false, false,false];
     }
 
     /**
@@ -158,6 +160,17 @@ class Extron extends utils.Adapter {
         } catch (err) {
             self.errorHandler(err, 'clientConnect');
         }
+    }
+
+    /**
+     * reconnect CLient after error
+     */
+    clientReConnect() {
+        const self = this;
+        self.log.info('closing client');
+        self.client.end();
+        self.log.info(`reconnecting after ${self.config.reconnectDelay}ms`);
+        self.timers.timeoutReconnectClient = setTimeout(self.clientConnect.bind(self),self.config.reconnectDelay);
     }
 
     /**
@@ -271,6 +284,7 @@ class Extron extends utils.Adapter {
             }
         } catch (err) {
             self.errorHandler(err, 'streamSend');
+            self.clientReConnect();
         }
     }
 
@@ -458,6 +472,7 @@ class Extron extends utils.Adapter {
      */
     onStreamError(err) {
         this.errorHandler(err, 'onStreamError');
+        this.stream.close();
     }
     /**
      * called if stream is closed
@@ -494,11 +509,9 @@ class Extron extends utils.Adapter {
             self.streamSend('Q');
             self.pollCount += 1;
             if (self.pollCount > maxPollCount) {
-                self.log.error('maxPollCount exceeded, closing client');
-                self.client.end();
+                self.log.error('maxPollCount exceeded');
                 self.pollCount = 0;
-                self.log.info(`reconnecting after ${self.config.reconnectDelay}ms`);
-                self.timers.timeoutReconnectClient = setTimeout(self.clientConnect.bind(self),self.config.reconnectDelay);
+                self.clientReConnect();
             } else {
                 self.timers.timeoutQueryStatus.refresh();
             }
@@ -793,6 +806,7 @@ class Extron extends utils.Adapter {
 
                             case 'filename' :
                                 self.sendFileName(baseId, state.toString());
+                                self.playerLoaded[Number(self.id2oid(baseId))-1] = (state.toString() != '' ? true : false);
                                 break;
                         }
                     }
@@ -1080,7 +1094,7 @@ class Extron extends utils.Adapter {
         try {
             const oid = self.id2oid(`${baseId}.source`);
             if (oid) {
-                self.streamSend(`WD${oid}*${value}AU\r`);
+                self.streamSend(`WD${oid}*${value === '' ? 0: value}AU\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendSource');
@@ -1127,7 +1141,7 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             const oid = self.id2oid(baseId);
-            if (oid) {
+            if (oid && self.playerLoaded[Number(oid)-1]) {
                 self.streamSend(`W${oid}*${(value?'1':'0')}PLAY\r`);
             }
         } catch (err) {
@@ -1174,7 +1188,7 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             const oid = self.id2oid(baseId);
-            if (oid) {
+            if (oid && self.playerLoaded[Number(oid)-1]) {
                 self.streamSend(`WM${oid}*${(value?'1':'0')}CPLY\r`);
             }
         } catch (err) {
@@ -1241,6 +1255,7 @@ class Extron extends utils.Adapter {
         try {
             const player = self.oid2id(oid);
             self.setState(`${player}filename`, value, true);
+            self.playerLoaded[Number(oid)-1] = (value != '' ? true : false);
         } catch (err) {
             this.errorHandler(err, 'setFileName');
         }
