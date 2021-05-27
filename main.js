@@ -58,7 +58,7 @@ class Extron extends utils.Adapter {
         this.isVerboseMode = false;         // will be true if verbose mode 3 is active
         this.initDone = false;              // will be true if all init is done
         this.versionSet = false;            // will be true if the version is once set in the db
-        this.statusRequested = false;       // will be true if device status has been requested after init
+        this.statusRequested = false;       // will be true once device status has been requested after init
         this.statusSended = false;          // will be true once database settings have been sended to device
         this.clientReady = false;           // will be true if device connection is ready
         // Some timers and intervalls
@@ -225,6 +225,13 @@ class Extron extends utils.Adapter {
             // Reset the connection indicator
             self.setState('info.connection', false, true);
             self.clientReady = false;
+            self.isDeviceChecked = false;       // will be true if device sends banner and will be verified
+            self.isVerboseMode = false;         // will be true if verbose mode 3 is active
+            self.initDone = false;              // will be true if all init is done
+            self.versionSet = false;            // will be true if the version is once set in the db
+            self.statusRequested = false;       // will be true if device status has been requested after init
+            self.statusSended = false;          // will be true once database settings have been sended to device
+            this.stream = undefined;
         } catch (err) {
             self.errorHandler(err, 'onClientClose');
         }
@@ -329,6 +336,7 @@ class Extron extends utils.Adapter {
                     const ext2 = matchArray[3] ? matchArray[3] : '';
 
                     self.pollCount = 0;     // reset pollcounter as valid data has been received
+                    self.timers.timeoutQueryStatus.refresh();   // refresh poll timer
 
                     switch (command) {
                         case 'VER':             // received a Version (answer to status query)
@@ -486,10 +494,13 @@ class Extron extends utils.Adapter {
             self.streamSend('Q');
             self.pollCount += 1;
             if (self.pollCount > maxPollCount) {
-                self.log.debug('maxPollCount exceeded, polling stopped');
+                self.log.error('maxPollCount exceeded, closing client');
+                self.client.end();
                 self.pollCount = 0;
+                self.log.info(`reconnecting after ${self.config.reconnectDelay}ms`);
+                self.timers.timeoutReconnectClient = setTimeout(self.clientConnect.bind(self),self.config.reconnectDelay);
             } else {
-                self.timers.timeoutQueryStatus = setTimeout(self.extronQueryStatus.bind(self), self.config.pollDelay);
+                self.timers.timeoutQueryStatus.refresh();
             }
         } catch (err) {
             this.errorHandler(err, 'extronQueryStatus');
@@ -1189,14 +1200,15 @@ class Extron extends utils.Adapter {
     /**
      * Send the Player filename to device
      * @param {string} baseId
-     * @param {string | boolean} value
+     * @param {string} value
      */
     sendFileName(baseId, value) {
         const self = this;
         try {
             const oid = self.id2oid(baseId);
             if (oid) {
-                self.streamSend(`WA${oid}*${value}CPLY\r`);
+                const streamData = `WA${oid}*${(value === '' ? ' ' : value)}CPLY\r`;
+                self.streamSend(streamData);
             }
         } catch (err) {
             this.errorHandler(err, 'sendFileName');
