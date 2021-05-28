@@ -552,30 +552,30 @@ class Extron extends utils.Adapter {
                     for (let i = 1; i <= self.devices[self.config.device].in[inputs].amount; i++) {
                         const actInput = `in.${inputs}.${('00' + i.toString()).slice(-2)}`;
                         // create the input folder
-                        await self.setObjectNotExistsAsync(actInput, self.objectsTemplate.input);
+                        await self.setObjectNotExistsAsync(actInput, self.objectsTemplate[self.devices[self.config.device].objects[1]].input);
                         // and the common structure of an input depending on type
                         switch (inputs) {
 
                             case 'auxInputs' :
-                                for (const element of self.objectsTemplate.auxInputs) {
+                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].auxInputs) {
                                     await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'inputs' :
-                                for (const element of self.objectsTemplate.inputs) {
+                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].inputs) {
                                     await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'virtualReturns' :
-                                for (const element of self.objectsTemplate.virtualReturns) {
+                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].virtualReturns) {
                                     await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'expansionInputs' :
-                                for (const element of self.objectsTemplate.expansionInputs) {
+                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].expansionInputs) {
                                     await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
@@ -596,7 +596,7 @@ class Extron extends utils.Adapter {
                                     },
                                     'native': {}
                                 });
-                                for (const element of self.objectsTemplate.mixPoints) {
+                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].mixPoints) {
                                     await self.setObjectNotExistsAsync(actMixPoint + '.' + element._id, element);
                                 }
                             }
@@ -626,9 +626,9 @@ class Extron extends utils.Adapter {
                     for (let i = 1; i <= self.devices[self.config.device].ply[players].amount; i++) {
                         const actPlayer = `ply.${players}.${i}`;
                         // create the player folder
-                        await self.setObjectNotExistsAsync(actPlayer, self.objectsTemplate.player);
+                        await self.setObjectNotExistsAsync(actPlayer, self.objectsTemplate[self.devices[self.config.device].objects[1]].player);
                         // and the common structure of a player
-                        for (const element of self.objectsTemplate.players) {
+                        for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].players) {
                             await self.setObjectNotExistsAsync(actPlayer + '.' + element._id, element);
                         }
                     }
@@ -656,24 +656,24 @@ class Extron extends utils.Adapter {
                     for (let i = 1; i <= self.devices[self.config.device].out[outputs].amount; i++) {
                         const actOutput = `out.${outputs}.${('00' + i.toString()).slice(-2)}`;
                         // create the output folder
-                        await self.setObjectNotExistsAsync(actOutput, self.objectsTemplate.output);
+                        await self.setObjectNotExistsAsync(actOutput, self.objectsTemplate[self.devices[self.config.device].objects[1]].output);
                         // and the common structure of a output
                         switch (outputs) {
 
                             case 'outputs' :
-                                for (const element of self.objectsTemplate.outputs) {
+                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].outputs) {
                                     await self.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'auxOutputs' :
-                                for (const element of self.objectsTemplate.auxOutputs) {
+                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].auxOutputs) {
                                     await self.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'expansionOutputs' :
-                                for (const element of self.objectsTemplate.expansionOutputs) {
+                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].expansionOutputs) {
                                     await self.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
                                 }
                                 break;

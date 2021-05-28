@@ -45,830 +45,859 @@
             "native": {}
         }
     ],
-    "input": {
-        "_id": "0",
-        "type": "folder",
-        "common": {
-            "name": "Input"
+    "dmp128": {
+        "common": [
+            {
+                "_id": "device",
+                "type": "device",
+                "common": {
+                    "name": "Put device name here"
+                },
+                "native": {}
+            },
+            {
+                "_id": "device.version",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "As received by Q",
+                    "type": "string",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "device.model",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "As received by 1I",
+                    "type": "string",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "device.name",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "As received by [ESC]CN",
+                    "type": "string",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            }
+        ],
+        "input": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "Input"
+            },
+            "native": {}
         },
-        "native": {}
+        "inputs": [
+            {
+                "_id": "gain",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain linear from 0 to 1000 (0 db is 236)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain logarithmic from -18 to 80 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -18.0,
+                    "max": 80.0,
+                    "def": -18.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.source",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "selects the input source",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min" : 0,
+                    "max" : 48,
+                    "def": 0
+                },
+                "native": {}
+            },        
+            {
+                "_id": "premix",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input at premix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level linear from 0 to 1000 (0 db is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level logarithmic from -100 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 12.0,
+                    "def": -100.0
+                },
+                "native": {}
+            },    
+            {
+                "_id": "mixPoints",
+                "type": "folder",
+                "common": {
+                    "name": "Matrix of patchable junction points"
+                },
+                "native": {}
+            }
+        ],
+        "auxInputs": [
+            {
+                "_id": "gain",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain linear from 0 to 1000",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain logarithmic from -18 to 24 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -18.0,
+                    "max": 24.0,
+                    "def": -18.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.source",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "selects the Aux input source",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min" : 0,
+                    "max" : 24,
+                    "def": 0
+                },
+                "native": {}
+            },        
+            {
+                "_id": "premix",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input at premix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level linear from 0 to 1000 (0 db is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix evel logarithmic from -100 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 12.0,
+                    "def": -100.0
+                },
+                "native": {}
+            },    
+            {
+                "_id": "mixPoints",
+                "type": "folder",
+                "common": {
+                    "name": "Matrix of patchable junction points"
+                },
+                "native": {}
+            }
+        ],
+        "virtualReturns": [
+            {
+                "_id": "premix",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input at premix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level linear from 0 to 1000 (0 db is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix evel logarithmic from -100 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 12.0,
+                    "def": -100.0
+                },
+                "native": {}
+            },    
+            {
+                "_id": "mixPoints",
+                "type": "folder",
+                "common": {
+                    "name": "Matrix of patchable junction points"
+                },
+                "native": {}
+            }
+        ],
+        "expansionInputs": [
+            {
+                "_id": "premix",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input at premix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level linear from 0 to 1000 (0 db is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix evel logarithmic from -100 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 12.0,
+                    "def": -100.0
+                },
+                "native": {}
+            },    
+            {
+                "_id": "mixPoints",
+                "type": "folder",
+                "common": {
+                    "name": "Matrix of patchable junction points"
+                },
+                "native": {}
+            }
+        ],
+        "mixPoints": [
+            {
+                "_id": "mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the mixpoint is disabled",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Level linear from 0 to 1000 (0 db is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Level logarithmic from -100 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 12.0,
+                    "def": -100.0
+                },
+                "native": {}
+            }
+        ],
+        "player": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "Player"
+            },
+            "native": {}
+        },   
+        "players": [
+            {
+                "_id": "common",
+                "type": "channel",
+                "common": {
+                    "role": "player.channel",
+                    "name": "Common player parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "common.playmode",
+                "type": "state",
+                "common": {
+                    "role" : "switch",
+                    "name" : "if true the player is playing",
+                    "type" : "boolean",
+                    "read" : true,
+                    "write" : true,
+                    "def" : false
+                },
+                "native" : {}
+            },
+            {
+                "_id": "common.repeatmode",
+                "type": "state",
+                "common": {
+                    "role" : "switch",
+                    "name" : "if true the player is repeating",
+                    "type" : "boolean",
+                    "read" : true,
+                    "write" : true,
+                    "def" : false
+                },
+                "native" : {}
+            },
+            {
+                "_id" : "common.filename",
+                "type" : "state",
+                "common" : {
+                    "role" : "value",
+                    "name" : "filename of currently loaded player file",
+                    "type" : "string",
+                    "read" : true,
+                    "write" : true,
+                    "def" : " "
+                },
+                "native" :{}
+            }
+        ],
+        "output": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "Output"
+            },
+            "native": {}
+        },
+        "outputs": [
+            {
+                "_id": "postmix",
+                "type": "channel",
+                "common": {
+                    "role": "output.channel",
+                    "name": "Common output parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "postmix.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "post mix level trim linear from 0 to 1000",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "postmix.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "post mix level trim logarithmic from -12 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -12.0,
+                    "max": 12.0,
+                    "def": -12.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation",
+                "type": "channel",
+                "common": {
+                    "role": "output.channel",
+                    "name": "Common output parameters"
+                },
+                "native": {}
+            },       
+            {
+                "_id": "attenuation.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the output at postmix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Output attenuation linear from 0 to 1000",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Output attenuation logarithmic from -100 to 0 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 0.0,
+                    "def": -100.0
+                },
+                "native": {}
+            }
+        ],
+        "auxOutputs": [
+            {
+                "_id": "postmix",
+                "type": "channel",
+                "common": {
+                    "role": "output.channel",
+                    "name": "Common output parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "postmix.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "post mix level trim linear from 0 to 1000",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "postmix.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "post Mix level trim logarithmic from -12 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -12.0,
+                    "max": 12.0,
+                    "def": -12.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation",
+                "type": "channel",
+                "common": {
+                    "role": "output.channel",
+                    "name": "Common output parameters"
+                },
+                "native": {}
+            },       
+            {
+                "_id": "attenuation.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the output at postmix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Output attenuation linear from 0 to 1000",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Output attenuation logarithmic from -100 to 0 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 0.0,
+                    "def": -100.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation.source",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "Output mode assignment",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 16,
+                    "def": 0
+                },
+                "native": {}
+            }    
+        ],
+        "expansionOutputs": [
+            {
+                "_id": "postmix",
+                "type": "channel",
+                "common": {
+                    "role": "output.channel",
+                    "name": "Common output parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "postmix.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "post mix level trim linear from 0 to 1000",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "postmix.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "post Mix level trim logarithmic from -12 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -12.0,
+                    "max": 12.0,
+                    "def": -12.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation",
+                "type": "channel",
+                "common": {
+                    "role": "output.channel",
+                    "name": "Common output parameters"
+                },
+                "native": {}
+            },       
+            {
+                "_id": "attenuation.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Output attenuation linear from 0 to 1000",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Output attenuation logarithmic from -100 to 0 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 0.0,
+                    "def": -100.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the output at postmix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            }
+        ]
     },
-    "inputs": [
-        {
-            "_id": "gain",
-            "type": "channel",
-            "common": {
-                "role": "input.channel",
-                "name": "Common input parameters"
-            },
-            "native": {}
-        },
-        {
-            "_id": "gain.mute",
-            "type": "state",
-            "common": {
-                "role": "switch",
-                "name": "If true the input is muted",
-                "type": "boolean",
-                "read": true,
-                "write": true,
-                "def": true
-            },
-            "native": {}
-        },
-        {
-            "_id": "gain.level",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Gain linear from 0 to 1000 (0 db is 236)",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 1000,
-                "def": 0
-            },
-            "native": {}
-        },
-        {
-            "_id": "gain.level_db",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Gain logarithmic from -18 to 80 in 0.1 db steps",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": -18.0,
-                "max": 80.0,
-                "def": -18.0
-            },
-            "native": {}
-        },
-        {
-            "_id": "gain.source",
-            "type": "state",
-            "common": {
-                "role": "value",
-                "name": "selects the input source",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min" : 0,
-                "max" : 48,
-                "def": 0
-            },
-            "native": {}
-        },        
-        {
-            "_id": "premix",
-            "type": "channel",
-            "common": {
-                "role": "input.channel",
-                "name": "Common input parameters"
-            },
-            "native": {}
-        },
-        {
-            "_id": "premix.mute",
-            "type": "state",
-            "common": {
-                "role": "switch",
-                "name": "If true the input at premix gain is muted",
-                "type": "boolean",
-                "read": true,
-                "write": true,
-                "def": true
-            },
-            "native": {}
-        },
-        {
-            "_id": "premix.level",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Mix level linear from 0 to 1000 (0 db is 764)",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 1000,
-                "def": 0
-            },
-            "native": {}
-        },
-        {
-            "_id": "premix.level_db",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Mix level logarithmic from -100 to 12 in 0.1 db steps",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": -100.0,
-                "max": 12.0,
-                "def": -100.0
-            },
-            "native": {}
-        },    
-        {
-            "_id": "mixPoints",
-            "type": "folder",
-            "common": {
-                "name": "Matrix of patchable junction points"
-            },
-            "native": {}
-        }
-    ],
-    "auxInputs": [
-        {
-            "_id": "gain",
-            "type": "channel",
-            "common": {
-                "role": "input.channel",
-                "name": "Common input parameters"
-            },
-            "native": {}
-        },
-        {
-            "_id": "gain.mute",
-            "type": "state",
-            "common": {
-                "role": "switch",
-                "name": "If true the input is muted",
-                "type": "boolean",
-                "read": true,
-                "write": true,
-                "def": true
-            },
-            "native": {}
-        },
-        {
-            "_id": "gain.level",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Gain linear from 0 to 1000",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 1000,
-                "def": 0
-            },
-            "native": {}
-        },
-        {
-            "_id": "gain.level_db",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Gain logarithmic from -18 to 24 in 0.1 db steps",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": -18.0,
-                "max": 24.0,
-                "def": -18.0
-            },
-            "native": {}
-        },
-        {
-            "_id": "gain.source",
-            "type": "state",
-            "common": {
-                "role": "value",
-                "name": "selects the Aux input source",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min" : 0,
-                "max" : 24,
-                "def": 0
-            },
-            "native": {}
-        },        
-        {
-            "_id": "premix",
-            "type": "channel",
-            "common": {
-                "role": "input.channel",
-                "name": "Common input parameters"
-            },
-            "native": {}
-        },
-        {
-            "_id": "premix.mute",
-            "type": "state",
-            "common": {
-                "role": "switch",
-                "name": "If true the input at premix gain is muted",
-                "type": "boolean",
-                "read": true,
-                "write": true,
-                "def": true
-            },
-            "native": {}
-        },
-        {
-            "_id": "premix.level",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Mix level linear from 0 to 1000 (0 db is 764)",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 1000,
-                "def": 0
-            },
-            "native": {}
-        },
-        {
-            "_id": "premix.level_db",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Mix evel logarithmic from -100 to 12 in 0.1 db steps",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": -100.0,
-                "max": 12.0,
-                "def": -100.0
-            },
-            "native": {}
-        },    
-        {
-            "_id": "mixPoints",
-            "type": "folder",
-            "common": {
-                "name": "Matrix of patchable junction points"
-            },
-            "native": {}
-        }
-    ],
-    "virtualReturns": [
-        {
-            "_id": "premix",
-            "type": "channel",
-            "common": {
-                "role": "input.channel",
-                "name": "Common input parameters"
-            },
-            "native": {}
-        },
-        {
-            "_id": "premix.mute",
-            "type": "state",
-            "common": {
-                "role": "switch",
-                "name": "If true the input at premix gain is muted",
-                "type": "boolean",
-                "read": true,
-                "write": true,
-                "def": true
-            },
-            "native": {}
-        },
-        {
-            "_id": "premix.level",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Mix level linear from 0 to 1000 (0 db is 764)",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 1000,
-                "def": 0
-            },
-            "native": {}
-        },
-        {
-            "_id": "premix.level_db",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Mix evel logarithmic from -100 to 12 in 0.1 db steps",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": -100.0,
-                "max": 12.0,
-                "def": -100.0
-            },
-            "native": {}
-        },    
-        {
-            "_id": "mixPoints",
-            "type": "folder",
-            "common": {
-                "name": "Matrix of patchable junction points"
-            },
-            "native": {}
-        }
-    ],
-    "expansionInputs": [
-        {
-            "_id": "premix",
-            "type": "channel",
-            "common": {
-                "role": "input.channel",
-                "name": "Common input parameters"
-            },
-            "native": {}
-        },
-        {
-            "_id": "premix.mute",
-            "type": "state",
-            "common": {
-                "role": "switch",
-                "name": "If true the input at premix gain is muted",
-                "type": "boolean",
-                "read": true,
-                "write": true,
-                "def": true
-            },
-            "native": {}
-        },
-        {
-            "_id": "premix.level",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Mix level linear from 0 to 1000 (0 db is 764)",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 1000,
-                "def": 0
-            },
-            "native": {}
-        },
-        {
-            "_id": "premix.level_db",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Mix evel logarithmic from -100 to 12 in 0.1 db steps",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": -100.0,
-                "max": 12.0,
-                "def": -100.0
-            },
-            "native": {}
-        },    
-        {
-            "_id": "mixPoints",
-            "type": "folder",
-            "common": {
-                "name": "Matrix of patchable junction points"
-            },
-            "native": {}
-        }
-    ],
-    "mixPoints": [
-        {
-            "_id": "mute",
-            "type": "state",
-            "common": {
-                "role": "switch",
-                "name": "If true the mixpoint is disabled",
-                "type": "boolean",
-                "read": true,
-                "write": true,
-                "def": true
-            },
-            "native": {}
-        },
-        {
-            "_id": "level",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Level linear from 0 to 1000 (0 db is 764)",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 1000,
-                "def": 0
-            },
-            "native": {}
-        },
-        {
-            "_id": "level_db",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Level logarithmic from -100 to 12 in 0.1 db steps",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": -100.0,
-                "max": 12.0,
-                "def": -100.0
-            },
-            "native": {}
-        }
-    ],
-    "player": {
-        "_id": "0",
-        "type": "folder",
-        "common": {
-            "name": "Player"
-        },
-        "native": {}
-    },   
-    "players": [
-        {
-            "_id": "common",
-            "type": "channel",
-            "common": {
-                "role": "player.channel",
-                "name": "Common player parameters"
-            },
-            "native": {}
-        },
-        {
-            "_id": "common.playmode",
-            "type": "state",
-            "common": {
-                "role" : "switch",
-                "name" : "if true the player is playing",
-                "type" : "boolean",
-                "read" : true,
-                "write" : true,
-                "def" : false
-            },
-            "native" : {}
-        },
-        {
-            "_id": "common.repeatmode",
-            "type": "state",
-            "common": {
-                "role" : "switch",
-                "name" : "if true the player is repeating",
-                "type" : "boolean",
-                "read" : true,
-                "write" : true,
-                "def" : false
-            },
-            "native" : {}
-        },
-        {
-            "_id" : "common.filename",
-            "type" : "state",
-            "common" : {
-                "role" : "value",
-                "name" : "filename of currently loaded player file",
-                "type" : "string",
-                "read" : true,
-                "write" : true,
-                "def" : " "
-            },
-            "native" :{}
-        }
-    ],
-    "output": {
-        "_id": "0",
-        "type": "folder",
-        "common": {
-            "name": "Output"
-        },
-        "native": {}
-    },
-    "outputs": [
-        {
-            "_id": "postmix",
-            "type": "channel",
-            "common": {
-                "role": "output.channel",
-                "name": "Common output parameters"
-            },
-            "native": {}
-        },
-        {
-            "_id": "postmix.level",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "post mix level trim linear from 0 to 1000",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 1000,
-                "def": 0
-            },
-            "native": {}
-        },
-        {
-            "_id": "postmix.level_db",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "post mix level trim logarithmic from -12 to 12 in 0.1 db steps",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": -12.0,
-                "max": 12.0,
-                "def": -12.0
-            },
-            "native": {}
-        },
-        {
-            "_id": "attenuation",
-            "type": "channel",
-            "common": {
-                "role": "output.channel",
-                "name": "Common output parameters"
-            },
-            "native": {}
-        },       
-        {
-            "_id": "attenuation.mute",
-            "type": "state",
-            "common": {
-                "role": "switch",
-                "name": "If true the output at postmix gain is muted",
-                "type": "boolean",
-                "read": true,
-                "write": true,
-                "def": true
-            },
-            "native": {}
-        },
-        {
-            "_id": "attenuation.level",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Output attenuation linear from 0 to 1000",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 1000,
-                "def": 0
-            },
-            "native": {}
-        },
-        {
-            "_id": "attenuation.level_db",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Output attenuation logarithmic from -100 to 0 in 0.1 db steps",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": -100.0,
-                "max": 0.0,
-                "def": -100.0
-            },
-            "native": {}
-        }
-    ],
-    "auxOutputs": [
-        {
-            "_id": "postmix",
-            "type": "channel",
-            "common": {
-                "role": "output.channel",
-                "name": "Common output parameters"
-            },
-            "native": {}
-        },
-        {
-            "_id": "postmix.level",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "post mix level trim linear from 0 to 1000",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 1000,
-                "def": 0
-            },
-            "native": {}
-        },
-        {
-            "_id": "postmix.level_db",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "post Mix level trim logarithmic from -12 to 12 in 0.1 db steps",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": -12.0,
-                "max": 12.0,
-                "def": -12.0
-            },
-            "native": {}
-        },
-        {
-            "_id": "attenuation",
-            "type": "channel",
-            "common": {
-                "role": "output.channel",
-                "name": "Common output parameters"
-            },
-            "native": {}
-        },       
-        {
-            "_id": "attenuation.mute",
-            "type": "state",
-            "common": {
-                "role": "switch",
-                "name": "If true the output at postmix gain is muted",
-                "type": "boolean",
-                "read": true,
-                "write": true,
-                "def": true
-            },
-            "native": {}
-        },
-        {
-            "_id": "attenuation.level",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Output attenuation linear from 0 to 1000",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 1000,
-                "def": 0
-            },
-            "native": {}
-        },
-        {
-            "_id": "attenuation.level_db",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Output attenuation logarithmic from -100 to 0 in 0.1 db steps",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": -100.0,
-                "max": 0.0,
-                "def": -100.0
-            },
-            "native": {}
-        },
-        {
-            "_id": "attenuation.source",
-            "type": "state",
-            "common": {
-                "role": "value",
-                "name": "Output mode assignment",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 16,
-                "def": 0
-            },
-            "native": {}
-        }    
-    ],
-    "expansionOutputs": [
-        {
-            "_id": "postmix",
-            "type": "channel",
-            "common": {
-                "role": "output.channel",
-                "name": "Common output parameters"
-            },
-            "native": {}
-        },
-        {
-            "_id": "postmix.level",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "post mix level trim linear from 0 to 1000",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 1000,
-                "def": 0
-            },
-            "native": {}
-        },
-        {
-            "_id": "postmix.level_db",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "post Mix level trim logarithmic from -12 to 12 in 0.1 db steps",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": -12.0,
-                "max": 12.0,
-                "def": -12.0
-            },
-            "native": {}
-        },
-        {
-            "_id": "attenuation",
-            "type": "channel",
-            "common": {
-                "role": "output.channel",
-                "name": "Common output parameters"
-            },
-            "native": {}
-        },       
-        {
-            "_id": "attenuation.level",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Output attenuation linear from 0 to 1000",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": 0,
-                "max": 1000,
-                "def": 0
-            },
-            "native": {}
-        },
-        {
-            "_id": "attenuation.level_db",
-            "type": "state",
-            "common": {
-                "role": "level.volume",
-                "name": "Output attenuation logarithmic from -100 to 0 in 0.1 db steps",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "min": -100.0,
-                "max": 0.0,
-                "def": -100.0
-            },
-            "native": {}
-        },
-        {
-            "_id": "attenuation.mute",
-            "type": "state",
-            "common": {
-                "role": "switch",
-                "name": "If true the output at postmix gain is muted",
-                "type": "boolean",
-                "read": true,
-                "write": true,
-                "def": true
-            },
-            "native": {}
-        }
-    ],
-    "cp82": [
-        {
-            "_id": "device",
-            "type": "device",
-            "common": {
-                "name": "Put device name here"
-            },
-            "native": {}
-        },
-        {
-            "_id": "device.version",
-            "type": "state",
-            "common": {
-                "role": "value",
-                "name": "As received by Q",
-                "type": "string",
-                "read": true,
-                "write": true
-            },
-            "native": {}
-        },
-        {
-            "_id": "connections",
+    "cp82": {
+        "connection": {
+            "_id": "0",
             "type": "folder",
             "common": {
                 "name": "Tie and control in and outputs"
             },
             "native": {}
         },
+        "connections": [
         {
             "_id": "connections.1",
             "type": "channel",
@@ -980,5 +1009,245 @@
             },
             "native": {}
         }
-    ]
+        ],
+        "input": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "Input"
+            },
+            "native": {}
+        },
+        "inputs": [
+            {
+                "_id": "gain",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain linear from 0 to 1000 (0 db is 236)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain logarithmic from -18 to 80 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -18.0,
+                    "max": 80.0,
+                    "def": -18.0
+                },
+                "native": {}
+            },    
+            {
+                "_id": "mixPoints",
+                "type": "folder",
+                "common": {
+                    "name": "Matrix of patchable junction points"
+                },
+                "native": {}
+            }
+        ],
+        "auxInputs": [
+            {
+                "_id": "gain",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain linear from 0 to 1000",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain logarithmic from -18 to 24 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -18.0,
+                    "max": 24.0,
+                    "def": -18.0
+                },
+                "native": {}
+            },    
+            {
+                "_id": "mixPoints",
+                "type": "folder",
+                "common": {
+                    "name": "Matrix of patchable junction points"
+                },
+                "native": {}
+            }
+        ],
+        "mixPoints": [
+            {
+                "_id": "mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the mixpoint is disabled",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Level linear from 0 to 1000 (0 db is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Level logarithmic from -100 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 12.0,
+                    "def": -100.0
+                },
+                "native": {}
+            }
+        ],
+        "output": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "Output"
+            },
+            "native": {}
+        },
+        "outputs": [
+            {
+                "_id": "attenuation",
+                "type": "channel",
+                "common": {
+                    "role": "output.channel",
+                    "name": "Common output parameters"
+                },
+                "native": {}
+            },       
+            {
+                "_id": "attenuation.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the output at postmix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Output attenuation linear from 0 to 1000",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Output attenuation logarithmic from -100 to 0 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 0.0,
+                    "def": -100.0
+                },
+                "native": {}
+            }
+        ]
+    }
 }

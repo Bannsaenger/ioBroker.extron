@@ -4,7 +4,26 @@
         "objects" : [
             "common",
             "cp82"
-        ]
+        ],
+        "in" : {
+            "inputs" : {
+                "name" : "Inputs",
+                "short" : "I",
+                "amount" : 18
+            },
+            "auxInputs" : {
+                "name" : "Mic/Line/File Inputs",
+                "short" : "X",
+                "amount" : 6
+            }
+        },
+        "out" : {
+            "outputs" : {
+                "name" : "Output",
+                "short" : "O",
+                "amount" : 12
+            }
+        }
     },
     "SMD202" : {
         "name" : "SMD 202",
@@ -21,7 +40,8 @@
     "DMP128Plus_AT" : {
         "name" : "DMP 128 Plus AT",
         "objects" : [
-            "common"
+            "common",
+            "dmp128"
         ],
         "in" : {
             "inputs" : {
@@ -67,7 +87,8 @@
     "DMP128Plus_C_V_AT" : {
         "name" : "DMP 128 Plus C V AT",
         "objects" : [
-            "common"
+            "common",
+            "dmp128"
         ],
         "in" : {
             "inputs" : {
