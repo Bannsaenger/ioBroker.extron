@@ -397,6 +397,27 @@ class Extron extends utils.Adapter {
                             self.setRepeatMode(ext1, ext2);
                             break;
 
+                        case 'IN1':             // received a tie command from CrossPoint
+                        case 'IN2':
+                        case 'IN3':
+                        case 'IN4':
+                        case 'IN5':
+                        case 'IN6':
+                        case 'IN7':
+                        case 'IN8':
+                            self.log.silly(`Extron got tie command ${command} for output: ${ext2}`);
+                            self.setTie(command, ext2);
+                            break;
+
+                        case 'LOUT':            // received a tie command for loop out
+                            self.log.silly(`Extron got tie command input "${ext1}" to loop output`);
+                            self.setState(`connections.3.tie`, Number(ext1), true);
+                            break;
+
+                        case 'VMT':             // received a video mute
+                            self.log.silly(`Extron got video mute for output "${ext1}" value "${ext2}"`);
+                            self.setState(`connections.${ext1}.mute`, Number(ext2), true);
+                            break;
                     }
                 } else {
                     if (answer != 'Q') {
@@ -466,6 +487,7 @@ class Extron extends utils.Adapter {
             self.errorHandler(err, 'onStreamContinue');
         }
     }
+
     /**
      * called if stream receives an error
      * @param {any} err
@@ -474,6 +496,7 @@ class Extron extends utils.Adapter {
         this.errorHandler(err, 'onStreamError');
         this.stream.close();
     }
+
     /**
      * called if stream is closed
      */
@@ -499,6 +522,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'extronSwitchMode');
         }
     }
+
     /**
      * called to send a status query
      */
@@ -519,6 +543,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'extronQueryStatus');
         }
     }
+
     /**
      * called to set up the database dependant on the device type
      */
@@ -528,6 +553,18 @@ class Extron extends utils.Adapter {
             // create the common section
             for (const element of self.objectsTemplate.common) {
                 await self.setObjectNotExistsAsync(element._id, element);
+            }
+            /** // create the sections configured at the device level
+            for (const section of self.devices[self.config.device].objects) {
+                for (const element of self.objectsTemplate[section]) {
+                    await self.setObjectNotExistsAsync(element._id, element);
+                }
+            }*/
+            // if cp82 : create video inputs and outputs
+            if (self.devices[self.config.device].short === 'cp82') {
+                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].connections) {
+                    await self.setObjectNotExistsAsync(element._id, element);
+                }
             }
             // maybe if a audio device
             if (self.devices[self.config.device] && self.devices[self.config.device].in) {
@@ -568,6 +605,12 @@ class Extron extends utils.Adapter {
                                 }
                                 break;
 
+                            case 'lineInputs' :
+                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].lineInputs) {
+                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                }
+                                break;
+
                             case 'virtualReturns' :
                                 for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].virtualReturns) {
                                     await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
@@ -582,22 +625,24 @@ class Extron extends utils.Adapter {
 
                         }
                         // now the mixpoints are created
-                        for (const outType of Object.keys(self.devices[self.config.device].out)) {
-                            for (let j = 1; j <= self.devices[self.config.device].out[outType].amount; j++) {
-                                if (i === j && outType === 'virtualSendBus') {
-                                    continue;       // these points cannot be set
-                                }
-                                const actMixPoint = actInput + '.mixPoints.' + self.devices[self.config.device].out[outType].short + ('00' + j.toString()).slice(-2);
-                                await self.setObjectNotExistsAsync(actMixPoint, {
-                                    'type': 'folder',
-                                    'common': {
-                                        'role': 'mixpoint',
-                                        'name': `Mixpoint ${outType} number ${j}`
-                                    },
-                                    'native': {}
-                                });
-                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].mixPoints) {
-                                    await self.setObjectNotExistsAsync(actMixPoint + '.' + element._id, element);
+                        if ((self.devices[self.config.device].short).slice(0,6) === 'dmp128') {      // if we have mixpoints
+                            for (const outType of Object.keys(self.devices[self.config.device].out)) {
+                                for (let j = 1; j <= self.devices[self.config.device].out[outType].amount; j++) {
+                                    if (i === j && outType === 'virtualSendBus') {
+                                        continue;       // these points cannot be set
+                                    }
+                                    const actMixPoint = actInput + '.mixPoints.' + self.devices[self.config.device].out[outType].short + ('00' + j.toString()).slice(-2);
+                                    await self.setObjectNotExistsAsync(actMixPoint, {
+                                        'type': 'folder',
+                                        'common': {
+                                            'role': 'mixpoint',
+                                            'name': `Mixpoint ${outType} number ${j}`
+                                        },
+                                        'native': {}
+                                    });
+                                    for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].mixPoints) {
+                                        await self.setObjectNotExistsAsync(actMixPoint + '.' + element._id, element);
+                                    }
                                 }
                             }
                         }
@@ -686,6 +731,7 @@ class Extron extends utils.Adapter {
             self.errorHandler(err, 'createDatabase');
         }
     }
+
     /**
      * called to create a list of all states in the database
      */
@@ -693,6 +739,7 @@ class Extron extends utils.Adapter {
         const self = this;
         self.stateList = Object.keys(await self.getStatesAsync('*'));
     }
+
     /**
      * called to get all database item status from device
      */
@@ -744,6 +791,7 @@ class Extron extends utils.Adapter {
             self.errorHandler(err, 'getDeviceStatus');
         }
     }
+
     /**
      * called to set all database item states to device
      */
@@ -818,6 +866,7 @@ class Extron extends utils.Adapter {
             self.errorHandler(err, 'setDeviceStatus');
         }
     }
+
     /**
      * calculate linValue -> logValue -> devValue and back
      * @param {number | string | undefined} value
@@ -962,6 +1011,7 @@ class Extron extends utils.Adapter {
 
         return locObj;
     }
+
     /** BEGIN Input and Mix control */
     /**
      * Set the database values for a mixpoint or channel
@@ -1006,6 +1056,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'setGain');
         }
     }
+
     /**
      * Send the mute status to the device
      * @param {string} baseId
@@ -1022,6 +1073,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'sendMuteStatus');
         }
     }
+
     /**
      * request the mute status from device
      * @param {string} baseId
@@ -1037,6 +1089,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'getMuteStatus');
         }
     }
+
     /**
      * Send the gain level to the device
      * @param {string} baseId
@@ -1054,6 +1107,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'sendGainLevel');
         }
     }
+
     /**
      * get the gain level from device
      * @param {string} baseId
@@ -1069,6 +1123,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'sendGainLevel');
         }
     }
+
     /**
      * Set the source for a auxinput
      * @param {string} oid
@@ -1084,6 +1139,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'setSource');
         }
     }
+
     /**
      * Send the source mode to the device
      * @param {string} baseId
@@ -1100,6 +1156,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'sendSource');
         }
     }
+
     /**
      * get the source mode from device
      * @param {string} baseId
@@ -1116,6 +1173,7 @@ class Extron extends utils.Adapter {
         }
     }
     /** END Input and Mix control */
+
     /** BEGIN integrated audio player control */
     /**
      * Set the database values for a player
@@ -1132,6 +1190,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'setPlayMode');
         }
     }
+
     /**
      * control playback on the device.player
      * @param {string} baseId
@@ -1148,6 +1207,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'sendPlayMode');
         }
     }
+
     /**
      * request playback mode from the device.player
      * @param {string}  baseId
@@ -1164,6 +1224,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'getPlayMode');
         }
     }
+
     /**
      * Set the database values for a player
      * @param {string} oid
@@ -1179,6 +1240,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'setRepeatMode');
         }
     }
+
     /**
      * control repeatmode on the device.player
      * @param {string} baseId
@@ -1195,6 +1257,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'sendPlayMode');
         }
     }
+
     /**
      * request repeatmode on the device.player
      * @param {string} baseId
@@ -1211,6 +1274,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'sendPlayMode');
         }
     }
+
     /**
      * Send the Player filename to device
      * @param {string} baseId
@@ -1228,6 +1292,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'sendFileName');
         }
     }
+
     /**
      * Send clear Player filename to device
      * @param {string} baseId
@@ -1244,6 +1309,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'sendFileName');
         }
     }
+
     /**
      * Set the Player filename in the database
      * @param {string} oid
@@ -1260,6 +1326,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'setFileName');
         }
     }
+
     /**
      * request current filename from player
      * @param {string} baseId
@@ -1277,6 +1344,70 @@ class Extron extends utils.Adapter {
         }
     }
     /** END integrated audio player control */
+
+    /** BEGIN cp82 Video control */
+
+    /**
+     * Set the database values for the tie state of an output
+     * @param {string} cmd
+     * @param {string} value
+     * cmd = Inx, x=1..8; value=[1,2] All if not All set for all and log a warning
+     */
+    setTie(cmd, value) {
+        const self = this;
+        try {
+            const input = cmd.substr(2,1);
+            const valArray = value.split(' ');
+            if (valArray[1] !== 'All') {
+                self.log.warn(`Extron received tie status "${valArray[1]}". Only "All" supported. andle like "All"`);
+            }
+            self.setState(`connections.${valArray[0]}.tie`, Number(input), true);
+
+        } catch (err) {
+            this.errorHandler(err, 'setTie');
+        }
+    }
+
+    /**
+     * Send the tie status to the device
+     * @param {string} baseId
+     * @param {string | any} value
+     */
+    sendTieCommand(baseId, value) {
+        const self = this;
+        try {
+            const idArray = baseId.split('.');
+            if (idArray[2] === 'connections') {         // video.output
+                if (Number(idArray[3]) <= 2) {
+                    self.streamSend(`${value}*${idArray[3]}!`);
+                } else {
+                    self.streamSend(`W${value}LOUT\r`);
+                }
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendTieCommand');
+        }
+    }
+
+    /**
+     * Send Video mute command to the device
+     * @param {string} baseId
+     * @param {string | any} value
+     */
+    sendVideoMute(baseId, value) {
+        const self = this;
+        try {
+            const idArray = baseId.split('.');
+            if (idArray[2] === 'connections') {         // video.output
+                self.streamSend(`${idArray[3]}*${value}B`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendVideoMute');
+        }
+    }
+
+    /** END CP83 Video control */
+
     /**
      * determine the database id from oid e.g. 20002 -> in.inputs.01.mixPoints.O03
      * @param {string} oid
@@ -1322,6 +1453,12 @@ class Extron extends utils.Adapter {
                         }
                         break;
 
+                    case 3:                         // Line inputs on CP82
+                        if (where === 0) {          // Input Gain Control
+                            return `in.lineInputs.${('00' + (val + 1).toString()).slice(-2)}.gain.`;
+                        }
+                        break;
+
                     case 4:                         // input block
                         if (where === 0) {          // Input gain block
                             if (val <= 11) {        // input 1 - 12
@@ -1357,7 +1494,7 @@ class Extron extends utils.Adapter {
 
                     case 6:                         // Output section
                         if (where === 0) {          // Output attenuation block
-                            if (val <= 7) {         // output 1 - 8
+                            if (val <= 7 || self.devices[self.config.device].short === 'cp82') {         // output 1 - 8 or DTP Output 1-12
                                 return `out.outputs.${('00' + (val + 1).toString()).slice(-2)}.attenuation.`;
                             }
                             if (val <= 15) {        // aux output 1 - 8
@@ -1392,6 +1529,7 @@ class Extron extends utils.Adapter {
         }
         return retId;
     }
+
     /**
      * determine the oid from the database id e.g. in.inputs.01.mixPoints.O03 -> 20002
      * @param {string} id
@@ -1418,6 +1556,10 @@ class Extron extends utils.Adapter {
             {
                 if (idBlock != 'mixPoints') {     // inputs / outputs
                     switch (idType) {
+                        case 'lineInputs':
+                            retOid = `300${('00' + (idNumber - 1).toString()).slice(-2)}`;
+                            break;
+
                         case 'inputs':
                             if (idBlock === 'gain') {
                                 retOid = `400${('00' + (idNumber - 1).toString()).slice(-2)}`;
@@ -1521,6 +1663,7 @@ class Extron extends utils.Adapter {
         }
         return retOid;
     }
+
     /**
      * Is called when adapter shuts down - callback has to be called under any circumstances!
      * @param {() => void} callback
@@ -1566,7 +1709,9 @@ class Extron extends utils.Adapter {
                         // @ts-ignore
                         switch (stateName) {
                             case 'mute' :
-                                self.sendMuteStatus(id, state.val);
+                                if (idArray[2] === 'connections') {
+                                    self.sendVideoMute(id, state.val);
+                                } else self.sendMuteStatus(id,state.val);
                                 break;
                             case 'source' :
                                 self.sendSource(id, state.val.toString());
@@ -1618,6 +1763,10 @@ class Extron extends utils.Adapter {
                             case 'filename' :
                                 self.sendFileName(id, state.val.toString());
                                 break;
+
+                            case 'tie' :
+                                self.sendTieCommand(baseId, state.val);
+                                break;
                         }
                     }
                 }
@@ -1636,7 +1785,7 @@ class Extron extends utils.Adapter {
 	 * @param {string} module
 	 */
     errorHandler(err, module = '') {
-        let errorStack = err.stack;
+        const errorStack = err.stack;
         //        if (err.stack) errorStack = err.stack.replace(/\n/g, '<br>');
         if (err.name === 'ResponseError') {     // gerade nicht benötigt, template ....
             if (err.message.includes('Permission denied') || err.message.includes('Keine Berechtigung')) {

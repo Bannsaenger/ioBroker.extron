@@ -1018,7 +1018,7 @@
             },
             "native": {}
         },
-        "inputs": [
+        "lineInputs": [
             {
                 "_id": "gain",
                 "type": "channel",
@@ -1070,17 +1070,9 @@
                     "def": -18.0
                 },
                 "native": {}
-            },    
-            {
-                "_id": "mixPoints",
-                "type": "folder",
-                "common": {
-                    "name": "Matrix of patchable junction points"
-                },
-                "native": {}
             }
         ],
-        "auxInputs": [
+        "inputs": [
             {
                 "_id": "gain",
                 "type": "channel",
@@ -1130,59 +1122,6 @@
                     "min": -18.0,
                     "max": 24.0,
                     "def": -18.0
-                },
-                "native": {}
-            },    
-            {
-                "_id": "mixPoints",
-                "type": "folder",
-                "common": {
-                    "name": "Matrix of patchable junction points"
-                },
-                "native": {}
-            }
-        ],
-        "mixPoints": [
-            {
-                "_id": "mute",
-                "type": "state",
-                "common": {
-                    "role": "switch",
-                    "name": "If true the mixpoint is disabled",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": true
-                },
-                "native": {}
-            },
-            {
-                "_id": "level",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "Level linear from 0 to 1000 (0 db is 764)",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 1000,
-                    "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "Level logarithmic from -100 to 12 in 0.1 db steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": -100.0,
-                    "max": 12.0,
-                    "def": -100.0
                 },
                 "native": {}
             }
