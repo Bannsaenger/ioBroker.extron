@@ -418,6 +418,27 @@ class Extron extends utils.Adapter {
                             self.log.silly(`Extron got video mute for output "${ext1}" value "${ext2}"`);
                             self.setState(`connections.${ext1}.mute`, Number(ext2), true);
                             break;
+
+                        case 'PLYRS' :          // received video playing
+                            self.log.silly(`Extron got video playing for output "${ext1}" value "${ext2}"`);
+                            self.setPlayVideo(`ply.players.${ext1}.common.`, 1);
+                            break;
+                        case'PLYRE' :           // received Video paused
+                            self.log.silly(`Extron got video paused for output "${ext1}" value "${ext2}"`);
+                            self.setPlayVideo(`ply.players.${ext1}.common.`, 2);
+                            break;
+                        case 'PLYRO' :          // received video stopped
+                            self.log.silly(`Extron got video stopped for output "${ext1}" value "${ext2}"`);
+                            self.setPlayVideo(`ply.players.${ext1}.common.`, 0);
+                            break;
+                        case 'PLYR1' :          // received loop state
+                            self.log.silly(`Extron got video loop mode for output "${ext1}" value "${ext2}"`);
+                            self.setLoopVideo(`ply.players.${ext1}.common.`,ext2);
+                            break;
+                        case 'PLYRU' :          // received video filepath
+                            self.log.silly(`Extron got video video filepath for output "${ext1}" value "${ext2}"`);
+                            self.setVideoFile(`ply.players.${ext1}.common.`,ext2);
+                            break;
                     }
                 } else {
                     if (answer != 'Q') {
@@ -771,7 +792,10 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'playmode' :
-                                self.getPlayMode(id);
+                                if (self.devices[self.config.device].short === 'smd202') 
+                                {
+                                    self.getPlayVideo();
+                                } else self.getPlayMode(id);
                                 break;
 
                             case 'repeatmode' :
@@ -780,6 +804,13 @@ class Extron extends utils.Adapter {
 
                             case 'filename' :
                                 self.getFileName(id);
+                                break;
+
+                            case 'filepath' :
+                                self.getVideoFile();
+                                break;
+                            case 'loopmode' :
+                                self.getLoopVideo();
                                 break;
                         }
                     }
@@ -1408,6 +1439,150 @@ class Extron extends utils.Adapter {
 
     /** END CP83 Video control */
 
+    /** BEGIN SMD2020 Video Player control */
+    /** send start payback command
+     * cmd = S1*1PLYR
+     */
+    sendPlayVideo() {
+        const self = this;
+        try {
+            self.streamSend('WS1*1PLYR');
+        } catch (err) {
+            this.errorHandler(err, 'sendPlayVideo');
+        }
+    }
+
+    /** send pause payback command
+     * cmd = E1PLYR
+     */
+    sendPauseVideo() {
+        const self = this;
+        try {
+            self.streamSend('WE11PLYR');
+        } catch (err) {
+            this.errorHandler(err, 'sendPauseVideo');
+        }
+    }
+
+    /** send stop playback command
+     * cmd = O1PLYR
+     */
+    sendStopVideo() {
+        const self = this;
+        try {
+            self.streamSend('WO1PLYR');
+        } catch (err) {
+            this.errorHandler(err, 'sendStopVideo');
+        }
+    }
+
+    /** get playback state
+     * cmd = Y1PLYR
+     */
+    getPlayVideo() {
+        const self = this;
+        try {
+            self.streamSend('WY1PLYR');
+        } catch (err) {
+            this.errorHandler(err, 'getPlayVideo');
+        }
+    }
+
+    /** set playback state in database
+     * @param {string} id
+     * @param {number} mode
+     */
+    setPlayVideo(id, mode) {
+        const self = this;
+        try {
+            self.setState(`${id}playmode`, mode, true);
+        } catch (err) {
+            this.errorHandler(err, 'setPlayVideo');
+        }
+    }
+
+    /** send loop payback command
+     * @param {string} id
+     * @param {boolean} mode
+     * cmd = R1*[mode]PLYR
+     */
+    sendLoopVideo(id, mode) {
+        const self = this;
+        try {
+            self.streamSend(`WR${self.id2oid(id)}*${mode?1:0}PLYR`);
+        } catch (err) {
+            this.errorHandler(err, 'sendLoopVideo');
+        }
+    }
+
+    /** get loop payback mode
+     * cmd = R1*[mode]PLYR
+     */
+    getLoopVideo() {
+        const self = this;
+        try {
+            self.streamSend('WR1PLYR');
+        } catch (err) {
+            this.errorHandler(err, 'getLoopVideo');
+        }
+    }
+
+    /** set loop payback mode
+     * @param {string} id
+     * @param {boolean | string} mode
+     */
+    setLoopVideo(id, mode) {
+        const self = this;
+        try {
+            self.setState(`${id}loopmode`, Number(mode)?true:false, true);
+        } catch (err) {
+            this.errorHandler(err, 'setLoopVideo');
+        }
+    }
+
+    /** send path and fileneame
+     * @param {string} id
+     * @param {string} path
+     * cmd = U1*[path]
+     */
+    sendVideoFile(id, path) {
+        const self = this;
+        try {
+            self.streamSend(`${self.id2oid(id)}*${path}PLYR`);
+        } catch (err) {
+            this.errorHandler(err, 'sendVideoFile');
+        }
+    }
+
+    /** get path and fileneame
+     * cmd = U1PLYR
+     */
+    getVideoFile() {
+        const self = this;
+        try {
+            self.streamSend('WU1PLYR');
+        } catch (err) {
+            this.errorHandler(err, 'getVideoFile');
+        }
+    }
+
+    /**
+     * Set the Player filename in the database
+     * @param {string} id
+     * @param {string} path
+     */
+    setVideoFile(id, path) {
+        const self = this;
+        try {
+            self.setState(`${id}filepath`, path, true);
+            self.playerLoaded[0] = (path != '' ? true : false);
+        } catch (err) {
+            this.errorHandler(err, 'setVideoFile');
+        }
+    }
+
+    /** END SMD 2020 Video Player Control */
+
     /**
      * determine the database id from oid e.g. 20002 -> in.inputs.01.mixPoints.O03
      * @param {string} oid
@@ -1766,6 +1941,12 @@ class Extron extends utils.Adapter {
 
                             case 'tie' :
                                 self.sendTieCommand(baseId, state.val);
+                                break;
+                            case 'loopmode' :
+                                self.sendLoopVideo(baseId, state.val);
+                                break;
+                            case 'filepath' :
+                                self.sendVideoFile(baseId, state.val);
                                 break;
                         }
                     }

@@ -1188,5 +1188,66 @@
                 "native": {}
             }
         ]
+    },
+    "smd202" :{
+        "player": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "Player"
+            },
+            "native": {}
+        },   
+        "players": [
+            {
+                "_id": "common",
+                "type": "channel",
+                "common": {
+                    "role": "player.channel",
+                    "name": "Common player parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "common.playmode",
+                "type": "state",
+                "common": {
+                    "role" : "value",
+                    "name" : "if true the player is playing",
+                    "type" : "number",
+                    "states" : "0:stop; 1:play; 2:pause",
+                    "read" : true,
+                    "write" : true,
+                    "def" : false
+                },
+                "native" : {}
+            },
+            {
+                "_id": "common.loopmode",
+                "type": "state",
+                "common": {
+                    "role" : "switch",
+                    "name" : "if true the player is repeating",
+                    "type" : "boolean",
+                    "read" : true,
+                    "write" : true,
+                    "def" : false
+                },
+                "native" : {}
+            },
+            {
+                "_id" : "common.filepath",
+                "type" : "state",
+                "common" : {
+                    "role" : "value",
+                    "name" : "filepath of currently loaded player file",
+                    "type" : "string",
+                    "read" : true,
+                    "write" : true,
+                    "def" : " "
+                },
+                "native" :{}
+            }
+        ]
     }
 }
