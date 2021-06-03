@@ -46,52 +46,6 @@
         }
     ],
     "dmp128": {
-        "common": [
-            {
-                "_id": "device",
-                "type": "device",
-                "common": {
-                    "name": "Put device name here"
-                },
-                "native": {}
-            },
-            {
-                "_id": "device.version",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "As received by Q",
-                    "type": "string",
-                    "read": true,
-                    "write": true
-                },
-                "native": {}
-            },
-            {
-                "_id": "device.model",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "As received by 1I",
-                    "type": "string",
-                    "read": true,
-                    "write": true
-                },
-                "native": {}
-            },
-            {
-                "_id": "device.name",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "As received by [ESC]CN",
-                    "type": "string",
-                    "read": true,
-                    "write": true
-                },
-                "native": {}
-            }
-        ],
         "input": {
             "_id": "0",
             "type": "folder",
@@ -898,117 +852,117 @@
             "native": {}
         },
         "connections": [
-        {
-            "_id": "connections.1",
-            "type": "channel",
-            "common": {
-                "role": "video.output",
-                "name": "Output 1 (HDMI)"
+            {
+                "_id": "connections.1",
+                "type": "channel",
+                "common": {
+                    "role": "video.output",
+                    "name": "Output 1 (HDMI)"
+                },
+                "native": {}
             },
-            "native": {}
-        },
-        {
-            "_id": "connections.1.tie",
-            "type": "state",
-            "common": {
-                "role": "value",
-                "name": "Tied a/v input for this output",
-                "type": "number",
-                "states": "0:untied;1:1 DP;2:2 HDMI;3:3 HDMI;4:4 HDMI;5:5 HDMI;6:6 HDMI;7:7 DTP2;8:8 DTP2",
-                "read": true,
-                "write": true,
-                "def": 0
+            {
+                "_id": "connections.1.tie",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "Tied a/v input for this output",
+                    "type": "number",
+                    "states": "0:untied;1:1 DP;2:2 HDMI;3:3 HDMI;4:4 HDMI;5:5 HDMI;6:6 HDMI;7:7 DTP2;8:8 DTP2",
+                    "read": true,
+                    "write": true,
+                    "def": 0
+                },
+                "native": {}
             },
-            "native": {}
-        },
-        {
-            "_id": "connections.1.mute",
-            "type": "state",
-            "common": {
-                "role": "value",
-                "name": "Video mute status ouf the output",
-                "type": "number",
-                "states": "0:unmute;1:mute video to black;2:mute video and sync",
-                "read": true,
-                "write": true,
-                "def": 0
+            {
+                "_id": "connections.1.mute",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "Video mute status ouf the output",
+                    "type": "number",
+                    "states": "0:unmute;1:mute video to black;2:mute video and sync",
+                    "read": true,
+                    "write": true,
+                    "def": 0
+                },
+                "native": {}
             },
-            "native": {}
-        },
-        {
-            "_id": "connections.2",
-            "type": "channel",
-            "common": {
-                "role": "video.output",
-                "name": "Output 2 (DTP2/HDBaseT)"
+            {
+                "_id": "connections.2",
+                "type": "channel",
+                "common": {
+                    "role": "video.output",
+                    "name": "Output 2 (DTP2/HDBaseT)"
+                },
+                "native": {}
             },
-            "native": {}
-        },
-        {
-            "_id": "connections.2.tie",
-           "type": "state",
-            "common": {
-                "role": "value",
-                "name": "Tied a/v input for this output",
-                "type": "number",
-                "states": "0:untied;1:1 DP;2:2 HDMI;3:3 HDMI;4:4 HDMI;5:5 HDMI;6:6 HDMI;7:7 DTP2;8:8 DTP2",
-                "read": true,
-                "write": true,
-                "def": 0
+            {
+                "_id": "connections.2.tie",
+               "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "Tied a/v input for this output",
+                    "type": "number",
+                    "states": "0:untied;1:1 DP;2:2 HDMI;3:3 HDMI;4:4 HDMI;5:5 HDMI;6:6 HDMI;7:7 DTP2;8:8 DTP2",
+                    "read": true,
+                    "write": true,
+                    "def": 0
+                },
+                "native": {}
             },
-            "native": {}
-        },
-        {
-            "_id": "connections.2.mute",
-            "type": "state",
-            "common": {
-                "role": "value",
-                "name": "Video mute status ouf the output",
-                "type": "number",
-                "states": "0:unmute;1:mute video to black;2:mute video and sync",
-                "read": true,
-                "write": true,
-                "def": 0
+            {
+                "_id": "connections.2.mute",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "Video mute status ouf the output",
+                    "type": "number",
+                    "states": "0:unmute;1:mute video to black;2:mute video and sync",
+                    "read": true,
+                    "write": true,
+                    "def": 0
+                },
+                "native": {}
             },
-            "native": {}
-        },
-        {
-            "_id": "connections.3",
-            "type": "channel",
-            "common": {
-                "role": "video.output",
-                "name": "Loop Out 3 (HDMI)"
+            {
+                "_id": "connections.3",
+                "type": "channel",
+                "common": {
+                    "role": "video.output",
+                    "name": "Loop Out 3 (HDMI)"
+                },
+                "native": {}
             },
-            "native": {}
-        },
-        {
-            "_id": "connections.3.tie",
-            "type": "state",
-            "common": {
-                "role": "value",
-                "name": "Tied a/v input for this output",
-                "type": "number",
-                "states": "0:untied;1:1 DP;2:2 HDMI;3:3 HDMI;4:4 HDMI;5:5 HDMI;6:6 HDMI;7:7 DTP2;8:8 DTP2",
-                "read": true,
-                "write": true,
-                "def": 0
+            {
+                "_id": "connections.3.tie",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "Tied a/v input for this output",
+                    "type": "number",
+                    "states": "0:untied;1:1 DP;2:2 HDMI;3:3 HDMI;4:4 HDMI;5:5 HDMI;6:6 HDMI;7:7 DTP2;8:8 DTP2",
+                    "read": true,
+                    "write": true,
+                    "def": 0
+                },
+                "native": {}
             },
-            "native": {}
-        },
-        {
-           "_id": "connections.3.mute",
-            "type": "state",
-            "common": {
-                "role": "value",
-                "name": "Video mute status ouf the output",
-                "type": "number",
-                "states": "0:unmute;1:mute video to black;2:mute video and sync",
-                "read": true,
-                "write": true,
-                "def": 0
-            },
-            "native": {}
-        }
+            {
+               "_id": "connections.3.mute",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "Video mute status ouf the output",
+                    "type": "number",
+                    "states": "0:unmute;1:mute video to black;2:mute video and sync",
+                    "read": true,
+                    "write": true,
+                    "def": 0
+                },
+                "native": {}
+            }
         ],
         "input": {
             "_id": "0",
@@ -1018,7 +972,7 @@
             },
             "native": {}
         },
-        "lineInputs": [
+        "inputs": [
             {
                 "_id": "gain",
                 "type": "channel",
@@ -1046,7 +1000,7 @@
                 "type": "state",
                 "common": {
                     "role": "level.volume",
-                    "name": "Gain linear from 0 to 1000 (0 db is 236)",
+                    "name": "Gain linear from 0 to 1000",
                     "type": "number",
                     "read": true,
                     "write": true,
@@ -1070,9 +1024,61 @@
                     "def": -18.0
                 },
                 "native": {}
+            },        
+            {
+                "_id": "premix",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input at premix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level linear from 0 to 1000 (0 db is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level logarithmic from -100 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 12.0,
+                    "def": -100.0
+                },
+                "native": {}
             }
         ],
-        "inputs": [
+        "lineInputs": [
             {
                 "_id": "gain",
                 "type": "channel",
@@ -1120,8 +1126,319 @@
                     "read": true,
                     "write": true,
                     "min": -18.0,
+                    "max": 80.0,
+                    "def": -18.0
+                },
+                "native": {}
+            },      
+            {
+                "_id": "premix",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input at premix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level linear from 0 to 1000 (0 db is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level logarithmic from -100 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 12.0,
+                    "def": -100.0
+                },
+                "native": {}
+            }
+        ],
+        "playerInputs": [
+            {
+                "_id": "gain",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain linear from 0 to 1000",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain logarithmic from -18 to 24 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -18.0,
+                    "max": 80.0,
+                    "def": -18.0
+                },
+                "native": {}
+            },      
+            {
+                "_id": "premix",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input at premix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level linear from 0 to 1000 (0 db is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level logarithmic from -100 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 12.0,
+                    "def": -100.0
+                },
+                "native": {}
+            }
+        ],
+        "programInputs": [
+            {
+                "_id": "premix",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input at premix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level linear from 0 to 1000 (0 db is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level logarithmic from -100 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 12.0,
+                    "def": -100.0
+                },
+                "native": {}
+            }
+        ],
+        "videoInputs": [                  
+            {
+                "_id": "premix",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input at premix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level linear from 0 to 1000 (0 db is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level logarithmic from -18 to 24 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -18.0,
                     "max": 24.0,
                     "def": -18.0
+                },
+                "native": {}
+            }
+        ],
+        "mixPoints": [
+            {
+                "_id": "mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the mixpoint is disabled",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Level linear from 0 to 1000 (0 db is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Level logarithmic from -100 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 12.0,
+                    "def": -100.0
                 },
                 "native": {}
             }
@@ -1229,6 +1546,131 @@
                     "role" : "switch",
                     "name" : "if true the player is repeating",
                     "type" : "boolean",
+                    "read" : true,
+                    "write" : true,
+                    "def" : false
+                },
+                "native" : {}
+            },
+            {
+                "_id" : "common.filepath",
+                "type" : "state",
+                "common" : {
+                    "role" : "value",
+                    "name" : "filepath of currently loaded player file",
+                    "type" : "string",
+                    "read" : true,
+                    "write" : true,
+                    "def" : " "
+                },
+                "native" :{}
+            }
+        ]
+    },
+    "sme211" :{
+        "input": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "Input"
+            },
+            "native": {}
+        },
+        "inputs": [
+            {
+                "_id": "gain",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the input is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain linear from 0 to 1000",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain logarithmic from -18 to 24 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -18.0,
+                    "max": 24.0,
+                    "def": -18.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.source",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "selects the input source",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min" : 0,
+                    "max" : 48,
+                    "def": 0
+                },
+                "native": {}
+            }
+        ],
+        "player": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "Player"
+            },
+            "native": {}
+        },   
+        "players": [
+            {
+                "_id": "common",
+                "type": "channel",
+                "common": {
+                    "role": "player.channel",
+                    "name": "Common player parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "common.streammode",
+                "type": "state",
+                "common": {
+                    "role" : "value",
+                    "name" : "if true the player is playing",
+                    "type" : "number",
+                    "states" : "0:stop; 1:play; 2:pause",
                     "read" : true,
                     "write" : true,
                     "def" : false

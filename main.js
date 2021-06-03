@@ -74,8 +74,8 @@ class Extron extends utils.Adapter {
         this.streamAvailable = true;    // if false wait for continue event
         this.stateList = [];            // will be filled with all existing states
         this.pollCount = 0;             // count sent status query
-        this.playerLoaded = [false, false, false, false, false, false, false,false];
-        this.auxOutEnabled = [false, false, false, false, false, false, false,false];
+        this.playerLoaded = [false, false, false, false, false, false, false,false];    // remember which player has a file assigned
+        this.auxOutEnabled = [false, false, false, false, false, false, false,false];   // remember which aux output is enabled
     }
 
     /**
@@ -131,6 +131,7 @@ class Extron extends utils.Adapter {
             self.client.on('close', this.onClientClose.bind(this));
             self.client.on('error', this.onClientError.bind(this));
             self.client.on('end', this.onClientEnd.bind(this));
+            this.timers.timeoutQueryStatus = setTimeout(self.extronQueryStatus.bind(self), self.config.pollDelay);
 
             self.log.info(`Extron took ${Date.now() - startTime}ms to initialize and setup db`);
 
@@ -316,6 +317,7 @@ class Extron extends utils.Adapter {
                 if (cmdPart.includes('3CV')) {
                     self.log.debug('Extron device switched to verbose mode 3');
                     self.isVerboseMode = true;
+                    this.timers.timeoutQueryStatus.refresh();
                     return;
                 }
                 if (cmdPart.includes('Vrb3')) {
@@ -327,7 +329,7 @@ class Extron extends utils.Adapter {
                         this.streamSend('WCN\r');   // query deviceName
                         self.initDone = true;
                         //self.timers.intervallQueryStatus = setInterval(self.extronQueryStatus.bind(self), self.config.pollDelay);
-                        self.timers.timeoutQueryStatus = setTimeout(self.extronQueryStatus.bind(self), self.config.pollDelay);
+                        this.timers.timeoutQueryStatus.refresh();
                         if (self.config.pushDeviceStatus === true) {
                             await self.setDeviceStatusAsync();
                         } else {
@@ -349,8 +351,8 @@ class Extron extends utils.Adapter {
                     const ext1 = matchArray[2] ? matchArray[2] : '';
                     const ext2 = matchArray[3] ? matchArray[3] : '';
 
-                    self.pollCount = 0;     // reset pollcounter as valid data has been received
-                    self.timers.timeoutQueryStatus.refresh();   // refresh poll timer
+                    this.pollCount = 0;     // reset pollcounter as valid data has been received
+                    this.timers.timeoutQueryStatus.refresh();   // refresh poll timer
 
                     switch (command) {
                         case 'VER':             // received a Version (answer to status query)
@@ -438,6 +440,15 @@ class Extron extends utils.Adapter {
                         case 'PLYRU' :          // received video filepath
                             self.log.silly(`Extron got video video filepath for output "${ext1}" value "${ext2}"`);
                             self.setVideoFile(`ply.players.${ext1}.common.`,ext2);
+                            break;
+                        case 'PLYRY' :
+                            self.log.silly(`Extron got video playmmode "${ext1}" value "${ext2}"`);
+                            self.setPlayVideo(`ply.players.1.common.`,Number(ext1));
+                            break;
+
+                        case 'STRMY' :
+                            self.log.silly(`Extron got streammode "${ext1}" value "${ext2}"`);
+                            self.setStreamMode(`ply.players.1.common.`,Number(ext1));
                             break;
                     }
                 } else {
@@ -575,12 +586,6 @@ class Extron extends utils.Adapter {
             for (const element of self.objectsTemplate.common) {
                 await self.setObjectNotExistsAsync(element._id, element);
             }
-            /** // create the sections configured at the device level
-            for (const section of self.devices[self.config.device].objects) {
-                for (const element of self.objectsTemplate[section]) {
-                    await self.setObjectNotExistsAsync(element._id, element);
-                }
-            }*/
             // if cp82 : create video inputs and outputs
             if (self.devices[self.config.device].short === 'cp82') {
                 for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].connections) {
@@ -614,12 +619,6 @@ class Extron extends utils.Adapter {
                         // and the common structure of an input depending on type
                         switch (inputs) {
 
-                            case 'auxInputs' :
-                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].auxInputs) {
-                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
-                                }
-                                break;
-
                             case 'inputs' :
                                 for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].inputs) {
                                     await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
@@ -628,6 +627,30 @@ class Extron extends utils.Adapter {
 
                             case 'lineInputs' :
                                 for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].lineInputs) {
+                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                }
+                                break;
+
+                            case 'playerInputs' :
+                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].playerInputs) {
+                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                }
+                                break;
+
+                            case 'programInputs' :
+                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].programInputs) {
+                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                }
+                                break;
+
+                            case 'videoInputs' :
+                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].videoInputs) {
+                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                }
+                                break;
+
+                            case 'auxInputs' :
+                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].auxInputs) {
                                     await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
@@ -646,23 +669,25 @@ class Extron extends utils.Adapter {
 
                         }
                         // now the mixpoints are created
-                        if ((self.devices[self.config.device].short).slice(0,6) === 'dmp128') {      // if we have mixpoints
-                            for (const outType of Object.keys(self.devices[self.config.device].out)) {
-                                for (let j = 1; j <= self.devices[self.config.device].out[outType].amount; j++) {
-                                    if (i === j && outType === 'virtualSendBus') {
-                                        continue;       // these points cannot be set
-                                    }
-                                    const actMixPoint = actInput + '.mixPoints.' + self.devices[self.config.device].out[outType].short + ('00' + j.toString()).slice(-2);
-                                    await self.setObjectNotExistsAsync(actMixPoint, {
-                                        'type': 'folder',
-                                        'common': {
-                                            'role': 'mixpoint',
-                                            'name': `Mixpoint ${outType} number ${j}`
-                                        },
-                                        'native': {}
-                                    });
-                                    for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].mixPoints) {
-                                        await self.setObjectNotExistsAsync(actMixPoint + '.' + element._id, element);
+                        if (self.devices[self.config.device] && self.devices[self.config.device].mp) {      // if we have mixpoints
+                            if (inputs != 'videoInputs') {
+                                for (const outType of Object.keys(self.devices[self.config.device].out)) {
+                                    for (let j = 1; j <= self.devices[self.config.device].out[outType].amount; j++) {
+                                        if (i === j && outType === 'virtualSendBus') {
+                                            continue;       // these points cannot be set
+                                        }
+                                        const actMixPoint = actInput + '.mixPoints.' + self.devices[self.config.device].out[outType].short + ('00' + j.toString()).slice(-2);
+                                        await self.setObjectNotExistsAsync(actMixPoint, {
+                                            'type': 'folder',
+                                            'common': {
+                                                'role': 'mixpoint',
+                                                'name': `Mixpoint ${outType} number ${j}`
+                                            },
+                                            'native': {}
+                                        });
+                                        for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].mixPoints) {
+                                            await self.setObjectNotExistsAsync(actMixPoint + '.' + element._id, element);
+                                        }
                                     }
                                 }
                             }
@@ -792,8 +817,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'playmode' :
-                                if (self.devices[self.config.device].short === 'smd202') 
-                                {
+                                if (self.devices[self.config.device].short === 'smd202') {
                                     self.getPlayVideo();
                                 } else self.getPlayMode(id);
                                 break;
@@ -809,8 +833,13 @@ class Extron extends utils.Adapter {
                             case 'filepath' :
                                 self.getVideoFile();
                                 break;
+
                             case 'loopmode' :
                                 self.getLoopVideo();
+                                break;
+
+                            case 'streammode' :
+                                self.getStreamMode();
                                 break;
                         }
                     }
@@ -861,6 +890,7 @@ class Extron extends utils.Adapter {
                                     case 'gain' :
                                         calcMode = 'linGain';
                                         if (idType === 'auxInputs') calcMode = 'linAux';
+                                        if (idType === 'lineInputs') calcMode = 'linAux';
                                         break;
 
                                     case 'postmix' :
@@ -886,6 +916,10 @@ class Extron extends utils.Adapter {
                             case 'filename' :
                                 self.sendFileName(baseId, state.toString());
                                 self.playerLoaded[Number(self.id2oid(baseId))-1] = (state.toString() != '' ? true : false);
+                                break;
+
+                            case 'streammode' :
+                                self.sendStreamMode(baseId, Number(state));
                                 break;
                         }
                     }
@@ -1066,6 +1100,7 @@ class Extron extends utils.Adapter {
                     case 'gain' :
                         calcMode = 'devGain';
                         if (idType === 'auxInputs') calcMode = 'devAux';
+                        if (self.devices[self.config.device].short === 'sme211') calcMode = 'devAux';
                         break;
 
                     case 'postmix' :
@@ -1580,8 +1615,48 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'setVideoFile');
         }
     }
-
     /** END SMD 2020 Video Player Control */
+
+    /** BEGIN SME211 stream control */
+    /** send streaming mode to device
+     * @param {string} id
+     * @param {number} mode
+     *  cmd = Y[mode]STRM
+    */
+    sendStreamMode(id, mode) {
+        const self = this;
+        try {
+            self.streamSend(`${self.id2oid(id)}Y${mode}STRM`);
+        } catch (err) {
+            this.errorhandler(err, 'sendStreamMode');
+        }
+    }
+
+    /** set streammode state in database
+     * @param {string} id
+     * @param {number} mode
+     */
+    setStreamMode(id, mode) {
+        const self = this;
+        try {
+            self.setState(`${id}streammode`, mode);
+        } catch (err) {
+            this.errorHandler(err, 'setStreamMode');
+        }
+    }
+
+    /** get streammode from device
+     *  cmd = YSTRM
+     */
+    getStreamMode() {
+        const self = this;
+        try {
+            self.streamSend('YSTRM');
+        } catch (err) {
+            this.errorHandler(err, 'getStreamMode');
+        }
+    }
+    /** END SME 211 stream control */
 
     /**
      * determine the database id from oid e.g. 20002 -> in.inputs.01.mixPoints.O03
@@ -1601,6 +1676,17 @@ class Extron extends utils.Adapter {
                 const val = Number(oid.substr(3,2));
                 switch (what) {
                     case 2:                         // mixpoints
+                        if (self.devices[self.config.device].short === 'cp82') {    // mixpoints on CP82
+                            if ( where < 2) {
+                                retId = `in.programInputs.${('00' + (where +1).toString()).slice(-2)}.mixPoints.`;
+                            } else if (where < 4) {
+                                retId = `in.inputs.${('00' + (where -1).toString()).slice(-2)}.mixPoints.`;
+                            } else if (where < 6) {
+                                retId = `in.lineInputs.${('00' + (where -3).toString()).slice(-2)}.mixPoints.`;
+                            } else if (where < 8) {
+                                retId = `in.playerInputs.${('00' + (where -5).toString()).slice(-2)}.mixPoints.`;
+                            }
+                        } else                      // mixpoints on dmp128
                         if (where <= 11) {          // from input 1 - 12
                             retId = `in.inputs.${('00' + (where + 1).toString()).slice(-2)}.mixPoints.`;
                         } else if (where <= 19) {   // aux input 1 - 8
@@ -1614,6 +1700,9 @@ class Extron extends utils.Adapter {
                                 'stack'  : `oid: ${oid}` };
                         }
                         // now determine the output
+                        if (self.devices[self.config.device].short === 'cp82') {    // mixpoints on CP82
+                            retId += `O${('00' + (val -1).toString()).slice(-2)}.`; // on CP82 mixpooint output OID count starts at 2
+                        } else                      // mixpoints on dmp128
                         if (val <= 7) {             // output 1 -8
                             retId += `O${('00' + (val + 1).toString()).slice(-2)}.`;
                         } else if (val <= 15) {     // aux output 1 - 8
@@ -1628,32 +1717,50 @@ class Extron extends utils.Adapter {
                         }
                         break;
 
-                    case 3:                         // Line inputs on CP82
+                    case 3:                         // VideoLine inputs on CP82
                         if (where === 0) {          // Input Gain Control
-                            return `in.lineInputs.${('00' + (val + 1).toString()).slice(-2)}.gain.`;
+                            return `in.videoInputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
                         }
                         break;
 
                     case 4:                         // input block
                         if (where === 0) {          // Input gain block
-                            if (val <= 11) {        // input 1 - 12
+                            if (self.devices[self.config.device].short === 'cp82'){ // Inputs on CP82
+                                if ( val < 2) {
+                                    return `in.inputs.${('00' + (val +1).toString()).slice(-2)}.gain.`;
+                                } else if (val < 4) {
+                                    return `in.lineInputs.${('00' + (val -1).toString()).slice(-2)}.gain.`;
+                                } else if (val < 6) {
+                                    return `in.playerInputs.${('00' + (val -3).toString()).slice(-2)}.gain.`;
+                                }
+                            } else if (val <= 11) {        // input 1 - 12
                                 return `in.inputs.${('00' + (val + 1).toString()).slice(-2)}.gain.`;
                             }
                             if (val <= 19) {        // aux input 1 - 8
                                 return `in.auxInputs.${('00' + (val - 11).toString()).slice(-2)}.gain.`;
                             }
                         } else if (where === 1) {   // premix gain block
-                            if (val <= 11) {        // input 1 - 12
+                            if (self.devices[self.config.device].short === 'cp82'){ // Inputs on CP82
+                                if ( val < 2) {
+                                    return `in.inputs.${('00' + (val +1).toString()).slice(-2)}.premix.`;
+                                } else if (val < 4) {
+                                    return `in.lineInputs.${('00' + (val -1).toString()).slice(-2)}.premix.`;
+                                } else if (val < 6) {
+                                    return `in.playerInputs.${('00' + (val -3).toString()).slice(-2)}.premix.`;
+                                }
+                            } else if (val <= 11) {        // input 1 - 12
                                 return `in.inputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
-                            }
-                            if (val <= 19) {        // aux input 1 - 8
+                            } else if (val <= 19) {        // aux input 1 - 8
                                 return `in.auxInputs.${('00' + (val - 11).toString()).slice(-2)}.premix.`;
                             }
                         }
                         throw { 'message': 'no known input',
                             'stack'  : `oid: ${oid}` };
 
-                    case 5:                         // virtual return and ext input
+                    case 5:                         // virtual return or ext input or program
+                        if (where === 0) {           // program inputs on CP82
+                            return `in.programInputs.${('00' + (val +1).toString()).slice(-2)}.premix.`;
+                        }
                         if (where === 1) {          // virtual returns
                             if (val <= 15) {        // virtual return 1 - 16 (A-P)
                                 return `in.virtualReturns.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
@@ -1669,7 +1776,10 @@ class Extron extends utils.Adapter {
 
                     case 6:                         // Output section
                         if (where === 0) {          // Output attenuation block
-                            if (val <= 7 || self.devices[self.config.device].short === 'cp82') {         // output 1 - 8 or DTP Output 1-12
+                            if (self.devices[self.config.device].short === 'cp82') {    // outputs on CP82
+                                return `out.outputs.${('00' + (val -1).toString()).slice(-2)}.attenuation.`; // ouput OID starts at 2 on CP82
+                            }
+                            if (val <= 7) {         // output 1 - 8
                                 return `out.outputs.${('00' + (val + 1).toString()).slice(-2)}.attenuation.`;
                             }
                             if (val <= 15) {        // aux output 1 - 8
@@ -1731,7 +1841,7 @@ class Extron extends utils.Adapter {
             {
                 if (idBlock != 'mixPoints') {     // inputs / outputs
                     switch (idType) {
-                        case 'lineInputs':
+                        case 'videoInputs':
                             retOid = `300${('00' + (idNumber - 1).toString()).slice(-2)}`;
                             break;
 
@@ -1740,6 +1850,26 @@ class Extron extends utils.Adapter {
                                 retOid = `400${('00' + (idNumber - 1).toString()).slice(-2)}`;
                             } else {
                                 retOid = `401${('00' + (idNumber - 1).toString()).slice(-2)}`;
+                            }
+                            break;
+
+                        case 'programInputs' :
+                            retOid = `500${('00' + (idNumber - 1).toString()).slice(-2)}`;             // program inputs on CP82
+                            break;
+
+                        case 'lineInputs' :
+                            if (idBlock === 'gain') {
+                                retOid = `400${('00' + (idNumber +1).toString()).slice(-2)}`;         // Line Inputs on CP82
+                            } else {
+                                retOid = `401${('00' + (idNumber +1).toString()).slice(-2)}`;
+                            }
+                            break;
+
+                        case 'playerInputs' :
+                            if (idBlock === 'gain') {
+                                retOid = `400${('00' + (idNumber +3).toString()).slice(-2)}`;         // player inputs on CP82
+                            } else {
+                                retOid = `401${('00' + (idNumber +3).toString()).slice(-2)}`;
                             }
                             break;
 
@@ -1762,6 +1892,7 @@ class Extron extends utils.Adapter {
                         case 'outputs' :
                             if (idBlock === 'attenuation') {
                                 retOid = `600${('00' + (idNumber - 1).toString()).slice(-2)}`;
+                                if (self.devices[self.config.device].short === 'cp82') retOid = `600${('00' + (idNumber +1).toString()).slice(-2)}`; // output OID count starts at 2 on CP82
                             } else {
                                 retOid = `601${('00' + (idNumber - 1).toString()).slice(-2)}`;
                             }
@@ -1791,6 +1922,19 @@ class Extron extends utils.Adapter {
                     switch (idType) {
                         case 'inputs':
                             retOid = `2${('00' + (idNumber -1).toString()).slice(-2)}`;
+                            if (self.devices[self.config.device].short === 'cp82') retOid = `2${('00' + (idNumber +1).toString()).slice(-2)}`; // Mic Inputs on CP82
+                            break;
+
+                        case 'programInputs' :
+                            retOid = `2${('00' + (idNumber -1).toString()).slice(-2)}`;         // program inputs on CP82
+                            break;
+
+                        case 'playerInputs' :
+                            retOid = `2${('00' + (idNumber +5).toString()).slice(-2)}`;         // FilePlayer Inouts on CP82
+                            break;
+
+                        case 'lineInputs' :
+                            retOid = `2${('00' + (idNumber +3).toString()).slice(-2)}`;         // Line Inputs on CP82
                             break;
 
                         case 'auxInputs':
@@ -1810,7 +1954,11 @@ class Extron extends utils.Adapter {
                     }
                     switch (outputType) {
                         case 'O':
-                            retOid += ('00' + (outputNumber - 1).toString()).slice(-2);
+                            if (self.devices[self.config.device].short === 'cp82') {
+                                retOid += ('00' + (outputNumber +1).toString()).slice(-2);  // output OID count starts at 2 on CP82
+                            } else {
+                                retOid += ('00' + (outputNumber - 1).toString()).slice(-2);
+                            }
                             break;
 
                         case 'A':
@@ -1896,6 +2044,11 @@ class Extron extends utils.Adapter {
                                     case 'gain' :
                                         calcMode = 'linGain';
                                         if (idType === 'auxInputs') calcMode = 'linAux';
+                                        if (self.devices[self.config.device].short === 'sme211') calcMode = 'linAux';
+                                        break;
+
+                                    case 'premix' :
+                                        if (self.devices[self.config.device].short === 'cp82') calcMode = 'linAux';
                                         break;
 
                                     case 'postmix' :
@@ -1914,6 +2067,11 @@ class Extron extends utils.Adapter {
                                     case 'gain' :
                                         calcMode = 'logGain';
                                         if (idType === 'auxInputs') calcMode = 'logAux';
+                                        if (idType === 'lineInputs') calcMode = 'logAux';
+                                        break;
+
+                                    case 'premix' :
+                                        if (self.devices[self.config.device].short === 'cp82') calcMode = 'logAux';
                                         break;
 
                                     case 'postmix' :
@@ -1943,11 +2101,13 @@ class Extron extends utils.Adapter {
                                 self.sendTieCommand(baseId, state.val);
                                 break;
                             case 'loopmode' :
-                                self.sendLoopVideo(baseId, state.val);
+                                self.sendLoopVideo(baseId, state.val?true:false);
                                 break;
                             case 'filepath' :
-                                self.sendVideoFile(baseId, state.val);
+                                self.sendVideoFile(baseId, state.val.toString());
                                 break;
+                            case 'streammode' :
+                                self.setStreamMode(baseId, Number(state.val));
                         }
                     }
                 }

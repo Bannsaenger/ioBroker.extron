@@ -7,22 +7,43 @@
             "cp82"
         ],
         "in" : {
-            "lineInputs" : {
+            "inputs" : {
+                "name" : "Mic Inputs",
+                "short" : "I",
+                "amount" : 2
+            },
+           "lineInputs" : {
                 "name" : "Line Inputs",
                 "short" : "L",
-                "amount" : 18
+                "amount" : 2
             },
-            "inputs" : {
-                "name" : "Mic/Line/File Inputs",
-                "short" : "I",
-                "amount" : 6
+            "playerInputs" :{
+                "name" : "File player",
+                "short" : "F",
+                "amount" : 2
+            },
+            "programInputs" :{
+                "name" : "Program Inputs",
+                "short" : "F",
+                "amount" : 2
+            },
+            "videoInputs" :{
+                "name" : "Video Line Inputs",
+                "short" : "S",
+                "amount" : 18
+            }
+        },
+        "mp" : {
+            "mixPoints" : {
+                "name" : "Mixpoints",
+                "short" : "MP"
             }
         },
         "out" : {
             "outputs" : {
                 "name" : "Output",
                 "short" : "O",
-                "amount" : 12
+                "amount" : 8
             }
         }
     },
@@ -43,10 +64,17 @@
     },
     "SME211" : {
         "name" : "SME 211",
-        "short" : "sme202",
+        "short" : "sme211",
         "objects" : [
             "common"
-        ]
+        ],
+        "in" : {
+            "inputs" : {
+                "name" : "Inputs",
+                "short" : "I",
+                "amount" : 4
+            }
+        }
     },
     "DMP128Plus_AT" : {
         "name" : "DMP 128 Plus AT",
@@ -75,6 +103,12 @@
                 "name" : "Expansion Bus (AT Inputs)",
                 "short" : "D",
                 "amount" : 2
+            }
+        },
+        "mp" : {
+            "mixPoints" : {
+                "name" : "Mixpoints",
+                "short" : "MP"
             }
         },
         "out" : {
@@ -123,6 +157,12 @@
                 "name" : "Expansion Bus (AT Inputs)",
                 "short" : "D",
                 "amount" : 48
+            }
+        },
+        "mp" : {
+            "mixPoints" : {
+                "name" : "Mixpoints",
+                "short" : "MP"
             }
         },
         "out" : {
