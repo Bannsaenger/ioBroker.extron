@@ -193,6 +193,11 @@
                 "short" : "P",
                 "amount" : 8
             }
+        },
+        "fs" :{
+            "files": {
+                "name" : "Flash Memory"
+            }
         }
     }
 }

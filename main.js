@@ -333,7 +333,7 @@ class Extron extends utils.Adapter {
                         if (self.config.pushDeviceStatus === true) {
                             await self.setDeviceStatusAsync();
                         } else {
-                            await self.getDeviceStatusAsync();
+                            // await self.getDeviceStatusAsync();
                         }
                     }
                     return;
@@ -450,10 +450,17 @@ class Extron extends utils.Adapter {
                             self.log.silly(`Extron got streammode "${ext1}" value "${ext2}"`);
                             self.setStreamMode(`ply.players.1.common.`,Number(ext1));
                             break;
+
+                        case 'UPL' :
+                            self.log.silly(`Extron got upload file command size: "${ext1}" name: "${ext2}"`);
+                            break;
+                        case 'WDF' :
+                            self.log.debug(`Extron got list directory command `);
+                            break;
                     }
                 } else {
-                    if (answer != 'Q') {
-                        self.log.silly('Extron received data which cannot be handled "' + answer + '"');
+                    if (answer != 'Q' && answer != '') {
+                        self.log.debug('Extron received data which cannot be handled "' + cmdPart + '"');
                     }
                 }
             }
@@ -591,6 +598,12 @@ class Extron extends utils.Adapter {
                 for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].connections) {
                     await self.setObjectNotExistsAsync(element._id, element);
                 }
+            }
+            // if we have a user filesystem on the device
+            if (self.devices[self.config.device] && self.devices[self.config.device].fs) {
+                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.dir._id, self.objectsTemplate.userflash.dir);
+                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.directory._id, self.objectsTemplate.userflash.directory);
+                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.files[0]._id, self.objectsTemplate.userflash.files[0]);
             }
             // maybe if a audio device
             if (self.devices[self.config.device] && self.devices[self.config.device].in) {
@@ -845,7 +858,7 @@ class Extron extends utils.Adapter {
                     }
                 }
                 self.statusRequested = true;
-                self.log.info('Extron get device status completed');
+                self.log.info('Extron request device status completed');
             }
         } catch (err) {
             self.errorHandler(err, 'getDeviceStatus');
@@ -1410,6 +1423,33 @@ class Extron extends utils.Adapter {
         }
     }
     /** END integrated audio player control */
+
+    /** BEGIN user flash memory file management */
+    /** called to load a file into device user flash memory
+     * @param {number} filesize
+     * @param {string} filename
+     */
+    loadFile(filesize, filename) {
+        const self = this;
+        try {
+            self.streamSend(`W+UF${filesize},${filename}`);
+        } catch (err) {
+            this.errorHandler(err, 'loadFile');
+        }
+    }
+
+    /** called to list current files in device user flash memory
+     *
+     */
+    listFile() {
+        const self = this;
+        try {
+            self.streamSend(`WDF`);
+        } catch (err) {
+            this.errorHandler(err, 'listFile');
+        }
+    }
+    /** END user flash memory file management */
 
     /** BEGIN cp82 Video control */
 
@@ -2108,6 +2148,11 @@ class Extron extends utils.Adapter {
                                 break;
                             case 'streammode' :
                                 self.setStreamMode(baseId, Number(state.val));
+                                break;
+
+                            case 'DIR' :
+                                self.listFile();
+                                break;
                         }
                     }
                 }

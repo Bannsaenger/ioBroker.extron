@@ -118,7 +118,8 @@
                     "write": true,
                     "min" : 0,
                     "max" : 48,
-                    "def": 0
+                    "def": 0,
+                    "states" : "0:Analog; 1:AT#1; 2:AT#2; 3:AT#3; 4:AT#4; 5:AT#5; 6:AT#6; 7:AT#7; 8:AT#8; 9:AT#9; 10:AT#10; 11:AT#11; 12:AT#12; 13:AT#13; 14:AT#14; 15:AT#15; 16:AT#16; 17:AT#17; 18:AT#18; 19:AT#19; 20:AT#20; 21:AT#21; 22:AT#22; 23:AT#23; 24:AT#24; 25:AT#25; 26:AT#26; 27:AT#27; 28:AT#28; 29:AT#29; 30:AT#30; 31:AT#31; 32:AT#32; 33:AT#33; 34:AT#34; 35:AT#35; 36:AT#36; 37:AT#37; 38:AT#38; 39:AT#39; 40:AT#40; 41:AT#41; 42:AT#42; 43:AT#43; 44:AT#44; 45:AT#45; 46:AT#46; 47:AT#47; 48:AT#48"
                 },
                 "native": {}
             },        
@@ -247,7 +248,8 @@
                     "write": true,
                     "min" : 0,
                     "max" : 24,
-                    "def": 0
+                    "def": 0,
+                    "states" : "0:disabled; 1:Player 1; 2:Player 2; 3:Player 3; 4:Player 4:; 5:Player 5; 6:Player 6; 7:Player 7; 8:Player 8; 9:USB1L; 10:USB1R; 11:USB2L; 12:USB2R; 17:VoIp 1; 18:VoIp2; 19:VoIp3; 20:VoIp4; 21:VoIp5; 22:VoIp6; 23:VoIp4; 24:VoIp8"
                 },
                 "native": {}
             },        
@@ -503,7 +505,7 @@
                 "_id": "common.playmode",
                 "type": "state",
                 "common": {
-                    "role" : "switch",
+                    "role" : "media.state",
                     "name" : "if true the player is playing",
                     "type" : "boolean",
                     "read" : true,
@@ -516,7 +518,7 @@
                 "_id": "common.repeatmode",
                 "type": "state",
                 "common": {
-                    "role" : "switch",
+                    "role" : "media.mode.repeat",
                     "name" : "if true the player is repeating",
                     "type" : "boolean",
                     "read" : true,
@@ -529,7 +531,7 @@
                 "_id" : "common.filename",
                 "type" : "state",
                 "common" : {
-                    "role" : "value",
+                    "role" : "media.link",
                     "name" : "filename of currently loaded player file",
                     "type" : "string",
                     "read" : true,
@@ -1667,7 +1669,7 @@
                 "_id": "common.streammode",
                 "type": "state",
                 "common": {
-                    "role" : "value",
+                    "role" : "media.state",
                     "name" : "if true the player is playing",
                     "type" : "number",
                     "states" : "0:stop; 1:play; 2:pause",
@@ -1689,6 +1691,40 @@
                     "def" : " "
                 },
                 "native" :{}
+            }
+        ]
+    },
+    "userflash" : {
+        "dir" : {
+            "_id": "fs",
+            "type": "folder",
+            "common": {
+                "name": "User Flash"
+            },
+            "native": {}  
+        },
+        "directory" : {
+            "_id": "fs.DIR",
+            "type": "state",
+            "common": {
+                "role": "switch",
+                "name": "If true, directory content is requested",
+                "type": "boolean",
+                "read": true,
+                "write": true,
+                "def": false
+                },
+            "native": {}
+        },
+        "files" : [
+            {
+                "_id": "fs.file",
+                "type": "state",
+                "common": {
+                    "role": "media.link",
+                    "name": "filename"
+                },
+                "native": {}
             }
         ]
     }
