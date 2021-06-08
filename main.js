@@ -875,6 +875,7 @@ class Extron extends utils.Adapter {
                     if (typeof(baseId) !== 'undefined' && baseId !== null) {
                         // @ts-ignore
                         const stateobj = await self.getStateAsync(id);
+                        // @ts-ignore
                         const state = stateobj.val;
                         if (state !== null) switch (stateName) {
                             case 'mute' :
@@ -1628,7 +1629,7 @@ class Extron extends utils.Adapter {
         try {
             self.streamSend(`${self.id2oid(id)}Y${mode}STRM`);
         } catch (err) {
-            this.errorhandler(err, 'sendStreamMode');
+            this.errorHandler(err, 'sendStreamMode');
         }
     }
 
