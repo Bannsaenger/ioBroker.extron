@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "extron",
-        "version": "0.1.1",
+        "version": "0.1.2",
         "news": {
             "0.0.1": {
                 "en": "initial release",
@@ -46,6 +46,10 @@
             "0.1.1": {
                 "en": "extend device/database structure to add devices CP82, SMD202, SME211",
                 "de": "Datenbankstruktur erweitert, Geräte CP82, SMD202 ,SME211 hinzugefügt"
+            },
+            "0.1.2": {
+                "en": "extend device/database structure to add user flash memory",
+                "de": "Datenbankstruktur erweitert, user flash hinzugefügt"
             }
         },
         "title": "Extron SIS",
