@@ -2115,7 +2115,7 @@ class Extron extends utils.Adapter {
                 // self.log.debug(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
                 if (!state.ack) {       // only react on not acknowledged state changes
                     self.log.info(`Extron state ${id} changed: ${state.val} (ack = ${state.ack})`);
-                    if (!state.val) state.val = '';
+                    //if (state.val === undefined) state.val = '';
                     const baseId = id.substr(0, id.lastIndexOf('.'));
                     const idArray = id.split('.');
                     const idType = idArray[3];
