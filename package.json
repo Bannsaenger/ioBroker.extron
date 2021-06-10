@@ -15,6 +15,7 @@
   "dependencies": {
     "@iobroker/adapter-core": "^2.4.0",
     "@types/ssh2": "^0.5.46",
+    "jshint": "^2.13.0",
     "ssh2": "^0.8.9"
   },
   "devDependencies": {

@@ -16,6 +16,8 @@ const utils = require('@iobroker/adapter-core');
 const fs = require('fs');
 // @ts-ignore
 const Client = require('ssh2').Client;
+// @ts-ignore
+const path = require('path');
 const errCodes = {
     'E01' : 'Invalid input channel number (out of range)',
     'E10' : 'Unrecognized command',
@@ -33,7 +35,7 @@ const errCodes = {
     'E28' : 'Bad filename or file not found',
     'E31' : 'Attempt to break port passthrough when not set'
 };
-const maxPollCount = 4;
+const maxPollCount = 10;
 
 class Extron extends utils.Adapter {
 
@@ -76,6 +78,7 @@ class Extron extends utils.Adapter {
         this.pollCount = 0;             // count sent status query
         this.playerLoaded = [false, false, false, false, false, false, false,false];    // remember which player has a file assigned
         this.auxOutEnabled = [false, false, false, false, false, false, false,false];   // remember which aux output is enabled
+        this.fileSend = false;          // if true a file is currently sended
     }
 
     /**
@@ -154,6 +157,7 @@ class Extron extends utils.Adapter {
                 'username': self.config.user,
                 'password': self.config.pass,
                 'keepaliveInterval': 5000,
+                // @ts-ignore
                 'debug': self.debugSSH ? self.log.silly : undefined,
                 'readyTimeout': 5000,
                 'tryKeyboard': true
@@ -333,7 +337,7 @@ class Extron extends utils.Adapter {
                         if (self.config.pushDeviceStatus === true) {
                             await self.setDeviceStatusAsync();
                         } else {
-                            // await self.getDeviceStatusAsync();
+                            await self.getDeviceStatusAsync();
                         }
                     }
                     return;
@@ -452,20 +456,24 @@ class Extron extends utils.Adapter {
                             break;
 
                         case 'UPL' :
-                            self.log.silly(`Extron got upload file command size: "${ext1}" name: "${ext2}"`);
+                            self.log.silly(`Extron got upload file confirmation command size: "${ext1}" name: "${ext2}"`);
                             break;
                         case 'WDF' :
-                            self.log.debug(`Extron got list directory command `);
+                            self.log.debug(`Extron got list directory command`);
+                            break;
+                        case '+UF' :
+                            self.log.debug(`Extron got upload file command: ${ext1} ${ext2}`);
                             break;
                     }
                 } else {
-                    if (answer != 'Q' && answer != '') {
+                    if (answer != 'Q' && answer != '' && self.fileSend == false) {
                         self.log.debug('Extron received data which cannot be handled "' + cmdPart + '"');
                     }
                 }
             }
         } catch (err) {
             self.errorHandler(err, 'onStreamData');
+            // @ts-ignore
             if (err.message === 'Device mismatch error') self.terminate('Device mismatch error');
         }
     }
@@ -603,9 +611,10 @@ class Extron extends utils.Adapter {
             if (self.devices[self.config.device] && self.devices[self.config.device].fs) {
                 await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.dir._id, self.objectsTemplate.userflash.dir);
                 await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.directory._id, self.objectsTemplate.userflash.directory);
+                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.upload._id, self.objectsTemplate.userflash.upload);
                 await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.files[0]._id, self.objectsTemplate.userflash.files[0]);
             }
-            // maybe if a audio device
+            // if we have inputs on the device
             if (self.devices[self.config.device] && self.devices[self.config.device].in) {
                 // at this point the device has inputs
                 await self.setObjectNotExistsAsync('in', {
@@ -807,7 +816,7 @@ class Extron extends utils.Adapter {
         try {
             // if status has not been requested
             if (!self.statusRequested && self.isVerboseMode) {
-                self.log.info('Extron get device status started');
+                self.log.info('Extron request device status started');
                 // iterate through stateList to request status from device
                 for (let index = 0; index < self.stateList.length; index++) {
                     const id = self.stateList[index];
@@ -888,6 +897,7 @@ class Extron extends utils.Adapter {
                     if (typeof(baseId) !== 'undefined' && baseId !== null) {
                         // @ts-ignore
                         const stateobj = await self.getStateAsync(id);
+                        // @ts-ignore
                         const state = stateobj.val;
                         if (state !== null) switch (stateName) {
                             case 'mute' :
@@ -1251,6 +1261,22 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'getSource');
         }
     }
+
+    /**
+     * get the input name from device
+     * @param {string} baseId
+     */
+    getInputName(baseId) {
+        const self = this;
+        try {
+            const oid = self.id2oid(`${baseId}.name`);
+            if (oid) {
+                self.streamSend(`${oid}NI\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'getInputName');
+        }
+    }
     /** END Input and Mix control */
 
     /** BEGIN integrated audio player control */
@@ -1426,13 +1452,40 @@ class Extron extends utils.Adapter {
 
     /** BEGIN user flash memory file management */
     /** called to load a file into device user flash memory
-     * @param {number} filesize
-     * @param {string} filename
+     * @param {string} filePath
      */
-    loadFile(filesize, filename) {
+    loadFile(filePath) {
         const self = this;
+        let chunk ='';
         try {
-            self.streamSend(`W+UF${filesize},${filename}`);
+            fs.accessSync(filePath);
+            const fileName = path.basename(filePath);
+            //const fileExt = path.extname(filePath);
+            const fileStats = fs.statSync(filePath);
+            const fileStream = fs.createReadStream(filePath);
+            //const fileTimeStamp = fileStats.mtime.toJSON();
+            //const year = fileTimeStamp.slice(0,4);
+            //const month = fileTimeStamp.slice(5,7);
+            //const day = fileTimeStamp.slice(8,10);
+            //const hour = fileTimeStamp.slice(11,13);
+            //const minute = fileTimeStamp.slice(14,16);
+            //const second = fileTimeStamp.slice(17,19);
+            //const streamData = `W+UF${fileStats.size}*1 ${day} ${month} ${year} ${hour} ${minute} ${second},${fileName}\r`;
+            const streamData = `W+UF${fileStats.size},${fileName}\r`;
+            self.streamSend(streamData);
+            fileStream.on('readable', function() {
+                while ((chunk=fileStream.read()) != null) {
+                    if (!self.fileSend) self.log.debug('loadFile started');
+                    self.streamSend(chunk);
+                    self.fileSend = true;
+                    self.timers.timeoutQueryStatus.refresh();
+                }
+                //self.fileSend = false;
+            });
+            fileStream.on('end', function() {
+                self.fileSend = false;
+                self.log.debug('loadFile completed');
+            });
         } catch (err) {
             this.errorHandler(err, 'loadFile');
         }
@@ -1441,12 +1494,12 @@ class Extron extends utils.Adapter {
     /** called to list current files in device user flash memory
      *
      */
-    listFile() {
+    listUserFiles() {
         const self = this;
         try {
-            self.streamSend(`WDF`);
+            self.streamSend(`WDF\r`);
         } catch (err) {
-            this.errorHandler(err, 'listFile');
+            this.errorHandler(err, 'listUserFiles');
         }
     }
     /** END user flash memory file management */
@@ -1668,7 +1721,7 @@ class Extron extends utils.Adapter {
         try {
             self.streamSend(`${self.id2oid(id)}Y${mode}STRM`);
         } catch (err) {
-            this.errorhandler(err, 'sendStreamMode');
+            this.errorHandler(err, 'sendStreamMode');
         }
     }
 
@@ -1955,7 +2008,8 @@ class Extron extends utils.Adapter {
                             break;
 
                         default:
-                            retOid = '';
+                            if (idBlock === 'name') retOid = idNumber.toString();
+                            else retOid = '';
                     }
                 }   else
                 {                      // mixpoints
@@ -2151,7 +2205,11 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'DIR' :
-                                self.listFile();
+                                self.listUserFiles();
+                                break;
+
+                            case 'UPL' :
+                                self.loadFile(`${state.val}`);
                                 break;
                         }
                     }
@@ -2167,7 +2225,7 @@ class Extron extends utils.Adapter {
 
     /**
      * Called on error situations and from catch blocks
-	 * @param {Error} err
+	 * @param {any} err
 	 * @param {string} module
 	 */
     errorHandler(err, module = '') {

@@ -249,7 +249,7 @@
                     "min" : 0,
                     "max" : 24,
                     "def": 0,
-                    "states" : "0:disabled; 1:Player 1; 2:Player 2; 3:Player 3; 4:Player 4:; 5:Player 5; 6:Player 6; 7:Player 7; 8:Player 8; 9:USB1L; 10:USB1R; 11:USB2L; 12:USB2R; 17:VoIp 1; 18:VoIp2; 19:VoIp3; 20:VoIp4; 21:VoIp5; 22:VoIp6; 23:VoIp4; 24:VoIp8"
+                    "states" : "0:disabled; 1:Player #1; 2:Player #2; 3:Player #3; 4:Player #4:; 5:Player #5; 6:Player #6; 7:Player #7; 8:Player #8; 9:USB1L; 10:USB1R; 11:USB2L; 12:USB2R; 17:VoIp #1; 18:VoIp #2; 19:VoIp #3; 20:VoIp #4; 21:VoIp #5; 22:VoIp #6; 23:VoIp #7; 24:VoIp #8"
                 },
                 "native": {}
             },        
@@ -1537,7 +1537,7 @@
                     "states" : "0:stop; 1:play; 2:pause",
                     "read" : true,
                     "write" : true,
-                    "def" : false
+                    "def" : 0
                 },
                 "native" : {}
             },
@@ -1675,7 +1675,7 @@
                     "states" : "0:stop; 1:play; 2:pause",
                     "read" : true,
                     "write" : true,
-                    "def" : false
+                    "def" : 0
                 },
                 "native" : {}
             },
@@ -1713,6 +1713,19 @@
                 "read": true,
                 "write": true,
                 "def": false
+                },
+            "native": {}
+        },
+        "upload" : {
+            "_id": "fs.UPL",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "Filepath to be uploaded",
+                "type": "string",
+                "read": true,
+                "write": true,
+                "def": ""
                 },
             "native": {}
         },

@@ -132,7 +132,7 @@
             "reconnectDelay": 30000,
             "answerTimeout": 500,
             "inactivityTimeout": 100000,
-            "pushDeviceStatus" : true
+            "pushDeviceStatus" : false
 
         -->
         <!-- For example columns with settings: -->
@@ -203,7 +203,10 @@
         
         <div class="row">
             <div class="col s12 m6 l4 input-field">
-                <input type="boolean" class="value" id="pushDeviceStatus" />
+                <select id="pushDeviceStatus" class="value">
+                    <option value="true" class="translate">Beim Start Konfiguration aus der Datenbank in das Gerät übertragen</option>
+                    <option value="false" class="translate">Beim Start Gerätekonfiguration abfragen und in die Datenbank übertragen</option>
+                </select>
                 <label for="pushDeviceStatus" class="translate">pushDeviceStatus</label>
             </div>
         </div>
