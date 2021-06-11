@@ -1729,13 +1729,38 @@
                 },
             "native": {}
         },
+        "freespace" : {
+            "_id": "fs.freespace",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "remaining space in user flash",
+                "type": "string",
+                "read": true,
+                "write": true,
+                "def": ""
+                },
+            "native": {}
+        },
+        "file" : {
+            "_id": "fs.files",
+            "type": "folder",
+            "common": {
+                "name": "User Flash Files"
+            },
+            "native": {}
+        },
         "files" : [
             {
-                "_id": "fs.file",
+                "_id": "filename",
                 "type": "state",
                 "common": {
                     "role": "media.link",
-                    "name": "filename"
+                    "name": "filename",
+                    "type": "string",
+                    "read": true,
+                    "write": false,
+                    "def": ""
                 },
                 "native": {}
             }

@@ -78,7 +78,10 @@ class Extron extends utils.Adapter {
         this.pollCount = 0;             // count sent status query
         this.playerLoaded = [false, false, false, false, false, false, false,false];    // remember which player has a file assigned
         this.auxOutEnabled = [false, false, false, false, false, false, false,false];   // remember which aux output is enabled
-        this.fileSend = false;          // if true a file is currently sended
+        this.fileSend = false;          // flag to signal a file is currently sended
+        this.requestDir = false;        // flag to signal a list user files command has been issued and a directory lst is to be received
+        this.file = {"fileName" : '', "timeStamp" : '', "fileSize":''};
+        this.fileList = {"freeSpace" : '', "files" : [this.file]};             // array to hold current file list
     }
 
     /**
@@ -315,6 +318,12 @@ class Extron extends utils.Adapter {
                 }
                 return;
             }
+            if (self.requestDir) {              // directory file list expected
+                self.requestDir = false;        // directory list has been received, clear flag
+                self.fileList.freeSpace = '';   // clear free space to be filled with new value from list
+                self.setUserFilesAsync(data);        // call subroutine to set database values
+                return;
+            }
             // iterate through multiple answers connected via [LF]
             for (const cmdPart of data.toString().split('\n')) {
 
@@ -338,10 +347,12 @@ class Extron extends utils.Adapter {
                             await self.setDeviceStatusAsync();
                         } else {
                             await self.getDeviceStatusAsync();
+                            //self.log.info('Extron get device status diabled');
                         }
                     }
                     return;
                 }
+
                 const answer = cmdPart.replace(/[\r\n]/gm, '');
                 // Error handling
                 if (answer.match(/E\d\d/gim)) {    // received an error
@@ -460,13 +471,14 @@ class Extron extends utils.Adapter {
                             break;
                         case 'WDF' :
                             self.log.debug(`Extron got list directory command`);
+                            self.requestDir = true;
                             break;
                         case '+UF' :
                             self.log.debug(`Extron got upload file command: ${ext1} ${ext2}`);
                             break;
                     }
                 } else {
-                    if (answer != 'Q' && answer != '' && self.fileSend == false) {
+                    if ((answer != 'Q') && (answer != '') && (self.fileSend == false) && !(answer.match(/\d\*\di/))) {
                         self.log.debug('Extron received data which cannot be handled "' + cmdPart + '"');
                     }
                 }
@@ -612,7 +624,8 @@ class Extron extends utils.Adapter {
                 await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.dir._id, self.objectsTemplate.userflash.dir);
                 await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.directory._id, self.objectsTemplate.userflash.directory);
                 await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.upload._id, self.objectsTemplate.userflash.upload);
-                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.files[0]._id, self.objectsTemplate.userflash.files[0]);
+                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.freespace._id, self.objectsTemplate.userflash.freespace);
+                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.file._id, self.objectsTemplate.userflash.file);
             }
             // if we have inputs on the device
             if (self.devices[self.config.device] && self.devices[self.config.device].in) {
@@ -862,6 +875,10 @@ class Extron extends utils.Adapter {
 
                             case 'streammode' :
                                 self.getStreamMode();
+                                break;
+
+                            case 'DIR' :
+                                self.listUserFiles();
                                 break;
                         }
                     }
@@ -1498,8 +1515,38 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             self.streamSend(`WDF\r`);
+            //self.requestDir = true;
         } catch (err) {
+            self.requestDir = false;
             this.errorHandler(err, 'listUserFiles');
+        }
+    }
+
+    /** called to set current files from device user flash memory in database
+     * @param {string | Uint8Array} data
+     */
+    async setUserFilesAsync(data) {
+        const self = this;
+        try {
+            const userFileList = data.toString().split('\r\r\n');               // split the list into separate lines
+            let i = 0;
+            for (const userFile of userFileList) {                              // check each line
+                self.delObjectAsync(`fs.files.${i+1}`);
+                if (self.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
+                else self.fileList.freeSpace = userFile.match(/^(\d+)\b/g);     //check for last line containing remaining free space
+                if (self.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
+                self.file.fileName = userFile.match(/^(.+\.\w{3}\b)/g)?userFile.match(/^(.+\.\w{3}\b)/g):'';    // extract filename
+                self.file.timeStamp = userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)?userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g):''; //extract timestamp
+                self.file.fileSize = userFile.match(/(\d+)$/g)?userFile.match(/(\d+)$/g):''; // extract filesize
+                self.fileList.files[i] = self.file;                             // add to filelist array
+                i++;
+                await self.setObjectNotExistsAsync(`fs.files.${i+1}`, self.objectsTemplate.userflash.files);
+                self.setState(`fs.files.${i+1}.filename`, self.file.fileName, true);
+            }
+            this.setState('fs.freespace',self.fileList.freeSpace,true);
+        } catch (err) {
+            self.requestDir = false;
+            this.errorHandler(err, 'setUserFiles');
         }
     }
     /** END user flash memory file management */
@@ -2115,7 +2162,7 @@ class Extron extends utils.Adapter {
                 // self.log.debug(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
                 if (!state.ack) {       // only react on not acknowledged state changes
                     self.log.info(`Extron state ${id} changed: ${state.val} (ack = ${state.ack})`);
-                    //if (state.val === undefined) state.val = '';
+                    if ((state.val === undefined) || (state.val === null)) state.val = '';
                     const baseId = id.substr(0, id.lastIndexOf('.'));
                     const idArray = id.split('.');
                     const idType = idArray[3];
