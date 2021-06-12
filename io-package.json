@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "extron",
-        "version": "0.1.2",
+        "version": "0.1.3",
         "news": {
             "0.0.1": {
                 "en": "initial release",
@@ -50,6 +50,10 @@
             "0.1.2": {
                 "en": "extend device/database structure to add user flash memory",
                 "de": "Datenbankstruktur erweitert, user flash hinzugefügt"
+            },
+            "0.1.3": {
+                "en": "fixes on device communication and user flash file management",
+                "de": "Fehlerkorrektur in der Gerätekommunikation und im Dateimanagement"
             }
         },
         "title": "Extron SIS",

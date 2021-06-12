@@ -303,6 +303,7 @@ class Extron extends utils.Adapter {
      */
     async onStreamData(data) {
         const self = this;
+        if (self.fileSend) return;
         try {
             self.log.debug('Extron got data: "' + self.decodeBufferToLog(data) + '"');
 
@@ -469,6 +470,8 @@ class Extron extends utils.Adapter {
 
                         case 'UPL' :
                             self.log.silly(`Extron got upload file confirmation command size: "${ext1}" name: "${ext2}"`);
+                            self.log.silly(`Extron requesting current user file list`);
+                            self.listUserFiles();
                             break;
                         case 'WDF' :
                             self.log.debug(`Extron got list directory command`);
@@ -479,7 +482,7 @@ class Extron extends utils.Adapter {
                             break;
                     }
                 } else {
-                    if ((answer != 'Q') && (answer != '') && (self.fileSend == false) && !(answer.match(/\d\*\di/))) {
+                    if ((answer != 'Q') && (answer != '') && (self.fileSend === false) && !(answer.match(/\d\*\di/))) {
                         self.log.debug('Extron received data which cannot be handled "' + cmdPart + '"');
                     }
                 }
@@ -554,6 +557,7 @@ class Extron extends utils.Adapter {
      */
     onStreamError(err) {
         this.errorHandler(err, 'onStreamError');
+        this.log.info('Extron onSteamError is closing the stream');
         this.stream.close();
     }
 
@@ -562,6 +566,7 @@ class Extron extends utils.Adapter {
      */
     onStreamClose() {
         const self = this;
+        this.clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
         try {
             self.log.info('Extron stream closed');
             self.client.end();
@@ -590,8 +595,10 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             self.log.debug('Extron send a status query');
-            self.streamSend('Q');
-            self.pollCount += 1;
+            if (!self.fileSend) {
+                self.streamSend('Q');
+                self.pollCount += 1;
+            }
             if (self.pollCount > maxPollCount) {
                 self.log.error('maxPollCount exceeded');
                 self.pollCount = 0;
@@ -878,7 +885,7 @@ class Extron extends utils.Adapter {
                                 self.getStreamMode();
                                 break;
 
-                            case 'DIR' :
+                            case 'dir' :
                                 self.listUserFiles();
                                 break;
                         }
@@ -1472,7 +1479,7 @@ class Extron extends utils.Adapter {
     /** called to load a file into device user flash memory
      * @param {string} filePath
      */
-    loadFile(filePath) {
+    loadUserFile(filePath) {
         const self = this;
         let chunk ='';
         try {
@@ -1493,7 +1500,7 @@ class Extron extends utils.Adapter {
             self.streamSend(streamData);
             fileStream.on('readable', function() {
                 while ((chunk=fileStream.read()) != null) {
-                    if (!self.fileSend) self.log.debug('loadFile started');
+                    if (!self.fileSend) self.log.debug('loadUserFile started');
                     self.streamSend(chunk);
                     self.fileSend = true;
                     self.timers.timeoutQueryStatus.refresh();
@@ -1502,10 +1509,24 @@ class Extron extends utils.Adapter {
             });
             fileStream.on('end', function() {
                 self.fileSend = false;
-                self.log.debug('loadFile completed');
+                self.log.debug('loadUserFile completed');
             });
         } catch (err) {
-            this.errorHandler(err, 'loadFile');
+            this.errorHandler(err, 'loadUserFile');
+        }
+    }
+
+    /**
+     * delete the user file from device
+     * @param {string} value
+     */
+    eraseUserFile(value) {
+        const self = this;
+        try {
+            const streamData = `W${(value === '' ? ' ' : value)}EF\r`;
+            self.streamSend(streamData);
+        } catch (err) {
+            this.errorHandler(err, 'eraseUserFile');
         }
     }
 
@@ -1532,13 +1553,14 @@ class Extron extends utils.Adapter {
             const userFileList = data.toString().split('\r\r\n');               // split the list into separate lines
             let i = 1;
             for (const userFile of userFileList) {                              // check each line
-                self.delObjectAsync(`fs.files.${i}`);
+                await self.delObjectAsync(`fs.files.${i}.filename`);                  // delete filename state from database
+                await self.delObjectAsync(`fs.files.${i}`);                           // delete file object from database
                 if (self.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
-                else self.fileList.freeSpace = userFile.match(/(\d+\b Bytes Left)/g)?userFile.match(/(\d+\b Bytes Left)/g)[0].toString():'';     //check for last line containing remaining free space
+                else self.fileList.freeSpace = userFile.match(/(\d+\b Bytes Left)/g)?`${userFile.match(/(\d+\b Bytes Left)/g)[0]}`:'';     //check for last line containing remaining free space
                 if (self.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
-                self.file.fileName = userFile.match(/^(.+\.\w{3}\b)/g)?userFile.match(/^(.+\.\w{3}\b)/g)[0].toString():'';    // extract filename
-                self.file.timeStamp = userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)?userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)[0].toString():''; //extract timestamp
-                self.file.fileSize = userFile.match(/(\d+)$/g)?userFile.match(/(\d+)$/g)[0].toString():''; // extract filesize
+                self.file.fileName = userFile.match(/^(.+\.\w{3}\b)/g)?`${userFile.match(/^(.+\.\w{3}\b)/g)[0]}`:'';    // extract filename
+                self.file.timeStamp = userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)?`${userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)[0]}`:''; //extract timestamp
+                self.file.fileSize = userFile.match(/(\d+)$/g)?`${userFile.match(/(\d+)$/g)[0]}`:''; // extract filesize
                 self.fileList.files[i] = self.file;                             // add to filelist array
                 await self.setObjectNotExistsAsync(`fs.files.${i}`, self.objectsTemplate.userflash.files[0]);
                 await self.setObjectNotExistsAsync(`fs.files.${i}.filename`, self.objectsTemplate.userflash.files[1]);
@@ -2258,7 +2280,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'upl' :
-                                self.loadFile(`${state.val}`);
+                                self.loadUserFile(`${state.val}`);
                                 break;
                         }
                     }
