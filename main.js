@@ -18,6 +18,7 @@ const fs = require('fs');
 const Client = require('ssh2').Client;
 // @ts-ignore
 const path = require('path');
+
 const errCodes = {
     'E01' : 'Invalid input channel number (out of range)',
     'E10' : 'Unrecognized command',
@@ -80,8 +81,8 @@ class Extron extends utils.Adapter {
         this.auxOutEnabled = [false, false, false, false, false, false, false,false];   // remember which aux output is enabled
         this.fileSend = false;          // flag to signal a file is currently sended
         this.requestDir = false;        // flag to signal a list user files command has been issued and a directory lst is to be received
-        this.file = {"fileName" : '', "timeStamp" : '', "fileSize":''};
-        this.fileList = {"freeSpace" : '', "files" : [this.file]};             // array to hold current file list
+        this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize':''};
+        this.fileList = {'freeSpace' : '', 'files' : [this.file]};             // array to hold current file list
     }
 
     /**
@@ -621,7 +622,7 @@ class Extron extends utils.Adapter {
             }
             // if we have a user filesystem on the device
             if (self.devices[self.config.device] && self.devices[self.config.device].fs) {
-                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.dir._id, self.objectsTemplate.userflash.dir);
+                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.filesystem._id, self.objectsTemplate.userflash.filesystem);
                 await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.directory._id, self.objectsTemplate.userflash.directory);
                 await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.upload._id, self.objectsTemplate.userflash.upload);
                 await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.freespace._id, self.objectsTemplate.userflash.freespace);
@@ -1529,19 +1530,20 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             const userFileList = data.toString().split('\r\r\n');               // split the list into separate lines
-            let i = 0;
+            let i = 1;
             for (const userFile of userFileList) {                              // check each line
-                self.delObjectAsync(`fs.files.${i+1}`);
+                self.delObjectAsync(`fs.files.${i}`);
                 if (self.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
-                else self.fileList.freeSpace = userFile.match(/^(\d+)\b/g);     //check for last line containing remaining free space
+                else self.fileList.freeSpace = userFile.match(/(\d+\b Bytes Left)/g)?userFile.match(/(\d+\b Bytes Left)/g)[0].toString():'';     //check for last line containing remaining free space
                 if (self.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
-                self.file.fileName = userFile.match(/^(.+\.\w{3}\b)/g)?userFile.match(/^(.+\.\w{3}\b)/g):'';    // extract filename
-                self.file.timeStamp = userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)?userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g):''; //extract timestamp
-                self.file.fileSize = userFile.match(/(\d+)$/g)?userFile.match(/(\d+)$/g):''; // extract filesize
+                self.file.fileName = userFile.match(/^(.+\.\w{3}\b)/g)?userFile.match(/^(.+\.\w{3}\b)/g)[0].toString():'';    // extract filename
+                self.file.timeStamp = userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)?userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)[0].toString():''; //extract timestamp
+                self.file.fileSize = userFile.match(/(\d+)$/g)?userFile.match(/(\d+)$/g)[0].toString():''; // extract filesize
                 self.fileList.files[i] = self.file;                             // add to filelist array
+                await self.setObjectNotExistsAsync(`fs.files.${i}`, self.objectsTemplate.userflash.files[0]);
+                await self.setObjectNotExistsAsync(`fs.files.${i}.filename`, self.objectsTemplate.userflash.files[1]);
+                self.setState(`fs.files.${i}.filename`, self.file.fileName, true);
                 i++;
-                await self.setObjectNotExistsAsync(`fs.files.${i+1}`, self.objectsTemplate.userflash.files);
-                self.setState(`fs.files.${i+1}.filename`, self.file.fileName, true);
             }
             this.setState('fs.freespace',self.fileList.freeSpace,true);
         } catch (err) {
@@ -1585,7 +1587,7 @@ class Extron extends utils.Adapter {
             const idArray = baseId.split('.');
             if (idArray[2] === 'connections') {         // video.output
                 if (Number(idArray[3]) <= 2) {
-                    self.streamSend(`${value}*${idArray[3]}!`);
+                    self.streamSend(`${value}*${idArray[3]}!\r`);
                 } else {
                     self.streamSend(`W${value}LOUT\r`);
                 }
@@ -1605,7 +1607,7 @@ class Extron extends utils.Adapter {
         try {
             const idArray = baseId.split('.');
             if (idArray[2] === 'connections') {         // video.output
-                self.streamSend(`${idArray[3]}*${value}B`);
+                self.streamSend(`${idArray[3]}*${value}B\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendVideoMute');
@@ -1621,7 +1623,7 @@ class Extron extends utils.Adapter {
     sendPlayVideo() {
         const self = this;
         try {
-            self.streamSend('WS1*1PLYR');
+            self.streamSend('WS1*1PLYR\r');
         } catch (err) {
             this.errorHandler(err, 'sendPlayVideo');
         }
@@ -1633,7 +1635,7 @@ class Extron extends utils.Adapter {
     sendPauseVideo() {
         const self = this;
         try {
-            self.streamSend('WE11PLYR');
+            self.streamSend('WE11PLYR\r');
         } catch (err) {
             this.errorHandler(err, 'sendPauseVideo');
         }
@@ -1645,7 +1647,7 @@ class Extron extends utils.Adapter {
     sendStopVideo() {
         const self = this;
         try {
-            self.streamSend('WO1PLYR');
+            self.streamSend('WO1PLYR\r');
         } catch (err) {
             this.errorHandler(err, 'sendStopVideo');
         }
@@ -1657,7 +1659,7 @@ class Extron extends utils.Adapter {
     getPlayVideo() {
         const self = this;
         try {
-            self.streamSend('WY1PLYR');
+            self.streamSend('WY1PLYR\r');
         } catch (err) {
             this.errorHandler(err, 'getPlayVideo');
         }
@@ -1684,7 +1686,7 @@ class Extron extends utils.Adapter {
     sendLoopVideo(id, mode) {
         const self = this;
         try {
-            self.streamSend(`WR${self.id2oid(id)}*${mode?1:0}PLYR`);
+            self.streamSend(`WR${self.id2oid(id)}*${mode?1:0}PLYR\r`);
         } catch (err) {
             this.errorHandler(err, 'sendLoopVideo');
         }
@@ -1696,7 +1698,7 @@ class Extron extends utils.Adapter {
     getLoopVideo() {
         const self = this;
         try {
-            self.streamSend('WR1PLYR');
+            self.streamSend('WR1PLYR\r');
         } catch (err) {
             this.errorHandler(err, 'getLoopVideo');
         }
@@ -1723,7 +1725,7 @@ class Extron extends utils.Adapter {
     sendVideoFile(id, path) {
         const self = this;
         try {
-            self.streamSend(`${self.id2oid(id)}*${path}PLYR`);
+            self.streamSend(`${self.id2oid(id)}*${path}PLYR\r`);
         } catch (err) {
             this.errorHandler(err, 'sendVideoFile');
         }
@@ -1735,7 +1737,7 @@ class Extron extends utils.Adapter {
     getVideoFile() {
         const self = this;
         try {
-            self.streamSend('WU1PLYR');
+            self.streamSend('WU1PLYR\r');
         } catch (err) {
             this.errorHandler(err, 'getVideoFile');
         }
@@ -1766,7 +1768,7 @@ class Extron extends utils.Adapter {
     sendStreamMode(id, mode) {
         const self = this;
         try {
-            self.streamSend(`${self.id2oid(id)}Y${mode}STRM`);
+            self.streamSend(`${self.id2oid(id)}Y${mode}STRM\r`);
         } catch (err) {
             this.errorHandler(err, 'sendStreamMode');
         }
@@ -1791,7 +1793,7 @@ class Extron extends utils.Adapter {
     getStreamMode() {
         const self = this;
         try {
-            self.streamSend('YSTRM');
+            self.streamSend('YSTRM\r');
         } catch (err) {
             this.errorHandler(err, 'getStreamMode');
         }
@@ -2251,11 +2253,11 @@ class Extron extends utils.Adapter {
                                 self.setStreamMode(baseId, Number(state.val));
                                 break;
 
-                            case 'DIR' :
+                            case 'dir' :
                                 self.listUserFiles();
                                 break;
 
-                            case 'UPL' :
+                            case 'upl' :
                                 self.loadFile(`${state.val}`);
                                 break;
                         }

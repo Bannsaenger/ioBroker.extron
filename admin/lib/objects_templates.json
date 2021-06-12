@@ -1695,7 +1695,7 @@
         ]
     },
     "userflash" : {
-        "dir" : {
+        "filesystem" : {
             "_id": "fs",
             "type": "folder",
             "common": {
@@ -1704,7 +1704,7 @@
             "native": {}  
         },
         "directory" : {
-            "_id": "fs.DIR",
+            "_id": "fs.dir",
             "type": "state",
             "common": {
                 "role": "switch",
@@ -1717,7 +1717,7 @@
             "native": {}
         },
         "upload" : {
-            "_id": "fs.UPL",
+            "_id": "fs.upl",
             "type": "state",
             "common": {
                 "role": "value",
@@ -1751,6 +1751,14 @@
             "native": {}
         },
         "files" : [
+            {
+                "_id":"0",
+                "type": "channel",
+                "common":{
+                    "role":"media.channel",
+                    "name":"file"
+                }
+            },
             {
                 "_id": "filename",
                 "type": "state",
