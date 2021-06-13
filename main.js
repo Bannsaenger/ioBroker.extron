@@ -16,6 +16,7 @@ const utils = require('@iobroker/adapter-core');
 const fs = require('fs');
 // @ts-ignore
 const Client = require('ssh2').Client;
+//const Telnet = require('telnet-cient');
 // @ts-ignore
 const path = require('path');
 
@@ -80,9 +81,9 @@ class Extron extends utils.Adapter {
         this.playerLoaded = [false, false, false, false, false, false, false,false];    // remember which player has a file assigned
         this.auxOutEnabled = [false, false, false, false, false, false, false,false];   // remember which aux output is enabled
         this.fileSend = false;          // flag to signal a file is currently sended
-        this.requestDir = false;        // flag to signal a list user files command has been issued and a directory lst is to be received
-        this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize':''};
-        this.fileList = {'freeSpace' : '', 'files' : [this.file]};             // array to hold current file list
+        this.requestDir = false;        // flag to signal a list user files command has been issued and a directory list is to be received
+        this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize':''};         // file object
+        this.fileList = {'freeSpace' : '', 'files' : [this.file]};              // array to hold current file list
     }
 
     /**
@@ -1488,15 +1489,15 @@ class Extron extends utils.Adapter {
             //const fileExt = path.extname(filePath);
             const fileStats = fs.statSync(filePath);
             const fileStream = fs.createReadStream(filePath);
-            //const fileTimeStamp = fileStats.mtime.toJSON();
-            //const year = fileTimeStamp.slice(0,4);
-            //const month = fileTimeStamp.slice(5,7);
-            //const day = fileTimeStamp.slice(8,10);
-            //const hour = fileTimeStamp.slice(11,13);
-            //const minute = fileTimeStamp.slice(14,16);
-            //const second = fileTimeStamp.slice(17,19);
-            //const streamData = `W+UF${fileStats.size}*1 ${day} ${month} ${year} ${hour} ${minute} ${second},${fileName}\r`;
-            const streamData = `W+UF${fileStats.size},${fileName}\r`;
+            const fileTimeStamp = fileStats.mtime.toJSON();
+            const year = fileTimeStamp.slice(0,4);
+            const month = fileTimeStamp.slice(5,7);
+            const day = fileTimeStamp.slice(8,10);
+            const hour = fileTimeStamp.slice(11,13);
+            const minute = fileTimeStamp.slice(14,16);
+            const second = fileTimeStamp.slice(17,19);
+            const streamData = `W+UF${fileStats.size}*7 ${month} ${day} ${year} ${hour} ${minute} ${second},${fileName}\r`;
+            //const streamData = `W+UF${fileStats.size},${fileName}\r`;
             self.streamSend(streamData);
             fileStream.on('readable', function() {
                 while ((chunk=fileStream.read()) != null) {
@@ -1551,21 +1552,27 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             const userFileList = data.toString().split('\r\r\n');               // split the list into separate lines
-            let i = 1;
-            for (const userFile of userFileList) {                              // check each line
+            //const actFiles = userFileList.length;
+            let i;
+            for (i=1; i<= self.fileList.files.length; i++) {
                 await self.delObjectAsync(`fs.files.${i}.filename`);                  // delete filename state from database
-                await self.delObjectAsync(`fs.files.${i}`);                           // delete file object from database
+                await self.delObjectAsync(`fs.files.${i}`);                         // delete file object from database
+            }
+            i = 1;
+            for (const userFile of userFileList) {                              // check each line
                 if (self.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
                 else self.fileList.freeSpace = userFile.match(/(\d+\b Bytes Left)/g)?`${userFile.match(/(\d+\b Bytes Left)/g)[0]}`:'';     //check for last line containing remaining free space
                 if (self.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
                 self.file.fileName = userFile.match(/^(.+\.\w{3}\b)/g)?`${userFile.match(/^(.+\.\w{3}\b)/g)[0]}`:'';    // extract filename
                 self.file.timeStamp = userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)?`${userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)[0]}`:''; //extract timestamp
                 self.file.fileSize = userFile.match(/(\d+)$/g)?`${userFile.match(/(\d+)$/g)[0]}`:''; // extract filesize
-                self.fileList.files[i] = self.file;                             // add to filelist array
-                await self.setObjectNotExistsAsync(`fs.files.${i}`, self.objectsTemplate.userflash.files[0]);
-                await self.setObjectNotExistsAsync(`fs.files.${i}.filename`, self.objectsTemplate.userflash.files[1]);
-                self.setState(`fs.files.${i}.filename`, self.file.fileName, true);
-                i++;
+                if (self.file.fileName.match(/.raw$/)) {        // check if AudioFile
+                    self.fileList.files[i] = self.file;                             // add to filelist array
+                    await self.setObjectNotExistsAsync(`fs.files.${i}`, self.objectsTemplate.userflash.files[0]);
+                    await self.setObjectNotExistsAsync(`fs.files.${i}.filename`, self.objectsTemplate.userflash.files[1]);
+                    self.setState(`fs.files.${i}.filename`, self.file.fileName, true);
+                    i++;
+                }
             }
             this.setState('fs.freespace',self.fileList.freeSpace,true);
         } catch (err) {
