@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "extron",
-        "version": "0.1.4",
+        "version": "0.1.5",
         "news": {
             "0.0.1": {
                 "en": "initial release",
@@ -58,6 +58,10 @@
             "0.1.4": {
                 "en": "fixes on device communication CP82 / SMD202",
                 "de": "Fehlerkorrektur in der Gerätekommunikation für CP82 und SMD202"
+            },
+            "0.1.5": {
+                "en": "fixes on device communication SME211",
+                "de": "Fehlerkorrektur in der Gerätekommunikation für SME211"
             }
         },
         "title": "Extron SIS",
