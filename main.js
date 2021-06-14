@@ -437,7 +437,8 @@ class Extron extends utils.Adapter {
 
                         case 'VMT':             // received a video mute
                             self.log.silly(`Extron got video mute for output "${ext1}" value "${ext2}"`);
-                            self.setState(`connections.${ext1}.mute`, Number(ext2), true);
+                            if (self.devices[self.config.device].short === 'sme211') self.setState(`connections.1.mute`, Number(ext1), true);
+                            else self.setState(`connections.${ext1}.mute`, Number(ext2), true);
                             break;
 
                         case 'PLYRS' :          // received video playing
@@ -465,7 +466,7 @@ class Extron extends utils.Adapter {
                             self.setPlayVideo(`ply.players.1.common.`,Number(ext1));
                             break;
 
-                        case 'STRMY' :
+                        case 'STRM' :
                             self.log.silly(`Extron got streammode "${ext1}" value "${ext2}"`);
                             self.setStreamMode(`ply.players.1.common.`,Number(ext1));
                             break;
@@ -486,7 +487,7 @@ class Extron extends utils.Adapter {
                             break;
                     }
                 } else {
-                    if ((answer != 'Q') && (answer != '') && (self.fileSend === false) && !(answer.match(/\d\*\d\w+/))) {
+                    if ((answer != 'Q') && (answer != '') && (self.fileSend === false) && !(answer.match(/\d\*\d\w+/)) && !(answer.match(/\d\w/))) {
                         self.log.debug('Extron received data which cannot be handled "' + cmdPart + '"');
                     }
                 }
@@ -626,8 +627,8 @@ class Extron extends utils.Adapter {
             for (const element of self.objectsTemplate.common) {
                 await self.setObjectNotExistsAsync(element._id, element);
             }
-            // if cp82 : create video inputs and outputs
-            if (self.devices[self.config.device].short === 'cp82') {
+            // if cp82 or sme211 : create video inputs and outputs
+            if ((self.devices[self.config.device].short === 'cp82') || (self.devices[self.config.device].short === 'sme211')) {
                 for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].connections) {
                     await self.setObjectNotExistsAsync(element._id, element);
                 }
@@ -848,12 +849,15 @@ class Extron extends utils.Adapter {
                     const id = self.stateList[index];
                     const baseId = id.substr(0, id.lastIndexOf('.'));
                     const stateName = id.substr(id.lastIndexOf('.') + 1);
+                    const idArray = id.split('.');
+                    const idType = idArray[2];
 
                     if (typeof(baseId) !== 'undefined' && baseId !== null) {
                         // @ts-ignore
                         switch (stateName) {
                             case 'mute' :
-                                self.getMuteStatus(id);
+                                if (idType === 'connections') self.getVideoMute(id);
+                                else self.getMuteStatus(id);
                                 break;
 
                             case 'source' :
@@ -972,7 +976,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'streammode' :
-                                self.sendStreamMode(baseId, Number(state));
+                                self.sendStreamMode(Number(state));
                                 break;
                         }
                     }
@@ -1217,10 +1221,28 @@ class Extron extends utils.Adapter {
     sendGainLevel(baseId, value) {
         const self = this;
         try {
-            const oid = self.id2oid(baseId);
+            let oid = self.id2oid(baseId);
             if (oid) {
-                const sendData = `WG${oid}*${value.devValue}AU\r`;
+                let sendData = `WG${oid}*${value.devValue}AU\r`;
                 self.streamSend(sendData);
+                if (self.devices[self.config.device].short === 'sme211') { // on SME211 we have stereo controls
+                    switch (Number(oid)) {
+                        case 40000 :
+                            oid = '40001';
+                            break;
+                        case 40001 :
+                            oid = '40000';
+                            break;
+                        case 40002 :
+                            oid = '40003';
+                            break;
+                        case 40003 :
+                            oid = '40002';
+                            break;
+                    }
+                    sendData = `WG${oid}*${value.devValue}AU\r`;
+                    self.streamSend(sendData);
+                }
             }
         } catch (err) {
             this.errorHandler(err, 'sendGainLevel');
@@ -1644,16 +1666,35 @@ class Extron extends utils.Adapter {
         try {
             const idArray = baseId.split('.');
             if (idArray[2] === 'connections') {         // video.output
-                self.streamSend(`${idArray[3]}*${value}B\r`);
+                if (self.devices[self.config.device].short === 'sme211') self.streamSend(`${value}B\r`);
+                else self.streamSend(`${idArray[3]}*${value}B\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendVideoMute');
         }
     }
 
+    /**
+     * get Video mute status from device
+     * @param {string} baseId
+     */
+    getVideoMute(baseId) {
+        const self = this;
+        try {
+            const idArray = baseId.split('.');
+            if (idArray[2] === 'connections') {         // video.output
+                if (self.devices[self.config.device].short === 'sme211') self.streamSend(`B\r`);
+                else self.streamSend(`${idArray[3]}*B\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'getVideoMute');
+        }
+    }
+
+
     /** END CP83 Video control */
 
-    /** BEGIN SMD2020 Video Player control */
+    /** BEGIN SMD202 Video Player control */
     /** send start payback command
      * cmd = WS1*1PLYR
      */
@@ -1798,14 +1839,13 @@ class Extron extends utils.Adapter {
 
     /** BEGIN SME211 stream control */
     /** send streaming mode to device
-     * @param {string} id
      * @param {number} mode
      *  cmd = Y[mode]STRM
     */
-    sendStreamMode(id, mode) {
+    sendStreamMode(mode) {
         const self = this;
         try {
-            self.streamSend(`${self.id2oid(id)}Y${mode}STRM\r`);
+            self.streamSend(`WY${mode}STRM\r`);
         } catch (err) {
             this.errorHandler(err, 'sendStreamMode');
         }
@@ -1830,7 +1870,7 @@ class Extron extends utils.Adapter {
     getStreamMode() {
         const self = this;
         try {
-            self.streamSend('YSTRM\r');
+            self.streamSend('WYSTRM\r');
         } catch (err) {
             this.errorHandler(err, 'getStreamMode');
         }
@@ -2294,7 +2334,7 @@ class Extron extends utils.Adapter {
                                 self.sendVideoFile(baseId, state.val.toString());
                                 break;
                             case 'streammode' :
-                                self.setStreamMode(baseId, Number(state.val));
+                                self.sendStreamMode(Number(state.val));
                                 break;
 
                             case 'dir' :

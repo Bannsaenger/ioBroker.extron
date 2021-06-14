@@ -1570,6 +1570,39 @@
         ]
     },
     "sme211" :{
+        "connection": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "Tie and control in and outputs"
+            },
+            "native": {}
+        },
+        "connections": [
+            {
+                "_id": "connections.1",
+                "type": "channel",
+                "common": {
+                    "role": "video.output",
+                    "name": "Output 1 (HDMI)"
+                },
+                "native": {}
+            },
+            {
+                "_id": "connections.1.mute",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "Video mute status ouf the output",
+                    "type": "number",
+                    "states": "0:unmute;1:mute video to black;2:mute video and sync",
+                    "read": true,
+                    "write": true,
+                    "def": 0
+                },
+                "native": {}
+            }
+        ],
         "input": {
             "_id": "0",
             "type": "folder",
@@ -1628,21 +1661,6 @@
                     "min": -18.0,
                     "max": 24.0,
                     "def": -18.0
-                },
-                "native": {}
-            },
-            {
-                "_id": "gain.source",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "selects the input source",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min" : 0,
-                    "max" : 48,
-                    "def": 0
                 },
                 "native": {}
             }

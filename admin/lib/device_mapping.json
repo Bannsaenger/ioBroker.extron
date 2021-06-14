@@ -66,13 +66,26 @@
         "name" : "SME 211",
         "short" : "sme211",
         "objects" : [
-            "common"
+            "common",
+            "sme211"
         ],
         "in" : {
             "inputs" : {
                 "name" : "Inputs",
                 "short" : "I",
                 "amount" : 4
+            }
+        },
+        "ply" : {
+            "players": {
+                "name" : "Video Player",
+                "short" : "P",
+                "amount" : 1
+            }
+        },
+        "fs" :{
+            "files": {
+                "name" : "Flash Memory"
             }
         }
     },
@@ -127,6 +140,11 @@
             "expansionOutputs" : {
                 "short" : "E",
                 "amount" : 16
+            }
+        },
+        "fs" :{
+            "files": {
+                "name" : "Flash Memory"
             }
         }
     },
