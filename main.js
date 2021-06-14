@@ -163,7 +163,8 @@ class Extron extends utils.Adapter {
                 'password': self.config.pass,
                 'keepaliveInterval': 5000,
                 // @ts-ignore
-                'debug': self.debugSSH ? self.log.silly : undefined,
+                'debug': self.debugSSH ? this.log.silly.bind(this) : undefined,
+                //'debug': true,
                 'readyTimeout': 5000,
                 'tryKeyboard': true
             });
@@ -304,7 +305,7 @@ class Extron extends utils.Adapter {
      */
     async onStreamData(data) {
         const self = this;
-        if (self.fileSend) return;
+        if (self.fileSend) return; // do nothing during file transmission
         try {
             self.log.debug('Extron got data: "' + self.decodeBufferToLog(data) + '"');
 
@@ -470,16 +471,18 @@ class Extron extends utils.Adapter {
                             break;
 
                         case 'UPL' :
+                            self.fileSend = false;   // reset file transmission flag
                             self.log.silly(`Extron got upload file confirmation command size: "${ext1}" name: "${ext2}"`);
                             self.log.silly(`Extron requesting current user file list`);
                             self.listUserFiles();
                             break;
                         case 'WDF' :
                             self.log.debug(`Extron got list directory command`);
-                            self.requestDir = true;
+                            self.requestDir = true;     // set directory transmission flag
                             break;
-                        case '+UF' :
+                        case 'W+UF' :
                             self.log.debug(`Extron got upload file command: ${ext1} ${ext2}`);
+                            self.fileSend = true;   // set file transmission flag
                             break;
                     }
                 } else {
@@ -567,9 +570,10 @@ class Extron extends utils.Adapter {
      */
     onStreamClose() {
         const self = this;
+        self.log.debug('onStreamClose clear query timer');
         this.clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
         try {
-            self.log.info('Extron stream closed');
+            self.log.info('Extron stream closed calling client.end()');
             self.client.end();
         } catch (err) {
             this.errorHandler(err, 'onStreamClose');
@@ -1489,6 +1493,7 @@ class Extron extends utils.Adapter {
             //const fileExt = path.extname(filePath);
             const fileStats = fs.statSync(filePath);
             const fileStream = fs.createReadStream(filePath);
+            fileStream.setEncoding('binary');
             const fileTimeStamp = fileStats.mtime.toJSON();
             const year = fileTimeStamp.slice(0,4);
             const month = fileTimeStamp.slice(5,7);
@@ -1499,12 +1504,14 @@ class Extron extends utils.Adapter {
             const streamData = `W+UF${fileStats.size}*7 ${month} ${day} ${year} ${hour} ${minute} ${second},${fileName}\r`;
             //const streamData = `W+UF${fileStats.size},${fileName}\r`;
             self.streamSend(streamData);
+            //self.log.debug('stream pipe start');
+            //fileStream.pipe(this.stream);
             fileStream.on('readable', function() {
                 while ((chunk=fileStream.read()) != null) {
                     if (!self.fileSend) self.log.debug('loadUserFile started');
                     self.streamSend(chunk);
                     self.fileSend = true;
-                    self.timers.timeoutQueryStatus.refresh();
+                    //self.timers.timeoutQueryStatus.refresh();
                 }
                 //self.fileSend = false;
             });
@@ -1647,7 +1654,7 @@ class Extron extends utils.Adapter {
 
     /** BEGIN SMD2020 Video Player control */
     /** send start payback command
-     * cmd = S1*1PLYR
+     * cmd = WS1*1PLYR
      */
     sendPlayVideo() {
         const self = this;
@@ -1664,7 +1671,7 @@ class Extron extends utils.Adapter {
     sendPauseVideo() {
         const self = this;
         try {
-            self.streamSend('WE11PLYR\r');
+            self.streamSend('WE1PLYR\r');
         } catch (err) {
             this.errorHandler(err, 'sendPauseVideo');
         }
@@ -1754,7 +1761,7 @@ class Extron extends utils.Adapter {
     sendVideoFile(id, path) {
         const self = this;
         try {
-            self.streamSend(`${self.id2oid(id)}*${path}PLYR\r`);
+            self.streamSend(`WU${self.id2oid(id)}*${path}PLYR\r`);
         } catch (err) {
             this.errorHandler(err, 'sendVideoFile');
         }
@@ -2169,7 +2176,7 @@ class Extron extends utils.Adapter {
             // clearTimeout(timeout1);
             // clearTimeout(timeout2);
             // ...
-            clearInterval(this.timers.intervallQueryStatus);
+            clearTimeout(this.timers.intervallQueryStatus);
 
             // close client connection
             this.client.end();
@@ -2258,7 +2265,14 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'playmode' :
-                                self.sendPlayMode(id, state.val);
+                                if (self.devices[self.config.device].short === 'smd202') {
+                                    switch (state.val) {
+                                        case 0: self.sendStopVideo(); break;
+                                        case 1: self.sendPlayVideo(); break;
+                                        case 2: self.sendPauseVideo(); break;
+                                    }
+                                }
+                                else self.sendPlayMode(id, state.val);
                                 break;
 
                             case 'repeatmode' :
