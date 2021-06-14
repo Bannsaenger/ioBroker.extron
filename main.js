@@ -486,7 +486,7 @@ class Extron extends utils.Adapter {
                             break;
                     }
                 } else {
-                    if ((answer != 'Q') && (answer != '') && (self.fileSend === false) && !(answer.match(/\d\*\di/))) {
+                    if ((answer != 'Q') && (answer != '') && (self.fileSend === false) && !(answer.match(/\d\*\d\w+/))) {
                         self.log.debug('Extron received data which cannot be handled "' + cmdPart + '"');
                     }
                 }
@@ -1623,9 +1623,10 @@ class Extron extends utils.Adapter {
             const idArray = baseId.split('.');
             if (idArray[2] === 'connections') {         // video.output
                 if (Number(idArray[3]) <= 2) {
-                    self.streamSend(`${value}*${idArray[3]}!\r`);
+                    self.streamSend(`${value}*${idArray[3]}!\r`);   // tie input 'value' to output 'idArray[3]'
                 } else {
-                    self.streamSend(`W${value}LOUT\r`);
+                    if (value > 0) self.streamSend(`W${value}LOUT\r`);  // set loop out input to 'value'
+                    else self.streamSend(`${value}*${idArray[3]}!\r`);  // untie loopOut
                 }
             }
         } catch (err) {

@@ -944,10 +944,10 @@
                     "role": "value",
                     "name": "Tied a/v input for this output",
                     "type": "number",
-                    "states": "0:untied;1:1 DP;2:2 HDMI;3:3 HDMI;4:4 HDMI;5:5 HDMI;6:6 HDMI;7:7 DTP2;8:8 DTP2",
+                    "states": "1:1 DP;2:2 HDMI;3:3 HDMI;4:4 HDMI;5:5 HDMI;6:6 HDMI;7:7 DTP2;8:8 DTP2",
                     "read": true,
                     "write": true,
-                    "def": 0
+                    "def": 1
                 },
                 "native": {}
             },

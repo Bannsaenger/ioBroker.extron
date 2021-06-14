@@ -1,6 +1,6 @@
 {
   "name": "iobroker.extron",
-  "version": "0.1.3",
+  "version": "0.1.4",
   "description": "Extron SIS adapter",
   "author": "Bannsaenger <bannsaenger@gmx.de>",
   "homepage": "https://github.com/Bannsaenger/ioBroker.extron",
