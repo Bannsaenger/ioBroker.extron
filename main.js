@@ -84,6 +84,7 @@ class Extron extends utils.Adapter {
         this.requestDir = false;        // flag to signal a list user files command has been issued and a directory list is to be received
         this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize':''};         // file object
         this.fileList = {'freeSpace' : '', 'files' : [this.file]};              // array to hold current file list
+        this.stateBuf = [{'id': {'timestamp' :''}}];
     }
 
     /**
@@ -401,6 +402,15 @@ class Extron extends utils.Adapter {
                         case 'DSD':             //received a set source command
                             self.log.silly(`Extron got source ${command} from OID: "${ext1}" value: "${ext2}"`);
                             self.setSource(ext1, ext2);
+                            break;
+
+                        case 'DSE' :            //received a limiter status change
+                            self.log.silly(`Extron got a limiter status change from OID : "${ext1}" value: "${ext2}"`);
+                            self.setLimitStatus(ext1, ext2);
+                            break;
+                        case 'DST' :            //received a limiter threshold change
+                            self.log.silly(`Extron got a limiter threshold change from OID : "${ext1}" value: "${ext2}"`);
+                            self.setLimitThreshold(ext1, ext2);
                             break;
 
                         case 'PLAY':             //received a play mode command
@@ -1329,6 +1339,106 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'getInputName');
         }
     }
+
+    /**
+     * set limiter status in database
+     * @param {string} oid
+     * @param {string | number} value
+     */
+    setLimitStatus(oid, value) {
+        const self = this;
+        try {
+            const channel = self.oid2id(oid);
+            self.setState(`${channel}status`, Number(value), true);
+        } catch (err) {
+            this.errorHandler(err, 'setLimitStatus');
+        }
+    }
+
+    /**
+     * get limiter status
+     * @param {string} baseId
+     * cmd WE[oid]AU
+     */
+    getLimitStatus(baseId) {
+        const self = this;
+        try {
+            const oid = self.id2oid(`${baseId}.status`);
+            if (oid) {
+                self.streamSend(`WE${oid}AU\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'getLimitStatus');
+        }
+    }
+
+    /**
+     * send Limiter status to device
+     * @param {string} baseId
+     * @param {string | any} value
+     * cmd WE[oid]*[0/1]AU
+     */
+    sendLimitStatus(baseId, value) {
+        const self = this;
+        try {
+            const oid = self.id2oid(baseId);
+            if (oid) {
+                self.streamSend(`WE${oid}*${value ? '1' : '0'}AU\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendLimitStatus');
+        }
+    }
+
+    /**
+     * set limiter threshold in database
+     * @param {string} oid
+     * @param {string | any} value
+     */
+    setLimitThreshold(oid, value) {
+        const self = this;
+        try {
+            const channel = self.oid2id(oid);
+            self.setState(`${channel}threshold`, Number(value), true);
+        } catch (err) {
+            this.errorHandler(err, 'setLimitThreshold');
+        }
+    }
+
+    /**
+     * get limiter threshold from device
+     * @param {string} baseId
+     * cmd WT[oid]AU
+     */
+    getLimitThreshold(baseId) {
+        const self = this;
+        try {
+            const oid = self.id2oid(`${baseId}.status`);
+            if (oid) {
+                self.streamSend(`WT${oid}AU\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'getLimitThreshold');
+        }
+    }
+
+    /**
+     * send new Limiter Threshold to device
+     * @param {string} baseId
+     * @param {string | any} value
+     * cmd WT[oid]*[value]AU
+     */
+    sendLimitThreshold(baseId, value) {
+        const self = this;
+        try {
+            const oid = self.id2oid(baseId);
+            if (oid) {
+                self.streamSend(`WT${oid}*${value}AU\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendLimitThreshold');
+        }
+    }
     /** END Input and Mix control */
 
     /** BEGIN integrated audio player control */
@@ -2019,6 +2129,17 @@ class Extron extends utils.Adapter {
                                 return `out.expansionOutputs.${('00' + (val - 15).toString()).slice(-2)}.postmix.`;
                             }
                         }
+                        if (where === 4) {          // limiter block
+                            if (val <= 7) {         // output 1 - 8
+                                return `out.outputs.${('00' + (val + 1).toString()).slice(-2)}.limiter.`;
+                            }
+                            if (val <= 15) {        // aux output 1 - 8
+                                return `out.auxOutputs.${('00' + (val - 7).toString()).slice(-2)}.limiter.`;
+                            }
+                            if (val <= 31) {        // expansion output 1-16
+                                return `out.expansionOutputs.${('00' + (val - 15).toString()).slice(-2)}.limiter.`;
+                            }
+                        }
                         throw { 'message': 'no known output',
                             'stack'  : `oid: ${oid}` };
 
@@ -2109,27 +2230,42 @@ class Extron extends utils.Adapter {
                             break;
 
                         case 'outputs' :
-                            if (idBlock === 'attenuation') {
-                                retOid = `600${('00' + (idNumber - 1).toString()).slice(-2)}`;
-                                if (self.devices[self.config.device].short === 'cp82') retOid = `600${('00' + (idNumber +1).toString()).slice(-2)}`; // output OID count starts at 2 on CP82
-                            } else {
-                                retOid = `601${('00' + (idNumber - 1).toString()).slice(-2)}`;
+                            switch (idBlock) {
+                                case 'attenuation' :
+                                    retOid = `600${('00' + (idNumber - 1).toString()).slice(-2)}`;
+                                    if (self.devices[self.config.device].short === 'cp82') retOid = `600${('00' + (idNumber +1).toString()).slice(-2)}`; // output OID count starts at 2 on CP82
+                                    break;
+                                case 'limiter' :
+                                    retOid = `640${('00' + (idNumber - 1).toString()).slice(-2)}`;
+                                    break;
+                                default:
+                                    retOid = `601${('00' + (idNumber - 1).toString()).slice(-2)}`;
                             }
                             break;
 
                         case 'auxOutputs' :
-                            if (idBlock === 'attenuation') {
-                                retOid = `600${('00' + (idNumber + 7).toString()).slice(-2)}`;
-                            } else {
-                                retOid = `601${('00' + (idNumber + 7).toString()).slice(-2)}`;
+                            switch (idBlock) {
+                                case 'attenuation' :
+                                    retOid = `600${('00' + (idNumber + 7).toString()).slice(-2)}`;
+                                    break;
+                                case 'limiter' :
+                                    retOid = `640${('00' + (idNumber + 7).toString()).slice(-2)}`;
+                                    break;
+                                default :
+                                    retOid = `601${('00' + (idNumber + 7).toString()).slice(-2)}`;
                             }
                             break;
 
                         case 'expansionOutputs' :
-                            if (idBlock === 'attenuation') {
-                                retOid = `600${('00' + (idNumber + 15).toString()).slice(-2)}`;
-                            } else {
-                                retOid = `601${('00' + (idNumber + 15).toString()).slice(-2)}`;
+                            switch (idBlock) {
+                                case 'attenuation' :
+                                    retOid = `600${('00' + (idNumber + 15).toString()).slice(-2)}`;
+                                    break;
+                                case 'limiter' :
+                                    retOid = `640${('00' + (idNumber + 15).toString()).slice(-2)}`;
+                                    break;
+                                default:
+                                    retOid = `601${('00' + (idNumber + 15).toString()).slice(-2)}`;
                             }
                             break;
 
@@ -2247,9 +2383,9 @@ class Extron extends utils.Adapter {
                     const idType = idArray[3];
                     const idBlock = idArray[5];
                     const stateName = id.substr(id.lastIndexOf('.') + 1);
+                    const timestamp = Date.now();
                     let calcMode ='lin';
                     if (typeof(baseId) !== 'undefined' && baseId !== null) {
-                        // @ts-ignore
                         switch (stateName) {
                             case 'mute' :
                                 if (idArray[2] === 'connections') {
@@ -2260,6 +2396,7 @@ class Extron extends utils.Adapter {
                                 self.sendSource(id, state.val.toString());
                                 break;
                             case 'level' :
+                                //if ( timeStamp > self.stateBuf.`${id}`.timestamp +50) {
                                 switch (idBlock) {
                                     case 'gain' :
                                         calcMode = 'linGain';
@@ -2279,7 +2416,9 @@ class Extron extends utils.Adapter {
                                         calcMode = 'linAtt';
                                         break;
                                 }
+                                // self.stateBuf.`${id}`.timestamp = timeStamp;
                                 self.sendGainLevel(id,self.calculateFaderValue(state.val.toString(),calcMode));
+                                //}
                                 break;
                             case 'level_db' :
                                 calcMode ='log';
@@ -2303,6 +2442,16 @@ class Extron extends utils.Adapter {
                                         break;
                                 }
                                 self.sendGainLevel(id,self.calculateFaderValue(state.val.toString(),calcMode));
+                                break;
+                            case 'limiter' :
+                                switch (idBlock){
+                                    case 'status' :
+                                        self.sendLimitStatus(id, state.val);
+                                        break;
+                                    case 'threshold':
+                                        self.sendLimitThreshold(id, (state.val < -800)?-800:(state.val>-5)?-5:state.val);
+                                        break;
+                                }
                                 break;
 
                             case 'playmode' :

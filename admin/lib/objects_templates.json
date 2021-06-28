@@ -590,6 +590,43 @@
                 "native": {}
             },
             {
+                "_id": "limiter",
+                "type": "channel",
+                "common": {
+                    "role": "output.channel",
+                    "name": "Common output parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "limiter.threshold",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "limiter threshold from -80 to -0,5db in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -800,
+                    "max": -5,
+                    "def": -100
+                },
+                "native": {}
+            },
+            {
+                "_id": "limiter.status",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "if true limiter is active",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": false
+                },
+                "native": {}
+            },
+            {
                 "_id": "attenuation",
                 "type": "channel",
                 "common": {
@@ -679,6 +716,43 @@
                     "min": -12.0,
                     "max": 12.0,
                     "def": -12.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "limiter",
+                "type": "channel",
+                "common": {
+                    "role": "output.channel",
+                    "name": "Common output parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "limiter.threshold",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "limiter threshold from -80 to -0,5db in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -800,
+                    "max": -5,
+                    "def": -100
+                },
+                "native": {}
+            },
+            {
+                "_id": "limiter.status",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "if true limiter is active",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": false
                 },
                 "native": {}
             },
@@ -787,6 +861,43 @@
                     "min": -12.0,
                     "max": 12.0,
                     "def": -12.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "limiter",
+                "type": "channel",
+                "common": {
+                    "role": "output.channel",
+                    "name": "Common output parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "limiter.threshold",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "limiter threshold from -80 to -0,5db in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -800,
+                    "max": -5,
+                    "def": -100
+                },
+                "native": {}
+            },
+            {
+                "_id": "limiter.status",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "if true limiter is active",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": false
                 },
                 "native": {}
             },
