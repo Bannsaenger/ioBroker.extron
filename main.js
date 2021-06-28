@@ -39,6 +39,7 @@ const errCodes = {
 };
 const maxPollCount = 10;
 
+
 class Extron extends utils.Adapter {
 
     /**
@@ -84,7 +85,8 @@ class Extron extends utils.Adapter {
         this.requestDir = false;        // flag to signal a list user files command has been issued and a directory list is to be received
         this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize':''};         // file object
         this.fileList = {'freeSpace' : '', 'files' : [this.file]};              // array to hold current file list
-        this.stateBuf = [{'id': {'timestamp' :''}}];
+        this.stateBuf = [{'id': '', 'timestamp' : 0}];
+        this.stateDelay = 50;           // milliseconds between states send to device
     }
 
     /**
@@ -2383,7 +2385,8 @@ class Extron extends utils.Adapter {
                     const idType = idArray[3];
                     const idBlock = idArray[5];
                     const stateName = id.substr(id.lastIndexOf('.') + 1);
-                    const timestamp = Date.now();
+                    const timeStamp = Date.now();
+                    let stateTime;
                     let calcMode ='lin';
                     if (typeof(baseId) !== 'undefined' && baseId !== null) {
                         switch (stateName) {
@@ -2396,29 +2399,30 @@ class Extron extends utils.Adapter {
                                 self.sendSource(id, state.val.toString());
                                 break;
                             case 'level' :
-                                //if ( timeStamp > self.stateBuf.`${id}`.timestamp +50) {
-                                switch (idBlock) {
-                                    case 'gain' :
-                                        calcMode = 'linGain';
-                                        if (idType === 'auxInputs') calcMode = 'linAux';
-                                        if (self.devices[self.config.device].short === 'sme211') calcMode = 'linAux';
-                                        break;
+                                stateTime = self.stateBuf.find(stateTime => stateTime.id === id)?self.stateBuf.find(stateTime => stateTime.id === id):self.stateBuf[self.stateBuf.push({'id' : id, 'timestamp' : 0})];
+                                if ( timeStamp > (stateTime.timestamp + self.stateDelay)) {
+                                    switch (idBlock) {
+                                        case 'gain' :
+                                            calcMode = 'linGain';
+                                            if (idType === 'auxInputs') calcMode = 'linAux';
+                                            if (self.devices[self.config.device].short === 'sme211') calcMode = 'linAux';
+                                            break;
 
-                                    case 'premix' :
-                                        if (self.devices[self.config.device].short === 'cp82') calcMode = 'linAux';
-                                        break;
+                                        case 'premix' :
+                                            if (self.devices[self.config.device].short === 'cp82') calcMode = 'linAux';
+                                            break;
 
-                                    case 'postmix' :
-                                        calcMode = 'linTrim';
-                                        break;
+                                        case 'postmix' :
+                                            calcMode = 'linTrim';
+                                            break;
 
-                                    case 'attenuation' :
-                                        calcMode = 'linAtt';
-                                        break;
+                                        case 'attenuation' :
+                                            calcMode = 'linAtt';
+                                            break;
+                                    }
+                                    stateTime.timestamp = timeStamp;
+                                    self.sendGainLevel(id,self.calculateFaderValue(state.val.toString(),calcMode));
                                 }
-                                // self.stateBuf.`${id}`.timestamp = timeStamp;
-                                self.sendGainLevel(id,self.calculateFaderValue(state.val.toString(),calcMode));
-                                //}
                                 break;
                             case 'level_db' :
                                 calcMode ='log';
@@ -2443,15 +2447,12 @@ class Extron extends utils.Adapter {
                                 }
                                 self.sendGainLevel(id,self.calculateFaderValue(state.val.toString(),calcMode));
                                 break;
-                            case 'limiter' :
-                                switch (idBlock){
-                                    case 'status' :
-                                        self.sendLimitStatus(id, state.val);
-                                        break;
-                                    case 'threshold':
-                                        self.sendLimitThreshold(id, (state.val < -800)?-800:(state.val>-5)?-5:state.val);
-                                        break;
-                                }
+
+                            case 'status' :
+                                self.sendLimitStatus(id, state.val);
+                                break;
+                            case 'threshold':
+                                self.sendLimitThreshold(id, (state.val < -800)?-800:(state.val>-5)?-5:state.val);
                                 break;
 
                             case 'playmode' :
