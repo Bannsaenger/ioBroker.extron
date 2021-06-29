@@ -86,7 +86,6 @@ class Extron extends utils.Adapter {
         this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize':''};         // file object
         this.fileList = {'freeSpace' : '', 'files' : [this.file]};              // array to hold current file list
         this.stateBuf = [{'id': '', 'timestamp' : 0}];
-        this.stateDelay = 50;           // milliseconds between states send to device
     }
 
     /**
@@ -407,7 +406,7 @@ class Extron extends utils.Adapter {
                             break;
 
                         case 'DSE' :            //received a limiter status change
-                            self.log.silly(`Extron got a limiter status change from OID : "${ext1}" value: "${ext2}"`);
+                            self.log.silly(`Extron got a limiter status change from OID : "${ext1}" value: "-${ext2}"`);
                             self.setLimitStatus(ext1, ext2);
                             break;
                         case 'DST' :            //received a limiter threshold change
@@ -1401,7 +1400,7 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             const channel = self.oid2id(oid);
-            self.setState(`${channel}threshold`, Number(value), true);
+            self.setState(`${channel}threshold`, Number(0-value), true);
         } catch (err) {
             this.errorHandler(err, 'setLimitThreshold');
         }
@@ -2131,7 +2130,7 @@ class Extron extends utils.Adapter {
                                 return `out.expansionOutputs.${('00' + (val - 15).toString()).slice(-2)}.postmix.`;
                             }
                         }
-                        if (where === 4) {          // limiter block
+                        if (where === 40) {          // limiter block
                             if (val <= 7) {         // output 1 - 8
                                 return `out.outputs.${('00' + (val + 1).toString()).slice(-2)}.limiter.`;
                             }
@@ -2386,8 +2385,9 @@ class Extron extends utils.Adapter {
                     const idBlock = idArray[5];
                     const stateName = id.substr(id.lastIndexOf('.') + 1);
                     const timeStamp = Date.now();
-                    let stateTime;
+                    let stateTime = self.stateBuf[0];
                     let calcMode ='lin';
+                    let elapsed = 0;
                     if (typeof(baseId) !== 'undefined' && baseId !== null) {
                         switch (stateName) {
                             case 'mute' :
@@ -2399,8 +2399,13 @@ class Extron extends utils.Adapter {
                                 self.sendSource(id, state.val.toString());
                                 break;
                             case 'level' :
-                                stateTime = self.stateBuf.find(stateTime => stateTime.id === id)?self.stateBuf.find(stateTime => stateTime.id === id):self.stateBuf[self.stateBuf.push({'id' : id, 'timestamp' : 0})];
-                                if ( timeStamp > (stateTime.timestamp + self.stateDelay)) {
+                                stateTime = self.stateBuf.find(stateTime => stateTime.id === id);   // check if state has already been buffered
+                                if (stateTime === undefined) {
+                                    self.stateBuf.push({'id' : id, 'timestamp' : 0});               // push state to buffer array
+                                    stateTime = self.stateBuf.find(stateTime => stateTime.id === id); // now it should be found
+                                }
+                                elapsed = timeStamp - stateTime.timestamp;  // calcualte elapsed milliseconds since last change
+                                if ( elapsed > self.config.stateDelay) {    // if configured stateDelay has been exceeded, process the change event
                                     switch (idBlock) {
                                         case 'gain' :
                                             calcMode = 'linGain';
@@ -2420,7 +2425,7 @@ class Extron extends utils.Adapter {
                                             calcMode = 'linAtt';
                                             break;
                                     }
-                                    stateTime.timestamp = timeStamp;
+                                    stateTime.timestamp = timeStamp;    // update stored timestamp
                                     self.sendGainLevel(id,self.calculateFaderValue(state.val.toString(),calcMode));
                                 }
                                 break;
@@ -2452,7 +2457,7 @@ class Extron extends utils.Adapter {
                                 self.sendLimitStatus(id, state.val);
                                 break;
                             case 'threshold':
-                                self.sendLimitThreshold(id, (state.val < -800)?-800:(state.val>-5)?-5:state.val);
+                                self.sendLimitThreshold(id, Math.abs(Number((state.val < -800)?-800:(state.val>0)?0:state.val)));
                                 break;
 
                             case 'playmode' :

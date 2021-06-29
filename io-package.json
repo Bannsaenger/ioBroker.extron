@@ -127,7 +127,8 @@
         "reconnectDelay": 30000,
         "answerTimeout": 500,
         "inactivityTimeout": 100000,
-        "pushDeviceStatus": true
+        "pushDeviceStatus": true,
+        "stateDelay" : 50
     },
     "objects": [],
     "instanceObjects": [

@@ -603,12 +603,12 @@
                 "type": "state",
                 "common": {
                     "role": "level.volume",
-                    "name": "limiter threshold from -80 to -0,5db in 0.1 db steps",
+                    "name": "limiter threshold from -80 to 0db in 0.1 db steps",
                     "type": "number",
                     "read": true,
                     "write": true,
                     "min": -800,
-                    "max": -5,
+                    "max": 0,
                     "def": -100
                 },
                 "native": {}
@@ -733,12 +733,12 @@
                 "type": "state",
                 "common": {
                     "role": "level.volume",
-                    "name": "limiter threshold from -80 to -0,5db in 0.1 db steps",
+                    "name": "limiter threshold from -80 to 0db in 0.1 db steps",
                     "type": "number",
                     "read": true,
                     "write": true,
                     "min": -800,
-                    "max": -5,
+                    "max": 0,
                     "def": -100
                 },
                 "native": {}
@@ -878,12 +878,12 @@
                 "type": "state",
                 "common": {
                     "role": "level.volume",
-                    "name": "limiter threshold from -80 to -0,5db in 0.1 db steps",
+                    "name": "limiter threshold from -80 to 0db in 0.1 db steps",
                     "type": "number",
                     "read": true,
                     "write": true,
                     "min": -800,
-                    "max": -5,
+                    "max": 0,
                     "def": -100
                 },
                 "native": {}

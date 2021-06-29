@@ -60,6 +60,9 @@
             if (settings.pushDeviceStatus === undefined) {
                 settings.pushDeviceStatus = true;
             }
+            if (settings.stateDelay === undefined) {
+                settings.stateDelay = 50;
+            }
             $('.value').each(function () {
                 var $key = $(this);
                 var id = $key.attr('id');
@@ -132,7 +135,8 @@
             "reconnectDelay": 30000,
             "answerTimeout": 500,
             "inactivityTimeout": 100000,
-            "pushDeviceStatus" : false
+            "pushDeviceStatus" : false,
+            "stateDelay" : 50
 
         -->
         <!-- For example columns with settings: -->
@@ -208,6 +212,10 @@
                     <option value="false" class="translate">Beim Start Gerätekonfiguration abfragen und in die Datenbank übertragen</option>
                 </select>
                 <label for="pushDeviceStatus" class="translate">pushDeviceStatus</label>
+            </div>
+            <div class="col s12 m6 l4 input-field">
+                <input type="number" min="0" max="100000" class="value" id="stateDelay" />
+                <label for="stateDelay" class="translate">stateDelay ms</label>
             </div>
         </div>
 
