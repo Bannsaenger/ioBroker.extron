@@ -1701,10 +1701,14 @@ class Extron extends utils.Adapter {
             i = 1;
             for (const userFile of userFileList) {                              // check each line
                 if (self.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
+                // @ts-ignore
                 else self.fileList.freeSpace = userFile.match(/(\d+\b Bytes Left)/g)?`${userFile.match(/(\d+\b Bytes Left)/g)[0]}`:'';     //check for last line containing remaining free space
                 if (self.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
+                // @ts-ignore
                 self.file.fileName = userFile.match(/^(.+\.\w{3}\b)/g)?`${userFile.match(/^(.+\.\w{3}\b)/g)[0]}`:'';    // extract filename
+                // @ts-ignore
                 self.file.timeStamp = userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)?`${userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)[0]}`:''; //extract timestamp
+                // @ts-ignore
                 self.file.fileSize = userFile.match(/(\d+)$/g)?`${userFile.match(/(\d+)$/g)[0]}`:''; // extract filesize
                 if (self.file.fileName.match(/.raw$/)) {        // check if AudioFile
                     self.fileList.files[i] = self.file;                             // add to filelist array
@@ -2399,9 +2403,11 @@ class Extron extends utils.Adapter {
                                 self.sendSource(id, state.val.toString());
                                 break;
                             case 'level' :
+                                // @ts-ignore
                                 stateTime = self.stateBuf.find(stateTime => stateTime.id === id);   // check if state has already been buffered
                                 if (stateTime === undefined) {
                                     self.stateBuf.push({'id' : id, 'timestamp' : 0});               // push state to buffer array
+                                    // @ts-ignore
                                     stateTime = self.stateBuf.find(stateTime => stateTime.id === id); // now it should be found
                                 }
                                 elapsed = timeStamp - stateTime.timestamp;  // calcualte elapsed milliseconds since last change
