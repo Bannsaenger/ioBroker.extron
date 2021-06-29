@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "extron",
-        "version": "0.1.5",
+        "version": "0.1.6",
         "news": {
             "0.0.1": {
                 "en": "initial release",
@@ -62,6 +62,10 @@
             "0.1.5": {
                 "en": "fixes on device communication SME211",
                 "de": "Fehlerkorrektur in der Gerätekommunikation für SME211"
+            },
+            "0.1.6": {
+                "en": "added limiter section for DMP128",
+                "de": "Limitersteuerung für DMP128 hinzugefügt"
             }
         },
         "title": "Extron SIS",
