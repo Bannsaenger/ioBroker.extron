@@ -60,6 +60,7 @@ class Extron extends utils.Adapter {
         this.sendBuffer = [];
         // Status variables
         this.isDeviceChecked = false;       // will be true if device sends banner and will be verified
+        this.isLoggedIn = false;            // will be true once telnet login completed
         this.isVerboseMode = false;         // will be true if verbose mode 3 is active
         this.initDone = false;              // will be true if all init is done
         this.versionSet = false;            // will be true if the version is once set in the db
@@ -148,10 +149,11 @@ class Extron extends utils.Adapter {
                     break;
 
                 case 'telnet' :
-                    //self.net.on('ready', this.onClientReady.bind(this));
-                    //self.net.on('close', this.onClientClose.bind(this));
-                    //self.net.on('end', this.onClientEnd.bind(this));
-                    //self.net.on('error', this.onClientError.bind(this));
+                    self.net.on('data', self.onStreamData.bind(self));
+                    self.net.on('error', self.onStreamError.bind(self));
+                    self.net.on('close', self.onStreamClose.bind(self));
+                    self.net.on('drain', self.onStreamContinue.bind(self));
+                    self.net.on('end', this.onClientEnd.bind(this));
                     break;
             }
             this.timers.timeoutQueryStatus = setTimeout(self.extronQueryStatus.bind(self), self.config.pollDelay);
@@ -202,12 +204,23 @@ class Extron extends utils.Adapter {
     clientReConnect() {
         const self = this;
         self.log.info('closing client');
+        // Status variables to be reset
+        this.isDeviceChecked = false;       // will be true if device sends banner and will be verified
+        this.isLoggedIn = false;            // will be true once telnet login completed
+        this.isVerboseMode = false;         // will be true if verbose mode 3 is active
+        this.initDone = false;              // will be true if all init is done
+        this.versionSet = false;            // will be true if the version is once set in the db
+        this.statusRequested = false;       // will be true once device status has been requested after init
+        this.statusSended = false;          // will be true once database settings have been sended to device
+        this.clientReady = false;           // will be true if device connection is ready
+        this.streamAvailable = true;        // if false wait for continue event
+        
         switch (self.config.type) {
             case 'ssh' :
                 self.client.end();
                 break;
             case 'telnet' :
-                self.net.end();
+                self.net.destroy();
                 break;
         }
         self.log.info(`reconnecting after ${self.config.reconnectDelay}ms`);
@@ -238,9 +251,9 @@ class Extron extends utils.Adapter {
     onClientReady() {
         const self = this;
         try {
-            self.log.info('Extron is authenticated successfully, now open the stream');
             switch (self.config.type) {
                 case 'ssh' :
+                    self.log.info('Extron is authenticated successfully, now open the stream');
                     self.client.shell(function (error, channel) {
                         try {
                             if (error) throw error;
@@ -261,11 +274,6 @@ class Extron extends utils.Adapter {
                 case 'telnet' :
                     try {
                         self.log.info('Extron established connection');
-                        //self.stream = channel;
-                        self.stream.on('error', self.onStreamError.bind(self));
-                        self.stream.on('close', self.onStreamClose.bind(self));
-                        self.stream.on('data', self.onStreamData.bind(self));
-                        self.stream.on('drain', self.onStreamContinue.bind(self));
                         // Set the connection indicator after authentication and an open stream
                         self.log.info('Extron connected');
                         self.setState('info.connection', true, true);
@@ -366,34 +374,40 @@ class Extron extends utils.Adapter {
             self.log.debug('Extron got data: "' + self.decodeBufferToLog(data) + '"');
 
             if (!self.isDeviceChecked) {        // the first data has to be the banner with device info
-                switch (self.config.type) {
-                    case 'ssh' :
-                        if (data.toString().includes(self.devices[self.config.device].name)) {
-                            self.isDeviceChecked = true;
-                            if (!self.isVerboseMode) {          // enter the verbose mode
-                                self.extronSwitchMode();
-                                return;
-                            }
-                        } else {
-                            throw { 'message': 'Device mismatch error',
-                                'stack'  : 'Please recreate the instance or connect to the correct device' };
+                if (data.toString().includes(self.devices[self.config.device].name)) {
+                    self.isDeviceChecked = true;
+                    self.log.info(`Device ${self.devices[self.config.device].name} verified`);
+                    if (self.config.type === 'ssh') {
+                        if (!self.isVerboseMode) {          // enter the verbose mode
+                            self.extronSwitchMode();
+                            return;
                         }
-                        break;
-                    case 'telnet' :
-                        if (data.toString().includes('Login Administrator')) {
-                            self.isDeviceChecked = true;
-                            if (!self.isVerboseMode) {          // enter the verbose mode
-                                self.extronSwitchMode();
-                                return;
-                            }
-                        } else {
-                            throw { 'message': 'Device mismatch error',
-                                'stack'  : 'Please recreate the instance or connect to the correct device' };
-                        }
-                        break;
+                    }
+                } else {
+                    throw { 'message': 'Device mismatch error',
+                        'stack'  : 'Please recreate the instance or connect to the correct device' };
                 }
                 return;
             }
+            if (self.config.type === 'telnet') {
+                if (!self.isLoggedIn) {
+                    if (data.toString().includes('Password:')) {
+                        self.log.info('Extron received Telnet Password request');
+                        self.streamSend(`${self.config.pass}\r`);
+                        return;
+                    }
+                    if (data.toString().includes('Login Administrator')) {
+                        self.isLoggedIn = true;
+                        self.log.info('Extron Telnet logged in');
+                        if (!self.isVerboseMode) {          // enter the verbose mode
+                            self.extronSwitchMode();
+                            return;
+                        }
+                        return;
+                    }
+                }
+            }
+
             if (self.requestDir) {              // directory file list expected
                 self.requestDir = false;        // directory list has been received, clear flag
                 self.fileList.freeSpace = '';   // clear free space to be filled with new value from list
@@ -431,7 +445,7 @@ class Extron extends utils.Adapter {
 
                 const answer = cmdPart.replace(/[\r\n]/gm, '');
                 // Error handling
-                if (answer.match(/E\d\d/gim)) {    // received an error
+                if (answer.match(/^E\d\d/gim)) {    // received an error
                     throw { 'message': 'Error response from device',
                         'stack'  : errCodes[answer] };
                 }
@@ -644,7 +658,14 @@ class Extron extends utils.Adapter {
     onStreamError(err) {
         this.errorHandler(err, 'onStreamError');
         this.log.info('Extron onSteamError is closing the stream');
-        this.stream.close();
+        switch (this.config.type) {
+            case 'ssh' :
+                this.stream.close();
+                break;
+            case 'telnet' :
+                this.net.end();
+                break;
+        }
     }
 
     /**
@@ -983,7 +1004,14 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'dir' :
-                                self.listUserFiles();
+                                //self.listUserFiles();
+                                break;
+
+                            case 'status' :
+                                self.getLimitStatus(id);
+                                break;
+                            case 'threshold':
+                                self.getLimitThreshold(id);
                                 break;
                         }
                     }
@@ -1427,7 +1455,7 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             const channel = self.oid2id(oid);
-            self.setState(`${channel}status`, Number(value), true);
+            self.setState(`${channel}status`, Number(value)>0?true:false, true);
         } catch (err) {
             this.errorHandler(err, 'setLimitStatus');
         }
@@ -1755,7 +1783,7 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             self.streamSend(`WDF\r`);
-            //self.requestDir = true;
+            if (self.config.type === 'telnet') self.requestDir = true;
         } catch (err) {
             self.requestDir = false;
             this.errorHandler(err, 'listUserFiles');
@@ -1767,8 +1795,16 @@ class Extron extends utils.Adapter {
      */
     async setUserFilesAsync(data) {
         const self = this;
+        let userFileList = [''];
         try {
-            const userFileList = data.toString().split('\r\r\n');               // split the list into separate lines
+            switch (self.config.type) {
+                case 'ssh' :
+                    userFileList = data.toString().split('\r\r\n');               // split the list into separate lines
+                    break;
+                case 'telnet' :
+                    userFileList = data.toString().split('\r\n');               // split the list into separate lines
+                    break;
+            }
             //const actFiles = userFileList.length;
             let i;
             for (i=1; i<= self.fileList.files.length; i++) {
