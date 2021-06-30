@@ -16,7 +16,7 @@ const utils = require('@iobroker/adapter-core');
 const fs = require('fs');
 // @ts-ignore
 const Client = require('ssh2').Client;
-//const Telnet = require('telnet-cient');
+const Net = require('net');
 // @ts-ignore
 const path = require('path');
 
@@ -74,7 +74,9 @@ class Extron extends utils.Adapter {
         this.debugSSH = false;
         // debug option for full ssh debug log on adapter.log.silly
         this.client = new Client();
-        // the shell stream
+        // the SSH shell stream
+        // Create a client socket to connect to the device
+        this.net = new Net.Socket();
         this.stream = undefined;
         this.streamAvailable = true;    // if false wait for continue event
         this.stateList = [];            // will be filled with all existing states
@@ -135,12 +137,23 @@ class Extron extends utils.Adapter {
             //await this.setStateAsync('testVariable', { val: true, ack: true, expire: 30 });
 
             // Client callbacks
-            self.client.on('keyboard-interactive', this.onClientKeyboard.bind(this));
-            self.client.on('ready', this.onClientReady.bind(this));
-            self.client.on('banner', this.onClientBanner.bind(this));
-            self.client.on('close', this.onClientClose.bind(this));
-            self.client.on('error', this.onClientError.bind(this));
-            self.client.on('end', this.onClientEnd.bind(this));
+            switch (self.config.type) {
+                case 'ssh' :
+                    self.client.on('keyboard-interactive', this.onClientKeyboard.bind(this));
+                    self.client.on('ready', this.onClientReady.bind(this));
+                    self.client.on('banner', this.onClientBanner.bind(this));
+                    self.client.on('close', this.onClientClose.bind(this));
+                    self.client.on('error', this.onClientError.bind(this));
+                    self.client.on('end', this.onClientEnd.bind(this));
+                    break;
+
+                case 'telnet' :
+                    //self.net.on('ready', this.onClientReady.bind(this));
+                    //self.net.on('close', this.onClientClose.bind(this));
+                    //self.net.on('end', this.onClientEnd.bind(this));
+                    //self.net.on('error', this.onClientError.bind(this));
+                    break;
+            }
             this.timers.timeoutQueryStatus = setTimeout(self.extronQueryStatus.bind(self), self.config.pollDelay);
 
             self.log.info(`Extron took ${Date.now() - startTime}ms to initialize and setup db`);
@@ -158,30 +171,45 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             self.log.info('Extron connecting to: ' + self.config.host + ':' + self.config.port);
-            self.client.connect({
-                'host': self.config.host,
-                'port': Number(self.config.port),
-                'username': self.config.user,
-                'password': self.config.pass,
-                'keepaliveInterval': 5000,
-                // @ts-ignore
-                'debug': self.debugSSH ? this.log.silly.bind(this) : undefined,
-                //'debug': true,
-                'readyTimeout': 5000,
-                'tryKeyboard': true
-            });
+            switch (self.config.type) {
+                case 'ssh' :
+                    self.client.connect({
+                        'host': self.config.host,
+                        'port': Number(self.config.port),
+                        'username': self.config.user,
+                        'password': self.config.pass,
+                        'keepaliveInterval': 5000,
+                        // @ts-ignore
+                        'debug': self.debugSSH ? this.log.silly.bind(this) : undefined,
+                        //'debug': true,
+                        'readyTimeout': 5000,
+                        'tryKeyboard': true
+                    });
+                    break;
+
+                case 'telnet' :
+                    self.stream = self.net.connect(Number(self.config.port), self.config.host);
+                    break;
+            }
         } catch (err) {
             self.errorHandler(err, 'clientConnect');
         }
     }
 
     /**
-     * reconnect CLient after error
+     * reconnect Client after error
      */
     clientReConnect() {
         const self = this;
         self.log.info('closing client');
-        self.client.end();
+        switch (self.config.type) {
+            case 'ssh' :
+                self.client.end();
+                break;
+            case 'telnet' :
+                self.net.end();
+                break;
+        }
         self.log.info(`reconnecting after ${self.config.reconnectDelay}ms`);
         self.timers.timeoutReconnectClient = setTimeout(self.clientConnect.bind(self),self.config.reconnectDelay);
     }
@@ -211,22 +239,41 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             self.log.info('Extron is authenticated successfully, now open the stream');
-            self.client.shell(function (error, channel) {
-                try {
-                    if (error) throw error;
-                    self.log.info('Extron shell established channel');
-                    self.stream = channel;
-                    self.stream.on('error', self.onStreamError.bind(self));
-                    self.stream.on('close', self.onStreamClose.bind(self));
-                    self.stream.on('data', self.onStreamData.bind(self));
-                    self.stream.on('continue', self.onStreamContinue.bind(self));
-                    // Set the connection indicator after authentication and an open stream
-                    self.log.info('Extron connected');
-                    self.setState('info.connection', true, true);
-                } catch (err) {
-                    self.errorHandler(err, 'onClientReady');
-                }
-            });
+            switch (self.config.type) {
+                case 'ssh' :
+                    self.client.shell(function (error, channel) {
+                        try {
+                            if (error) throw error;
+                            self.log.info('Extron shell established channel');
+                            self.stream = channel;
+                            self.stream.on('error', self.onStreamError.bind(self));
+                            self.stream.on('close', self.onStreamClose.bind(self));
+                            self.stream.on('data', self.onStreamData.bind(self));
+                            self.stream.on('continue', self.onStreamContinue.bind(self));
+                            // Set the connection indicator after authentication and an open stream
+                            self.log.info('Extron connected');
+                            self.setState('info.connection', true, true);
+                        } catch (err) {
+                            self.errorHandler(err, 'onClientReady');
+                        }
+                    });
+                    break;
+                case 'telnet' :
+                    try {
+                        self.log.info('Extron established connection');
+                        //self.stream = channel;
+                        self.stream.on('error', self.onStreamError.bind(self));
+                        self.stream.on('close', self.onStreamClose.bind(self));
+                        self.stream.on('data', self.onStreamData.bind(self));
+                        self.stream.on('drain', self.onStreamContinue.bind(self));
+                        // Set the connection indicator after authentication and an open stream
+                        self.log.info('Extron connected');
+                        self.setState('info.connection', true, true);
+                    } catch (err) {
+                        self.errorHandler(err, 'onClientReady');
+                    }
+                    break;
+            }
         } catch (err) {
             self.errorHandler(err, 'onClientReady');
         }
@@ -290,7 +337,14 @@ class Extron extends utils.Adapter {
         try {
             if (self.streamAvailable) {
                 self.log.debug('Extron sends data to the stream: "' + self.decodeBufferToLog(data) + '"');
-                self.streamAvailable = self.stream.write(data);
+                switch (self.config.type) {
+                    case 'ssh' :
+                        self.streamAvailable = self.stream.write(data);
+                        break;
+                    case 'telnet' :
+                        self.streamAvailable = self.net.write(data);
+                        break;
+                }
             } else {
                 self.log.debug('Extron push data to the send buffer: "' + self.decodeBufferToLog(data) + '"');
                 self.sendBuffer.push(data);
@@ -312,15 +366,31 @@ class Extron extends utils.Adapter {
             self.log.debug('Extron got data: "' + self.decodeBufferToLog(data) + '"');
 
             if (!self.isDeviceChecked) {        // the first data has to be the banner with device info
-                if (data.toString().includes(self.devices[self.config.device].name)) {
-                    self.isDeviceChecked = true;
-                    if (!self.isVerboseMode) {          // enter the verbose mode
-                        self.extronSwitchMode();
-                        return;
-                    }
-                } else {
-                    throw { 'message': 'Device mismatch error',
-                        'stack'  : 'Please recreate the instance or connect to the correct device' };
+                switch (self.config.type) {
+                    case 'ssh' :
+                        if (data.toString().includes(self.devices[self.config.device].name)) {
+                            self.isDeviceChecked = true;
+                            if (!self.isVerboseMode) {          // enter the verbose mode
+                                self.extronSwitchMode();
+                                return;
+                            }
+                        } else {
+                            throw { 'message': 'Device mismatch error',
+                                'stack'  : 'Please recreate the instance or connect to the correct device' };
+                        }
+                        break;
+                    case 'telnet' :
+                        if (data.toString().includes('Login Administrator')) {
+                            self.isDeviceChecked = true;
+                            if (!self.isVerboseMode) {          // enter the verbose mode
+                                self.extronSwitchMode();
+                                return;
+                            }
+                        } else {
+                            throw { 'message': 'Device mismatch error',
+                                'stack'  : 'Please recreate the instance or connect to the correct device' };
+                        }
+                        break;
                 }
                 return;
             }
@@ -586,7 +656,14 @@ class Extron extends utils.Adapter {
         this.clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
         try {
             self.log.info('Extron stream closed calling client.end()');
-            self.client.end();
+            switch (self.config.type) {
+                case 'ssh' :
+                    self.client.end();
+                    break;
+                case 'telnet' :
+                    self.net.end();
+                    break;
+            }
         } catch (err) {
             this.errorHandler(err, 'onStreamClose');
         }
@@ -2361,8 +2438,14 @@ class Extron extends utils.Adapter {
             clearTimeout(this.timers.intervallQueryStatus);
 
             // close client connection
-            this.client.end();
-
+            switch (this.config.type) {
+                case 'ssh' :
+                    this.client.end();
+                    break;
+                case 'telnet' :
+                    this.net.end();
+                    break;
+            }
             callback();
         } catch (e) {
             callback();
