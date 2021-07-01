@@ -674,7 +674,7 @@ class Extron extends utils.Adapter {
     onStreamClose() {
         const self = this;
         self.log.debug('onStreamClose clear query timer');
-        this.clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
+        clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
         try {
             self.log.info('Extron stream closed calling client.end()');
             switch (self.config.type) {
