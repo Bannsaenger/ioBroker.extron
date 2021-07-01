@@ -214,7 +214,7 @@ class Extron extends utils.Adapter {
         this.statusSended = false;          // will be true once database settings have been sended to device
         this.clientReady = false;           // will be true if device connection is ready
         this.streamAvailable = true;        // if false wait for continue event
-        
+
         switch (self.config.type) {
             case 'ssh' :
                 self.client.end();
@@ -1004,7 +1004,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'dir' :
-                                //self.listUserFiles();
+                                self.listUserFiles();
                                 break;
 
                             case 'status' :
