@@ -77,7 +77,9 @@ class Extron extends utils.Adapter {
         this.client = new Client();
         // the SSH shell stream
         // Create a client socket to connect to the device
-        this.net = new Net.Socket();
+        this.net = new Net.Socket({'readable':true,'writable' : true});
+        this.net.setKeepAlive(true);
+        this.net.setNoDelay(true);
         this.stream = undefined;
         this.streamAvailable = true;    // if false wait for continue event
         this.stateList = [];            // will be filled with all existing states
@@ -344,7 +346,7 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             if (self.streamAvailable) {
-                self.log.debug('Extron sends data to the stream: "' + self.decodeBufferToLog(data) + '"');
+                self.log.debug(`Extron sends data to the stream: "${self.fileSend?'file data':self.decodeBufferToLog(data)}"`);
                 switch (self.config.type) {
                     case 'ssh' :
                         self.streamAvailable = self.stream.write(data);
@@ -354,8 +356,8 @@ class Extron extends utils.Adapter {
                         break;
                 }
             } else {
-                self.log.debug('Extron push data to the send buffer: "' + self.decodeBufferToLog(data) + '"');
-                self.sendBuffer.push(data);
+                const bufSize = self.sendBuffer.push(data);
+                self.log.debug(`Extron push data to the send buffer: "${self.fileSend?'file data':self.decodeBufferToLog(data)}" new buffersize:${bufSize.toString()}`);
             }
         } catch (err) {
             self.errorHandler(err, 'streamSend');
@@ -569,8 +571,8 @@ class Extron extends utils.Adapter {
                         case 'UPL' :
                             self.fileSend = false;   // reset file transmission flag
                             self.log.silly(`Extron got upload file confirmation command size: "${ext1}" name: "${ext2}"`);
-                            self.log.silly(`Extron requesting current user file list`);
-                            self.listUserFiles();
+                            //self.log.silly(`Extron requesting current user file list`);
+                            //self.listUserFiles();
                             break;
                         case 'WDF' :
                             self.log.debug(`Extron got list directory command`);
@@ -657,15 +659,8 @@ class Extron extends utils.Adapter {
      */
     onStreamError(err) {
         this.errorHandler(err, 'onStreamError');
-        this.log.info('Extron onSteamError is closing the stream');
-        switch (this.config.type) {
-            case 'ssh' :
-                this.stream.close();
-                break;
-            case 'telnet' :
-                this.net.end();
-                break;
-        }
+        this.log.info('Extron onSteamError is calling clientReConnect');
+        this.clientReConnect();
     }
 
     /**
@@ -1029,7 +1024,6 @@ class Extron extends utils.Adapter {
      */
     async setDeviceStatusAsync() {
         const self = this;
-        let value = {};
         try {
             // if status has not been requested
             if (!self.statusSended && self.isVerboseMode) {
@@ -1037,6 +1031,11 @@ class Extron extends utils.Adapter {
                 // iterate through stateList to send status to device
                 for (let index = 0; index < self.stateList.length; index++) {
                     const id = self.stateList[index];
+                    const state = await self.getStateAsync(id);
+                    // @ts-ignore
+                    state.ack = false;
+                    self.onStateChange(id, state);
+                    /**
                     const baseId = id.substr(0, id.lastIndexOf('.'));
                     const idArray = id.split('.');
                     const idType = idArray[3];
@@ -1046,16 +1045,13 @@ class Extron extends utils.Adapter {
 
                     if (typeof(baseId) !== 'undefined' && baseId !== null) {
                         // @ts-ignore
-                        const stateobj = await self.getStateAsync(id);
-                        // @ts-ignore
-                        const state = stateobj.val;
                         if (state !== null) switch (stateName) {
                             case 'mute' :
-                                self.sendMuteStatus(baseId, state);
+                                self.sendMuteStatus(baseId, state.val);
                                 break;
 
                             case 'source' :
-                                self.sendSource(id, Number(state));
+                                self.sendSource(id, Number(state.val));
                                 break;
 
                             case 'level' :
@@ -1074,28 +1070,29 @@ class Extron extends utils.Adapter {
                                         calcMode = 'linAtt';
                                         break;
                                 }
-                                value = self.calculateFaderValue(Number(state),calcMode);
+                                value = self.calculateFaderValue(Number(state.val),calcMode);
                                 self.sendGainLevel(id,value);
                                 break;
 
                             case 'playmode' :
-                                self.sendPlayMode(baseId, state);
+                                self.sendPlayMode(baseId, state.val);
                                 break;
 
                             case 'repeatmode' :
-                                self.sendRepeatMode(baseId, state);
+                                self.sendRepeatMode(baseId, state.val);
                                 break;
 
                             case 'filename' :
-                                self.sendFileName(baseId, state.toString());
-                                self.playerLoaded[Number(self.id2oid(baseId))-1] = (state.toString() != '' ? true : false);
+                                self.sendFileName(baseId, state.val.toString());
+                                self.playerLoaded[Number(self.id2oid(baseId))-1] = (state.val.toString() != '' ? true : false);
                                 break;
 
                             case 'streammode' :
-                                self.sendStreamMode(Number(state));
+                                self.sendStreamMode(Number(state.val));
                                 break;
                         }
                     }
+                    */
                 }
                 self.statusSended = true;
                 self.log.info('Extron set device status completed');
@@ -1726,12 +1723,12 @@ class Extron extends utils.Adapter {
         const self = this;
         let chunk ='';
         try {
-            fs.accessSync(filePath);
-            const fileName = path.basename(filePath);
+            fs.accessSync(filePath);                            // check if given path is accessible
+            const fileName = path.basename(filePath);           // extract filename
             //const fileExt = path.extname(filePath);
-            const fileStats = fs.statSync(filePath);
-            const fileStream = fs.createReadStream(filePath);
-            fileStream.setEncoding('binary');
+            const fileStats = fs.statSync(filePath);            // load file statistics
+            const fileStream = fs.createReadStream(filePath);   // open a stream
+            fileStream.setEncoding('binary');                   // switch stream to binary mode
             const fileTimeStamp = fileStats.mtime.toJSON();
             const year = fileTimeStamp.slice(0,4);
             const month = fileTimeStamp.slice(5,7);
@@ -1739,23 +1736,21 @@ class Extron extends utils.Adapter {
             const hour = fileTimeStamp.slice(11,13);
             const minute = fileTimeStamp.slice(14,16);
             const second = fileTimeStamp.slice(17,19);
-            const streamData = `W+UF${fileStats.size}*7 ${month} ${day} ${year} ${hour} ${minute} ${second},${fileName}\r`;
+            const streamData = `W+UF${fileStats.size}*5 ${month} ${day} ${year} ${hour} ${minute} ${second},${fileName}\r`;
             //const streamData = `W+UF${fileStats.size},${fileName}\r`;
-            self.streamSend(streamData);
-            //self.log.debug('stream pipe start');
-            //fileStream.pipe(this.stream);
-            fileStream.on('readable', function() {
+            self.streamSend(streamData);                        // issue upload command to device
+            fileStream.on('readable', function() {              // start file transmission
                 while ((chunk=fileStream.read()) != null) {
-                    if (!self.fileSend) self.log.debug('loadUserFile started');
+                    if (!self.fileSend) {
+                        self.log.debug('Extron loadUserFile started');
+                        self.fileSend = true;
+                    }
                     self.streamSend(chunk);
-                    self.fileSend = true;
-                    //self.timers.timeoutQueryStatus.refresh();
                 }
-                //self.fileSend = false;
             });
-            fileStream.on('end', function() {
+            fileStream.on('end', function() {                   // on transmission end
                 self.fileSend = false;
-                self.log.debug('loadUserFile completed');
+                self.log.debug('Extron loadUserFile completed');
             });
         } catch (err) {
             this.errorHandler(err, 'loadUserFile');
