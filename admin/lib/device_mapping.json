@@ -100,22 +100,22 @@
             "inputs" : {
                 "name" : "Inputs",
                 "short" : "I",
-                "amount" : 2
+                "amount" : 12
             },
             "auxInputs" : {
                 "name" : "Aux Inputs",
                 "short" : "X",
-                "amount" : 2
+                "amount" : 8
             },
             "virtualReturns" : {
                 "name" : "Virtual Returns",
                 "short" : "R",
-                "amount" : 2
+                "amount" : 16
             },
             "expansionInputs" : {
                 "name" : "Expansion Bus (AT Inputs)",
                 "short" : "D",
-                "amount" : 2
+                "amount" : 48
             }
         },
         "mp" : {
@@ -126,20 +126,31 @@
         },
         "out" : {
             "outputs" : {
+                "name" : "Output",
                 "short" : "O",
                 "amount" : 8
             },
             "auxOutputs" : {
+                "name" : "Aux Output",
                 "short" : "A",
                 "amount" : 8
             },
             "virtualSendBus" : {
+                "name" : "virtual SendBus",
                 "short" : "V",
                 "amount" : 16
             },
             "expansionOutputs" : {
+                "name" : "Expansion Output",
                 "short" : "E",
                 "amount" : 16
+            }
+        },
+        "ply" : {
+            "players": {
+                "name" : "Audio Player",
+                "short" : "P",
+                "amount" : 8
             }
         },
         "fs" :{
