@@ -401,6 +401,7 @@ class Extron extends utils.Adapter {
                     if (data.toString().includes('Login Administrator')) {
                         self.isLoggedIn = true;
                         self.log.info('Extron Telnet logged in');
+                        self.setState('info.connection', true, true);
                         if (!self.isVerboseMode) {          // enter the verbose mode
                             self.extronSwitchMode();
                             return;
