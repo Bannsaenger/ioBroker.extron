@@ -70,6 +70,10 @@
             "0.1.7": {
                 "en": "added plain Telnet communication for DMP128",
                 "de": "Telnet Kommunikation für DMP128 hinzugefügt"
+            },
+            "0.1.8": {
+                "en": "fixed setting of info.connection in telnet mode",
+                "de": "info.connection im Telnet Mode gefixed"
             }
         },
         "title": "Extron SIS",
