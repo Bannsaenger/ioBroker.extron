@@ -73,7 +73,7 @@ If you are a non commercial organisation or use it for private use you can get a
 ### 0.1.7
 * (mschlgl) added plaint Telnet communication for DMP128
 
-### 0.1.8
+### 0.1.9
 * (Bannsaenger) fixed setting of info.connection in telnet mode
 
 ## License

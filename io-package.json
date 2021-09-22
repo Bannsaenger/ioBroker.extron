@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "extron",
-        "version": "0.1.7",
+        "version": "0.1.9",
         "news": {
             "0.0.1": {
                 "en": "initial release",
@@ -71,7 +71,7 @@
                 "en": "added plain Telnet communication for DMP128",
                 "de": "Telnet Kommunikation für DMP128 hinzugefügt"
             },
-            "0.1.8": {
+            "0.1.9": {
                 "en": "fixed setting of info.connection in telnet mode",
                 "de": "info.connection im Telnet Mode gefixed"
             }
