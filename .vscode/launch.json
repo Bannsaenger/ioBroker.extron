@@ -5,14 +5,6 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Backup erstellen",
-            "type": "cppvsdbg",
-            "request": "launch",
-            "program": "F:/TechDevel/ioBroker/extron/backup_extron.cmd",
-            "args": [],
-            "cwd": "${workspaceFolder}"
-        },
-        {
            "name": "(extron) main.js --force starten",
             "type": "node",
             "request": "launch",

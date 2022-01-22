@@ -61,7 +61,6 @@ class Extron extends utils.Adapter {
      * called to initialize internal variables
      */
     initVars() {
-        const self = this;
         this.log.debug('initVars(): Extron initializing internal variables');
         // Send buffer (Array of commands to send)
         this.sendBuffer = [];
@@ -100,25 +99,24 @@ class Extron extends utils.Adapter {
         this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize':''};         // file object
         this.fileList = {'freeSpace' : '', 'files' : [this.file]};              // array to hold current file list
         this.stateBuf = [{'id': '', 'timestamp' : 0}];
-        this.invalidChars = ['+','~',',','@','=',"'",'[',']','{','}','<','>',"`",'"',':',';','|','\\','?'];
+        this.invalidChars = ['+','~',',','@','=',"'",'[',']','{','}','<','>','`','"',':',';','|','\\','?'];
     }
 
     /**
      * Is called when databases are connected and adapter received configuration.
      */
     async onReady() {
-        const self = this;
         try {
             // Initialize your adapter here
             const startTime = Date.now();
-            self.initVars();
+            this.initVars();
 
             // Reset the connection indicator during startup
-            self.setState('info.connection', false, true);
+            this.setState('info.connection', false, true);
 
             // The adapters config (in the instance object everything under the attribute "native") is accessible via
             // this.config:
-            self.log.info('onReady(): configured host/port: ' + self.config.host + ':' + self.config.port);
+            this.log.info('onReady(): configured host/port: ' + this.config.host + ':' + this.config.port);
 
 
             // read Objects template for object generation
@@ -129,12 +127,12 @@ class Extron extends utils.Adapter {
             /*
             * For every state in the system there has to be also an object of type state
             */
-            await self.createDatabaseAsync();
-            await self.createStatesListAsync();
+            await this.createDatabaseAsync();
+            await this.createStatesListAsync();
 
             // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
             // this.subscribeStates('testVariable');
-            self.subscribeStates('*');
+            this.subscribeStates('*');
 
             /*
                 setState examples
@@ -151,31 +149,31 @@ class Extron extends utils.Adapter {
             //await this.setStateAsync('testVariable', { val: true, ack: true, expire: 30 });
 
             // Client callbacks
-            switch (self.config.type) {
+            switch (this.config.type) {
                 case 'ssh' :
-                    self.client.on('keyboard-interactive', this.onClientKeyboard.bind(this));
-                    self.client.on('ready', this.onClientReady.bind(this));
-                    self.client.on('banner', this.onClientBanner.bind(this));
-                    self.client.on('close', this.onClientClose.bind(this));
-                    self.client.on('error', this.onClientError.bind(this));
-                    self.client.on('end', this.onClientEnd.bind(this));
+                    this.client.on('keyboard-interactive', this.onClientKeyboard.bind(this));
+                    this.client.on('ready', this.onClientReady.bind(this));
+                    this.client.on('banner', this.onClientBanner.bind(this));
+                    this.client.on('close', this.onClientClose.bind(this));
+                    this.client.on('error', this.onClientError.bind(this));
+                    this.client.on('end', this.onClientEnd.bind(this));
                     break;
 
                 case 'telnet' :
-                    self.net.on('data', self.onStreamData.bind(self));
-                    self.net.on('error', self.onStreamError.bind(self));
-                    self.net.on('close', self.onStreamClose.bind(self));
-                    self.net.on('drain', self.onStreamContinue.bind(self));
-                    self.net.on('end', this.onClientEnd.bind(this));
+                    this.net.on('data', this.onStreamData.bind(this));
+                    this.net.on('error', this.onStreamError.bind(this));
+                    this.net.on('close', this.onStreamClose.bind(this));
+                    this.net.on('drain', this.onStreamContinue.bind(this));
+                    this.net.on('end', this.onClientEnd.bind(this));
                     break;
             }
-            self.timers.timeoutQueryStatus = setTimeout(self.queryStatus.bind(self), self.config.pollDelay);
+            this.timers.timeoutQueryStatus = setTimeout(this.queryStatus.bind(this), this.config.pollDelay);
 
-            self.log.info(`onReady(): Extron took ${Date.now() - startTime}ms to initialize and setup db`);
+            this.log.info(`onReady(): Extron took ${Date.now() - startTime}ms to initialize and setup db`);
 
-            self.clientConnect();
+            this.clientConnect();
         } catch (err) {
-            self.errorHandler(err, 'onReady');
+            this.errorHandler(err, 'onReady');
         }
     }
 
@@ -183,19 +181,18 @@ class Extron extends utils.Adapter {
      * try to connect to the device
      */
     clientConnect() {
-        const self = this;
         try {
-            self.log.info(`clientConnect(): Extron connecting via ${self.config.type} to: ${self.config.host}:${self.config.port}`);
-            switch (self.config.type) {
+            this.log.info(`clientConnect(): Extron connecting via ${this.config.type} to: ${this.config.host}:${this.config.port}`);
+            switch (this.config.type) {
                 case 'ssh' :
-                    self.client.connect({
-                        'host': self.config.host,
-                        'port': Number(self.config.port),
-                        'username': self.config.user,
-                        'password': self.config.pass,
+                    this.client.connect({
+                        'host': this.config.host,
+                        'port': Number(this.config.port),
+                        'username': this.config.user,
+                        'password': this.config.pass,
                         'keepaliveInterval': 5000,
                         // @ts-ignore
-                        'debug': self.debugSSH ? this.log.silly.bind(this) : undefined,
+                        'debug': this.debugSSH ? this.log.silly.bind(this) : undefined,
                         //'debug': true,
                         'readyTimeout': 5000,
                         'tryKeyboard': true
@@ -203,11 +200,11 @@ class Extron extends utils.Adapter {
                     break;
 
                 case 'telnet' :
-                    self.stream = self.net.connect(Number(self.config.port), self.config.host);
+                    this.stream = this.net.connect(Number(this.config.port), this.config.host);
                     break;
             }
         } catch (err) {
-            self.errorHandler(err, 'clientConnect');
+            this.errorHandler(err, 'clientConnect');
         }
     }
 
@@ -215,19 +212,18 @@ class Extron extends utils.Adapter {
      * reconnect Client after error
      */
     clientReConnect() {
-        const self = this;
         // Status variables to be reset
-        self.initVars();
-        switch (self.config.type) {
+        this.initVars();
+        switch (this.config.type) {
             case 'ssh' :
-                self.client.end();
+                this.client.end();
                 break;
             case 'telnet' :
-                self.net.destroy();
+                this.net.destroy();
                 break;
         }
-        self.log.info(`clientReConnect(): reconnecting after ${self.config.reconnectDelay}ms`);
-        self.timers.timeoutReconnectClient = setTimeout(self.clientConnect.bind(self),self.config.reconnectDelay);
+        this.log.info(`clientReConnect(): reconnecting after ${this.config.reconnectDelay}ms`);
+        this.timers.timeoutReconnectClient = setTimeout(this.clientConnect.bind(this),this.config.reconnectDelay);
     }
 
     /**
@@ -239,12 +235,11 @@ class Extron extends utils.Adapter {
      * @param {function} finish
      */
     onClientKeyboard(_name, _instructions, _instructionsLang, _prompts, finish) {
-        const self = this;
         try {
             this.log.info('onClientKeyboard(): Extron keyboard autentication in progress. Send back password');
             finish([this.config.pass]);
         } catch (err) {
-            self.errorHandler(err, 'onClientKeyboard');
+            this.errorHandler(err, 'onClientKeyboard');
         }
     }
 
@@ -252,41 +247,48 @@ class Extron extends utils.Adapter {
      * called if client is successfully connected
      */
     onClientReady() {
-        const self = this;
         try {
-            switch (self.config.type) {
+            switch (this.config.type) {
                 case 'ssh' :
-                    self.log.info('onClientReady(): Extron is authenticated successfully, now open the stream');
-                    self.client.shell(function (error, channel) {
+                    this.log.info('onClientReady(): Extron is authenticated successfully, now open the stream');
+                    this.client.shell(function (error, channel) {
                         try {
                             if (error) throw error;
-                            self.log.info('onClientReady(): Extron shell established channel');
-                            self.stream = channel;
-                            self.stream.on('error', self.onStreamError.bind(self));
-                            self.stream.on('close', self.onStreamClose.bind(self));
-                            self.stream.on('data', self.onStreamData.bind(self));
-                            self.stream.on('continue', self.onStreamContinue.bind(self));
+                            // @ts-ignore
+                            this.log.info('onClientReady(): Extron shell established channel');
+                            this.stream = channel;
+                            // @ts-ignore
+                            this.stream.on('error', this.onStreamError.bind(this));
+                            // @ts-ignore
+                            this.stream.on('close', this.onStreamClose.bind(this));
+                            // @ts-ignore
+                            this.stream.on('data', this.onStreamData.bind(this));
+                            // @ts-ignore
+                            this.stream.on('continue', this.onStreamContinue.bind(this));
                             // Set the connection indicator after authentication and an open stream
-                            self.log.info('onClientReady(): Extron connected');
-                            self.setState('info.connection', true, true);
+                            // @ts-ignore
+                            this.log.info('onClientReady(): Extron connected');
+                            // @ts-ignore
+                            this.setState('info.connection', true, true);
                         } catch (err) {
-                            self.errorHandler(err, 'onClientReady');
+                            // @ts-ignore
+                            this.errorHandler(err, 'onClientReady');
                         }
                     });
                     break;
                 case 'telnet' :
                     try {
-                        self.log.info('onClientReady(): Extron established connection');
+                        this.log.info('onClientReady(): Extron established connection');
                         // Set the connection indicator after authentication and an open stream
-                        self.log.info('onClientReady(): Extron connected');
-                        self.setState('info.connection', true, true);
+                        this.log.info('onClientReady(): Extron connected');
+                        this.setState('info.connection', true, true);
                     } catch (err) {
-                        self.errorHandler(err, 'onClientReady');
+                        this.errorHandler(err, 'onClientReady');
                     }
                     break;
             }
         } catch (err) {
-            self.errorHandler(err, 'onClientReady');
+            this.errorHandler(err, 'onClientReady');
         }
     }
 
@@ -303,32 +305,30 @@ class Extron extends utils.Adapter {
      * called if client is closed
      */
     onClientClose() {
-        const self = this;
         try {
-            self.log.info('onClientClose(): Extron client closed');
+            this.log.info('onClientClose(): Extron client closed');
             // Reset the connection indicator
-            self.setState('info.connection', false, true);
-            self.clientReady = false;
-            self.isDeviceChecked = false;       // will be true if device sends banner and will be verified
-            self.isVerboseMode = false;         // will be true if verbose mode 3 is active
-            self.initDone = false;              // will be true if all init is done
-            self.versionSet = false;            // will be true if the version is once set in the db
-            self.statusRequested = false;       // will be true if device status has been requested after init
-            self.statusSended = false;          // will be true once database settings have been sended to device
+            this.setState('info.connection', false, true);
+            this.clientReady = false;
+            this.isDeviceChecked = false;       // will be true if device sends banner and will be verified
+            this.isVerboseMode = false;         // will be true if verbose mode 3 is active
+            this.initDone = false;              // will be true if all init is done
+            this.versionSet = false;            // will be true if the version is once set in the db
+            this.statusRequested = false;       // will be true if device status has been requested after init
+            this.statusSended = false;          // will be true once database settings have been sended to device
             this.stream = undefined;
         } catch (err) {
-            self.errorHandler(err, 'onClientClose');
+            this.errorHandler(err, 'onClientClose');
         }
     }
     /**
      * called if the socket is disconnected
      */
     onClientEnd() {
-        const self = this;
         try {
-            self.log.info('onClientEnd(): Extron client socket disconnected');
+            this.log.info('onClientEnd(): Extron client socket disconnected');
         } catch (err) {
-            self.errorHandler(err, 'onClientEnd');
+            this.errorHandler(err, 'onClientEnd');
         }
     }
     /**
@@ -336,7 +336,7 @@ class Extron extends utils.Adapter {
      * @param {any} err
      */
     onClientError(err) {
-        self.log.info('onClientError(): error detected');
+        this.log.info('onClientError(): error detected');
         this.errorHandler(err, 'onClientError');
     }
 
@@ -345,25 +345,24 @@ class Extron extends utils.Adapter {
      * @param {string} data
      */
     streamSend(data) {
-        const self = this;
         try {
-            if (self.streamAvailable) {
-                self.log.debug(`streamSend(): Extron sends data to the ${self.config.type} stream: "${self.fileSend?'file data':self.decodeBufferToLog(data)}"`);
-                switch (self.config.type) {
+            if (this.streamAvailable) {
+                this.log.debug(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.fileSend?'file data':this.decodeBufferToLog(data)}"`);
+                switch (this.config.type) {
                     case 'ssh' :
-                        self.streamAvailable = self.stream.write(data);
+                        this.streamAvailable = this.stream.write(data);
                         break;
                     case 'telnet' :
-                        self.streamAvailable = self.net.write(data);
+                        this.streamAvailable = this.net.write(data);
                         break;
                 }
             } else {
-                const bufSize = self.sendBuffer.push(data);
-                self.log.warn(`streamSend(): Extron push data to the send buffer: "${self.fileSend?'file data':self.decodeBufferToLog(data)}" new buffersize:${bufSize}`);
+                const bufSize = this.sendBuffer.push(data);
+                this.log.warn(`streamSend(): Extron push data to the send buffer: "${this.fileSend?'file data':this.decodeBufferToLog(data)}" new buffersize:${bufSize}`);
             }
         } catch (err) {
-            self.errorHandler(err, 'streamSend');
-            self.clientReConnect();
+            this.errorHandler(err, 'streamSend');
+            this.clientReConnect();
         }
     }
 
@@ -372,22 +371,21 @@ class Extron extends utils.Adapter {
      * @param {string | Uint8Array} data
      */
     async onStreamData(data) {
-        const self = this;
         let members = [];
 
-        self.streamAvailable = true;    // if we receive data the stream is available
-        if (self.fileSend) return; // do nothing during file transmission
+        this.streamAvailable = true;    // if we receive data the stream is available
+        if (this.fileSend) return; // do nothing during file transmission
         try {
-            self.log.debug(`onStreamData(): Extron got data: "${self.decodeBufferToLog(data)}"`);
+            this.log.debug(`onStreamData(): Extron got data: "${this.decodeBufferToLog(data)}"`);
 
-            if (!self.isDeviceChecked) {        // the first data has to be the banner with device info
-                if (data.toString().includes(self.devices[self.config.device].name)) {
-                    self.isDeviceChecked = true;
-                    self.log.info(`onStreamData(): Device ${self.devices[self.config.device].name} verified`);
-                    self.setState('info.connection', true, true);
-                    if (self.config.type === 'ssh') {
-                        if (!self.isVerboseMode) {          // enter the verbose mode
-                            self.switchMode();
+            if (!this.isDeviceChecked) {        // the first data has to be the banner with device info
+                if (data.toString().includes(this.devices[this.config.device].name)) {
+                    this.isDeviceChecked = true;
+                    this.log.info(`onStreamData(): Device ${this.devices[this.config.device].name} verified`);
+                    this.setState('info.connection', true, true);
+                    if (this.config.type === 'ssh') {
+                        if (!this.isVerboseMode) {          // enter the verbose mode
+                            this.switchMode();
                             return;
                         }
                     }
@@ -397,19 +395,19 @@ class Extron extends utils.Adapter {
                 }
                 return;
             }
-            if (self.config.type === 'telnet') {
-                if (!self.isLoggedIn) {
+            if (this.config.type === 'telnet') {
+                if (!this.isLoggedIn) {
                     if (data.toString().includes('Password:')) {
-                        self.log.info('onStreamData(): Extron received Telnet Password request');
-                        self.streamSend(`${self.config.pass}\r`);
+                        this.log.info('onStreamData(): Extron received Telnet Password request');
+                        this.streamSend(`${this.config.pass}\r`);
                         return;
                     }
                     if (data.toString().includes('Login Administrator')) {
-                        self.isLoggedIn = true;
-                        self.log.info('onStreamData(): Extron Telnet logged in');
-                        self.setState('info.connection', true, true);
-                        if (!self.isVerboseMode) {          // enter the verbose mode
-                            self.switchMode();
+                        this.isLoggedIn = true;
+                        this.log.info('onStreamData(): Extron Telnet logged in');
+                        this.setState('info.connection', true, true);
+                        if (!this.isVerboseMode) {          // enter the verbose mode
+                            this.switchMode();
                             return;
                         }
                         return;
@@ -417,35 +415,35 @@ class Extron extends utils.Adapter {
                 }
             }
 
-            if (self.requestDir) {              // directory file list expected
-                self.requestDir = false;        // directory list has been received, clear flag
-                self.fileList.freeSpace = '';   // clear free space to be filled with new value from list
-                self.setUserFilesAsync(data);        // call subroutine to set database values
+            if (this.requestDir) {              // directory file list expected
+                this.requestDir = false;        // directory list has been received, clear flag
+                this.fileList.freeSpace = '';   // clear free space to be filled with new value from list
+                this.setUserFilesAsync(data);        // call subroutine to set database values
                 return;
             }
             // iterate through multiple answers connected via [LF]
             for (const cmdPart of data.toString().split('\n')) {
 
                 if (cmdPart.includes('3CV')) {
-                    self.log.debug('onStreamData(): Extron device switched to verbose mode 3');
-                    self.isVerboseMode = true;
+                    this.log.debug('onStreamData(): Extron device switched to verbose mode 3');
+                    this.isVerboseMode = true;
                     this.timers.timeoutQueryStatus.refresh();
                     return;
                 }
                 if (cmdPart.includes('Vrb3')) {
-                    self.log.debug('onStreamData(): Extron device entered verbose mode 3');
-                    self.isVerboseMode = true;
-                    if (!self.initDone) {
+                    this.log.debug('onStreamData(): Extron device entered verbose mode 3');
+                    this.isVerboseMode = true;
+                    if (!this.initDone) {
                         this.streamSend('Q');       // query Version
                         this.streamSend('1I');      // query Model
                         this.streamSend('WCN\r');   // query deviceName
-                        self.initDone = true;
+                        this.initDone = true;
                         this.timers.timeoutQueryStatus.refresh();
-                        if (self.config.pushDeviceStatus === true) {
-                            await self.setDeviceStatusAsync();
+                        if (this.config.pushDeviceStatus === true) {
+                            await this.setDeviceStatusAsync();
                         } else {
-                            await self.getDeviceStatusAsync();
-                            //self.log.info('Extron get device status diabled');
+                            await this.getDeviceStatusAsync();
+                            //this.log.info('Extron get device status diabled');
                         }
                     }
                     return;
@@ -469,56 +467,56 @@ class Extron extends utils.Adapter {
 
                     switch (command) {
                         case 'VER':             // received a Version (answer to status query)
-                            self.log.debug(`onStreamData(): Extron got version: "${ext2}"`);
-                            if (!self.versionSet) {
-                                self.versionSet = true;
-                                self.setState('device.version', ext2, true);
+                            this.log.debug(`onStreamData(): Extron got version: "${ext2}"`);
+                            if (!this.versionSet) {
+                                this.versionSet = true;
+                                this.setState('device.version', ext2, true);
                             }
                             break;
 
                         case 'IPN':             // received a device name
-                            self.log.debug(`onStreamData(): Extron got devicename: "${ext2}"`);
-                            self.setState('device.name', ext2, true);
+                            this.log.debug(`onStreamData(): Extron got devicename: "${ext2}"`);
+                            this.setState('device.name', ext2, true);
                             break;
 
                         case 'INF':             // received a device model
-                            self.log.debug(`onStreamData(): Extron got device model: "${ext2}"`);
-                            self.setState('device.model', ext2, true);
+                            this.log.debug(`onStreamData(): Extron got device model: "${ext2}"`);
+                            this.setState('device.model', ext2, true);
                             break;
 
                         case 'DSM':             // received a mute command
                         case 'DSG':             // received a gain level
-                            self.log.debug(`onStreamData(): Extron got mute/gain ${command} from OID: "${ext1}" value: ${ext2}`);
-                            self.setGain(command, ext1, ext2);
+                            this.log.debug(`onStreamData(): Extron got mute/gain ${command} from OID: "${ext1}" value: ${ext2}`);
+                            this.setGain(command, ext1, ext2);
                             break;
 
                         case 'DSD':             //received a set source command
-                            self.log.debug(`onStreamData(): Extron got source ${command} from OID: "${ext1}" value: "${ext2}"`);
-                            self.setSource(ext1, ext2);
+                            this.log.debug(`onStreamData(): Extron got source ${command} from OID: "${ext1}" value: "${ext2}"`);
+                            this.setSource(ext1, ext2);
                             break;
 
                         case 'DSE' :            //received a limiter status change
-                            self.log.debug(`onStreamData(): Extron got a limiter status change from OID : "${ext1}" value: "-${ext2}"`);
-                            self.setLimitStatus(ext1, ext2);
+                            this.log.debug(`onStreamData(): Extron got a limiter status change from OID : "${ext1}" value: "-${ext2}"`);
+                            this.setLimitStatus(ext1, ext2);
                             break;
                         case 'DST' :            //received a limiter threshold change
-                            self.log.debug(`onStreamData(): Extron got a limiter threshold change from OID : "${ext1}" value: "${ext2}"`);
-                            self.setLimitThreshold(ext1, ext2);
+                            this.log.debug(`onStreamData(): Extron got a limiter threshold change from OID : "${ext1}" value: "${ext2}"`);
+                            this.setLimitThreshold(ext1, ext2);
                             break;
 
                         case 'PLAY':             //received a play mode command
-                            self.log.debug(`onStreamData(): Extron got play mode ${command} for Player: "${ext1}" value: "${ext2}"`);
-                            self.setPlayMode(ext1, ext2);
+                            this.log.debug(`onStreamData(): Extron got play mode ${command} for Player: "${ext1}" value: "${ext2}"`);
+                            this.setPlayMode(ext1, ext2);
                             break;
 
                         case 'CPLYA':           //received a file association to a player
-                            self.log.debug(`onStreamData(): Extron got filename for Player: "${ext1}" value: "${ext2}"`);
-                            self.setFileName(ext1, ext2);
+                            this.log.debug(`onStreamData(): Extron got filename for Player: "${ext1}" value: "${ext2}"`);
+                            this.setFileName(ext1, ext2);
                             break;
 
                         case 'CPLYM':           //received a set repeat mode command
-                            self.log.debug(`onStreamData(): Extron got repeat mode ${command} for Player: "${ext1}" value: "${ext2}"`);
-                            self.setRepeatMode(ext1, ext2);
+                            this.log.debug(`onStreamData(): Extron got repeat mode ${command} for Player: "${ext1}" value: "${ext2}"`);
+                            this.setRepeatMode(ext1, ext2);
                             break;
 
                         case 'IN1':             // received a tie command from CrossPoint
@@ -529,117 +527,117 @@ class Extron extends utils.Adapter {
                         case 'IN6':
                         case 'IN7':
                         case 'IN8':
-                            self.log.debug(`onStreamData(): Extron got tie command ${command} for output: ${ext2}`);
-                            self.setTie(command, ext2);
+                            this.log.debug(`onStreamData(): Extron got tie command ${command} for output: ${ext2}`);
+                            this.setTie(command, ext2);
                             break;
 
                         case 'LOUT':            // received a tie command for loop out
-                            self.log.debug(`onStreamData(): Extron got tie command input "${ext1}" to loop output`);
-                            self.setState(`connections.3.tie`, Number(ext1), true);
+                            this.log.debug(`onStreamData(): Extron got tie command input "${ext1}" to loop output`);
+                            this.setState(`connections.3.tie`, Number(ext1), true);
                             break;
 
                         case 'VMT':             // received a video mute
-                            self.log.debug(`onStreamData(): Extron got video mute for output "${ext1}" value "${ext2}"`);
-                            if (self.devices[self.config.device].short === 'sme211') self.setState(`connections.1.mute`, Number(ext1), true);
-                            else self.setState(`connections.${ext1}.mute`, Number(ext2), true);
+                            this.log.debug(`onStreamData(): Extron got video mute for output "${ext1}" value "${ext2}"`);
+                            if (this.devices[this.config.device].short === 'sme211') this.setState(`connections.1.mute`, Number(ext1), true);
+                            else this.setState(`connections.${ext1}.mute`, Number(ext2), true);
                             break;
 
                         case 'PLYRS' :          // received video playing
-                            self.log.debug(`onStreamData(): Extron got video playing for output "${ext1}" value "${ext2}"`);
-                            self.setPlayVideo(`ply.players.${ext1}.common.`, 1);
+                            this.log.debug(`onStreamData(): Extron got video playing for output "${ext1}" value "${ext2}"`);
+                            this.setPlayVideo(`ply.players.${ext1}.common.`, 1);
                             break;
                         case'PLYRE' :           // received Video paused
-                            self.log.debug(`onStreamData(): Extron got video paused for output "${ext1}" value "${ext2}"`);
-                            self.setPlayVideo(`ply.players.${ext1}.common.`, 2);
+                            this.log.debug(`onStreamData(): Extron got video paused for output "${ext1}" value "${ext2}"`);
+                            this.setPlayVideo(`ply.players.${ext1}.common.`, 2);
                             break;
                         case 'PLYRO' :          // received video stopped
-                            self.log.debug(`onStreamData(): Extron got video stopped for output "${ext1}" value "${ext2}"`);
-                            self.setPlayVideo(`ply.players.${ext1}.common.`, 0);
+                            this.log.debug(`onStreamData(): Extron got video stopped for output "${ext1}" value "${ext2}"`);
+                            this.setPlayVideo(`ply.players.${ext1}.common.`, 0);
                             break;
                         case 'PLYR1' :          // received loop state
-                            self.log.debug(`onStreamData(): Extron got video loop mode for output "${ext1}" value "${ext2}"`);
-                            self.setLoopVideo(`ply.players.${ext1}.common.`,ext2);
+                            this.log.debug(`onStreamData(): Extron got video loop mode for output "${ext1}" value "${ext2}"`);
+                            this.setLoopVideo(`ply.players.${ext1}.common.`,ext2);
                             break;
                         case 'PLYRU' :          // received video filepath
-                            self.log.debug(`onStreamData(): Extron got video video filepath for output "${ext1}" value "${ext2}"`);
-                            self.setVideoFile(`ply.players.${ext1}.common.`,ext2);
+                            this.log.debug(`onStreamData(): Extron got video video filepath for output "${ext1}" value "${ext2}"`);
+                            this.setVideoFile(`ply.players.${ext1}.common.`,ext2);
                             break;
                         case 'PLYRY' :
-                            self.log.debug(`onStreamData(): Extron got video playmmode "${ext1}" value "${ext2}"`);
-                            self.setPlayVideo(`ply.players.1.common.`,Number(ext1));
+                            this.log.debug(`onStreamData(): Extron got video playmmode "${ext1}" value "${ext2}"`);
+                            this.setPlayVideo(`ply.players.1.common.`,Number(ext1));
                             break;
 
                         case 'STRM' :
-                            self.log.debug(`onStreamData(): Extron got streammode "${ext1}" value "${ext2}"`);
-                            self.setStreamMode(`ply.players.1.common.`,Number(ext1));
+                            this.log.debug(`onStreamData(): Extron got streammode "${ext1}" value "${ext2}"`);
+                            this.setStreamMode(`ply.players.1.common.`,Number(ext1));
                             break;
 
                         case 'UPL' :
-                            self.fileSend = false;   // reset file transmission flag
-                            self.log.debug(`onStreamData(): Extron got upload file confirmation command size: "${ext1}" name: "${ext2}"`);
+                            this.fileSend = false;   // reset file transmission flag
+                            this.log.debug(`onStreamData(): Extron got upload file confirmation command size: "${ext1}" name: "${ext2}"`);
                             break;
                         case 'WDF' :
-                            self.log.debug(`onStreamData(): Extron got list directory command`);
-                            self.requestDir = true;     // set directory transmission flag
+                            this.log.debug(`onStreamData(): Extron got list directory command`);
+                            this.requestDir = true;     // set directory transmission flag
                             break;
                         case 'W+UF' :
-                            self.log.debug(`onStreamData(): Extron got upload file command: ${ext1} ${ext2}`);
-                            self.fileSend = true;   // set file transmission flag
+                            this.log.debug(`onStreamData(): Extron got upload file command: ${ext1} ${ext2}`);
+                            this.fileSend = true;   // set file transmission flag
                             break;
 
                         case 'GRPMZ' :      // delete Group command
-                            self.log.debug(`onStreamData(): Extron got delete group #"${ext1}`);
-                            self.groupTypes[Number(ext1)] = undefined;
-                            self.groupMembers[Number(ext1)] = '';
-                            self.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.members`,'',true);
-                            self.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.deleted`,true,true);
+                            this.log.debug(`onStreamData(): Extron got delete group #"${ext1}`);
+                            this.groupTypes[Number(ext1)] = undefined;
+                            this.groupMembers[Number(ext1)] = '';
+                            this.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.members`,'',true);
+                            this.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.deleted`,true,true);
                             break;
                         case 'GRPMD' :      // set Group fader value
-                            self.log.debug(`onStreamData(): Extron got Group #'${ext1}" fader value:"${ext2}"`);
-                            self.setGroupLevel(Number(ext1),Number(ext2));
+                            this.log.debug(`onStreamData(): Extron got Group #'${ext1}" fader value:"${ext2}"`);
+                            this.setGroupLevel(Number(ext1),Number(ext2));
                             break;
                         case 'GRPMP' :      // set Group type
-                            self.log.debug(`onStreamData(): Extron got set group #"${ext1}" type: "${ext2}"`);
-                            self.setGroupType(Number(ext1), Number(ext2));
+                            this.log.debug(`onStreamData(): Extron got set group #"${ext1}" type: "${ext2}"`);
+                            this.setGroupType(Number(ext1), Number(ext2));
                             break;
                         case 'GRPMO' :      // add group member
                             members = ext2.split('*');
                             if (members.length >1) {
-                                self.log.debug(`onStreamData(): Extron got group #"${ext1}" add OID's: "${members}"`);
+                                this.log.debug(`onStreamData(): Extron got group #"${ext1}" add OID's: "${members}"`);
                             } else {
-                                self.log.debug(`onStreamData(): Extron got group #"${ext1}" add OID: "${members}"`);
+                                this.log.debug(`onStreamData(): Extron got group #"${ext1}" add OID: "${members}"`);
                             }
-                            self.setGroupMembers(Number(ext1),members);
+                            this.setGroupMembers(Number(ext1),members);
                             break;
                         case 'GRPML' :      // set group limits
-                            self.log.debug(`onStreamData(): Extron got set group #"${ext1}" limits upper: "${ext2.split("*")[0]}" lower: "${ext2.split("*")[1]}""`);
-                            self.setGroupLimits(Number(ext1),Number(ext2.split("*")[0]),Number(ext2.split("*")[1]));
+                            this.log.debug(`onStreamData(): Extron got set group #"${ext1}" limits upper: "${ext2.split('*')[0]}" lower: "${ext2.split('*')[1]}""`);
+                            this.setGroupLimits(Number(ext1),Number(ext2.split('*')[0]),Number(ext2.split('*')[1]));
                             break;
                         case 'GRPMN' :      // group name
-                            self.log.debug(`onStreamData(): Extron got group #"${ext1}" name: "${ext2}"`);
-                            self.setGroupName(Number(ext1), ext2);
+                            this.log.debug(`onStreamData(): Extron got group #"${ext1}" name: "${ext2}"`);
+                            this.setGroupName(Number(ext1), ext2);
                             break;
-                        
+
                         case 'NMI' :   // I/O Name
                         case 'NML' :
                         case 'NEI' :
                         case 'NMO' :
                         case 'NEX' :
                         case 'EXPDA' :
-                            self.log.debug(`onStreamData(): Extron got I/O Name "${ext2}" for I/O: "${self.oid2id(`${command}${ext1}`)}"`);
-                            self.setIOName(`${command}${ext1}`, ext2);
+                            this.log.debug(`onStreamData(): Extron got I/O Name "${ext2}" for I/O: "${this.oid2id(`${command}${ext1}`)}"`);
+                            this.setIOName(`${command}${ext1}`, ext2);
                             break;
                     }
                 } else {
-                    if ((answer != 'Q') && (answer != '') && (self.fileSend === false) && !(answer.match(/\d\*\d\w+/)) && !(answer.match(/\d\w/))) {
-                        self.log.debug('onStreamData(): Extron received data which cannot be handled "' + cmdPart + '"');
+                    if ((answer != 'Q') && (answer != '') && (this.fileSend === false) && !(answer.match(/\d\*\d\w+/)) && !(answer.match(/\d\w/))) {
+                        this.log.debug('onStreamData(): Extron received data which cannot be handled "' + cmdPart + '"');
                     }
                 }
             }
         } catch (err) {
-            self.errorHandler(err, 'onStreamData');
+            this.errorHandler(err, 'onStreamData');
             // @ts-ignore
-            if (err.message === 'Device mismatch error') self.terminate('Device mismatch error');
+            if (err.message === 'Device mismatch error') this.terminate('Device mismatch error');
         }
     }
 
@@ -648,7 +646,6 @@ class Extron extends utils.Adapter {
      * @param {string | Uint8Array} data
      */
     decodeBufferToLog(data) {
-        const self = this;
         try {
             let retString = '';
             let dataString = '';
@@ -683,7 +680,7 @@ class Extron extends utils.Adapter {
             }
             return retString;
         } catch (err) {
-            self.errorHandler(err, 'decodeBufferToLog');
+            this.errorHandler(err, 'decodeBufferToLog');
         }
     }
 
@@ -691,13 +688,12 @@ class Extron extends utils.Adapter {
      * called if stream is ready to send new data
      */
     async onStreamContinue() {
-        const self = this;
         try {
-            self.log.silly('onStreamContinue(): Extron stream can continue');
-            self.streamAvailable = true;
-            self.streamSend(self.sendBuffer.pop());
+            this.log.silly('onStreamContinue(): Extron stream can continue');
+            this.streamAvailable = true;
+            this.streamSend(this.sendBuffer.pop());
         } catch (err) {
-            self.errorHandler(err, 'onStreamContinue');
+            this.errorHandler(err, 'onStreamContinue');
         }
     }
 
@@ -715,18 +711,17 @@ class Extron extends utils.Adapter {
      * called if stream is closed
      */
     onStreamClose() {
-        const self = this;
-        self.log.debug('onStreamClose(): clear query timer');
+        this.log.debug('onStreamClose(): clear query timer');
         clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
         try {
-            switch (self.config.type) {
+            switch (this.config.type) {
                 case 'ssh' :
-                    self.log.info('onStreamClose(): Extron stream closed calling client.end()');
-                    self.client.end();
+                    this.log.info('onStreamClose(): Extron stream closed calling client.end()');
+                    this.client.end();
                     break;
                 case 'telnet' :
-                    self.log.info('onStreamClose(): Extron stream closed calling net.destroy()');
-                    self.net.destroy();
+                    this.log.info('onStreamClose(): Extron stream closed calling net.destroy()');
+                    this.net.destroy();
                     break;
             }
         } catch (err) {
@@ -738,10 +733,9 @@ class Extron extends utils.Adapter {
      * called to switch the verbose mode
      */
     switchMode() {
-        const self = this;
         try {
-            self.log.debug('switchMode(): Extron switching to verbose mode 3');
-            self.streamSend('W3CV\r');
+            this.log.debug('switchMode(): Extron switching to verbose mode 3');
+            this.streamSend('W3CV\r');
         } catch (err) {
             this.errorHandler(err, 'switchMode');
         }
@@ -751,18 +745,17 @@ class Extron extends utils.Adapter {
      * called to send a status query
      */
     queryStatus() {
-        const self = this;
         try {
-            if (self.pollCount > maxPollCount) {
-                self.log.error('queryStatus(): maxPollCount exceeded');
-                self.pollCount = 0;
-                self.clientReConnect();
+            if (this.pollCount > maxPollCount) {
+                this.log.error('queryStatus(): maxPollCount exceeded');
+                this.pollCount = 0;
+                this.clientReConnect();
             } else {
-                self.timers.timeoutQueryStatus.refresh();
-                if (!self.fileSend) {
-                    self.streamSend('Q');
-                    self.pollCount += 1;
-                    self.log.debug(`queryStatus(): Extron send a status query #${self.pollCount}`);
+                this.timers.timeoutQueryStatus.refresh();
+                if (!this.fileSend) {
+                    this.streamSend('Q');
+                    this.pollCount += 1;
+                    this.log.debug(`queryStatus(): Extron send a status query #${this.pollCount}`);
                 }
             }
         } catch (err) {
@@ -774,112 +767,111 @@ class Extron extends utils.Adapter {
      * called to set up the database dependant on the device type
      */
     async createDatabaseAsync() {
-        const self = this;
         try {
             // create the common section
-            for (const element of self.objectsTemplate.common) {
-                await self.setObjectNotExistsAsync(element._id, element);
+            for (const element of this.objectsTemplate.common) {
+                await this.setObjectNotExistsAsync(element._id, element);
             }
             // if cp82 or sme211 : create video inputs and outputs
-            if ((self.devices[self.config.device].short === 'cp82') || (self.devices[self.config.device].short === 'sme211')) {
-                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].connections) {
-                    await self.setObjectNotExistsAsync(element._id, element);
+            if ((this.devices[this.config.device].short === 'cp82') || (this.devices[this.config.device].short === 'sme211')) {
+                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].connections) {
+                    await this.setObjectNotExistsAsync(element._id, element);
                 }
             }
             // if we have a user filesystem on the device
-            if (self.devices[self.config.device] && self.devices[self.config.device].fs) {
-                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.filesystem._id, self.objectsTemplate.userflash.filesystem);
-                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.directory._id, self.objectsTemplate.userflash.directory);
-                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.upload._id, self.objectsTemplate.userflash.upload);
-                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.freespace._id, self.objectsTemplate.userflash.freespace);
-                await self.setObjectNotExistsAsync(self.objectsTemplate.userflash.file._id, self.objectsTemplate.userflash.file);
+            if (this.devices[this.config.device] && this.devices[this.config.device].fs) {
+                await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.filesystem._id, this.objectsTemplate.userflash.filesystem);
+                await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.directory._id, this.objectsTemplate.userflash.directory);
+                await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.upload._id, this.objectsTemplate.userflash.upload);
+                await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.freespace._id, this.objectsTemplate.userflash.freespace);
+                await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
             }
             // if we have inputs on the device
-            if (self.devices[self.config.device] && self.devices[self.config.device].in) {
+            if (this.devices[this.config.device] && this.devices[this.config.device].in) {
                 // at this point the device has inputs
-                await self.setObjectNotExistsAsync('in', {
+                await this.setObjectNotExistsAsync('in', {
                     'type': 'folder',
                     'common': {
                         'name': 'All input types'
                     },
                     'native': {}
                 });
-                for (const inputs of Object.keys(self.devices[self.config.device].in)) {
+                for (const inputs of Object.keys(this.devices[this.config.device].in)) {
                     // create input folder, key name is the folder id
-                    await self.setObjectNotExistsAsync(`in.${inputs}`, {
+                    await this.setObjectNotExistsAsync(`in.${inputs}`, {
                         'type': 'folder',
                         'common': {
-                            'name': self.devices[self.config.device].in[inputs].name
+                            'name': this.devices[this.config.device].in[inputs].name
                         },
                         'native': {}
                     });
                     // for each input type create the amount of inputs
-                    for (let i = 1; i <= self.devices[self.config.device].in[inputs].amount; i++) {
+                    for (let i = 1; i <= this.devices[this.config.device].in[inputs].amount; i++) {
                         const actInput = `in.${inputs}.${('00' + i.toString()).slice(-2)}`;
                         // create the input folder
-                        await self.setObjectNotExistsAsync(actInput, self.objectsTemplate[self.devices[self.config.device].objects[1]].input);
+                        await this.setObjectNotExistsAsync(actInput, this.objectsTemplate[this.devices[this.config.device].objects[1]].input);
                         // and the common structure of an input depending on type
                         switch (inputs) {
 
                             case 'inputs' :
-                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].inputs) {
-                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].inputs) {
+                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'lineInputs' :
-                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].lineInputs) {
-                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].lineInputs) {
+                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'playerInputs' :
-                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].playerInputs) {
-                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].playerInputs) {
+                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'programInputs' :
-                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].programInputs) {
-                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].programInputs) {
+                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'videoInputs' :
-                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].videoInputs) {
-                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].videoInputs) {
+                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'auxInputs' :
-                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].auxInputs) {
-                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].auxInputs) {
+                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'virtualReturns' :
-                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].virtualReturns) {
-                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].virtualReturns) {
+                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'expansionInputs' :
-                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].expansionInputs) {
-                                    await self.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].expansionInputs) {
+                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                         }
                         // now the mixpoints are created
-                        if (self.devices[self.config.device] && self.devices[self.config.device].mp) {      // if we have mixpoints
+                        if (this.devices[this.config.device] && this.devices[this.config.device].mp) {      // if we have mixpoints
                             if (inputs != 'videoInputs') {
-                                for (const outType of Object.keys(self.devices[self.config.device].out)) {
-                                    for (let j = 1; j <= self.devices[self.config.device].out[outType].amount; j++) {
+                                for (const outType of Object.keys(this.devices[this.config.device].out)) {
+                                    for (let j = 1; j <= this.devices[this.config.device].out[outType].amount; j++) {
                                         if (i === j && outType === 'virtualSendBus') {
                                             continue;       // these points cannot be set
                                         }
-                                        const actMixPoint = actInput + '.mixPoints.' + self.devices[self.config.device].out[outType].short + ('00' + j.toString()).slice(-2);
-                                        await self.setObjectNotExistsAsync(actMixPoint, {
+                                        const actMixPoint = actInput + '.mixPoints.' + this.devices[this.config.device].out[outType].short + ('00' + j.toString()).slice(-2);
+                                        await this.setObjectNotExistsAsync(actMixPoint, {
                                             'type': 'folder',
                                             'common': {
                                                 'role': 'mixpoint',
@@ -887,8 +879,8 @@ class Extron extends utils.Adapter {
                                             },
                                             'native': {}
                                         });
-                                        for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].mixPoints) {
-                                            await self.setObjectNotExistsAsync(actMixPoint + '.' + element._id, element);
+                                        for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].mixPoints) {
+                                            await this.setObjectNotExistsAsync(actMixPoint + '.' + element._id, element);
                                         }
                                     }
                                 }
@@ -898,77 +890,77 @@ class Extron extends utils.Adapter {
                 }
             }
             // if we have players on the device
-            if (self.devices[self.config.device] && self.devices[self.config.device].ply) {
+            if (this.devices[this.config.device] && this.devices[this.config.device].ply) {
                 // at this point the device has players
-                await self.setObjectNotExistsAsync('ply', {
+                await this.setObjectNotExistsAsync('ply', {
                     'type': 'folder',
                     'common': {
                         'name': 'All players'
                     },
                     'native': {}
                 });
-                for (const players of Object.keys(self.devices[self.config.device].ply)) {
+                for (const players of Object.keys(this.devices[this.config.device].ply)) {
                     // create player folder, key name is the folder id
-                    await self.setObjectNotExistsAsync(`ply.${players}`, {
+                    await this.setObjectNotExistsAsync(`ply.${players}`, {
                         'type': 'folder',
                         'common': {
-                            'name': self.devices[self.config.device].ply[players].name
+                            'name': this.devices[this.config.device].ply[players].name
                         },
                         'native': {}
                     });
                     // create the amount of players
-                    for (let i = 1; i <= self.devices[self.config.device].ply[players].amount; i++) {
+                    for (let i = 1; i <= this.devices[this.config.device].ply[players].amount; i++) {
                         const actPlayer = `ply.${players}.${i}`;
                         // create the player folder
-                        await self.setObjectNotExistsAsync(actPlayer, self.objectsTemplate[self.devices[self.config.device].objects[1]].player);
+                        await this.setObjectNotExistsAsync(actPlayer, this.objectsTemplate[this.devices[this.config.device].objects[1]].player);
                         // and the common structure of a player
-                        for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].players) {
-                            await self.setObjectNotExistsAsync(actPlayer + '.' + element._id, element);
+                        for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].players) {
+                            await this.setObjectNotExistsAsync(actPlayer + '.' + element._id, element);
                         }
                     }
                 }
             }
             // if we have outputs on the device
-            if (self.devices[self.config.device] && self.devices[self.config.device].out) {
+            if (this.devices[this.config.device] && this.devices[this.config.device].out) {
                 // at this point the device has outputs
-                await self.setObjectNotExistsAsync('out', {
+                await this.setObjectNotExistsAsync('out', {
                     'type': 'folder',
                     'common': {
                         'name': 'All outputs'
                     },
                     'native': {}
                 });
-                for (const outputs of Object.keys(self.devices[self.config.device].out)) {
+                for (const outputs of Object.keys(this.devices[this.config.device].out)) {
                     // create outputs folder, key name is the folder id
-                    await self.setObjectNotExistsAsync(`out.${outputs}`, {
+                    await this.setObjectNotExistsAsync(`out.${outputs}`, {
                         'type': 'folder',
                         'common': {
-                            'name': self.devices[self.config.device].out[outputs].name
+                            'name': this.devices[this.config.device].out[outputs].name
                         },
                         'native': {}
                     });
                     // create the amount of outputs
-                    for (let i = 1; i <= self.devices[self.config.device].out[outputs].amount; i++) {
+                    for (let i = 1; i <= this.devices[this.config.device].out[outputs].amount; i++) {
                         const actOutput = `out.${outputs}.${('00' + i.toString()).slice(-2)}`;
                         // create the output folder
-                        await self.setObjectNotExistsAsync(actOutput, self.objectsTemplate[self.devices[self.config.device].objects[1]].output);
+                        await this.setObjectNotExistsAsync(actOutput, this.objectsTemplate[this.devices[this.config.device].objects[1]].output);
                         // and the common structure of a output
                         switch (outputs) {
                             case 'outputs' :
-                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].outputs) {
-                                    await self.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
+                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].outputs) {
+                                    await this.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'auxOutputs' :
-                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].auxOutputs) {
-                                    await self.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
+                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].auxOutputs) {
+                                    await this.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'expansionOutputs' :
-                                for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].expansionOutputs) {
-                                    await self.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
+                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].expansionOutputs) {
+                                    await this.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
                                 }
                                 break;
                         }
@@ -976,8 +968,8 @@ class Extron extends utils.Adapter {
                 }
             }
             // if we have groups on the device
-            if (self.devices[self.config.device] && self.devices[self.config.device].grp) {
-                await self.setObjectNotExistsAsync('groups', {
+            if (this.devices[this.config.device] && this.devices[this.config.device].grp) {
+                await this.setObjectNotExistsAsync('groups', {
                     'type': 'folder',
                     'common': {
                         'name': 'All Groups'
@@ -985,18 +977,18 @@ class Extron extends utils.Adapter {
                     'native': {}
                 });
                 // create the amount of groups
-                for (let i = 1; i <= self.devices[self.config.device].grp.groups.amount; i++) {
+                for (let i = 1; i <= this.devices[this.config.device].grp.groups.amount; i++) {
                     const actGroup = `groups.${('00' + i.toString()).slice(-2)}`;
                     // create the group folder
-                    await self.setObjectNotExistsAsync(actGroup, self.objectsTemplate[self.devices[self.config.device].objects[1]].group);
+                    await this.setObjectNotExistsAsync(actGroup, this.objectsTemplate[this.devices[this.config.device].objects[1]].group);
                     // and the common structure of a group
-                    for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].groups) {
-                        await self.setObjectNotExistsAsync(actGroup + '.' + element._id, element);
+                    for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].groups) {
+                        await this.setObjectNotExistsAsync(actGroup + '.' + element._id, element);
                     }
                 }
             }
         } catch (err) {
-            self.errorHandler(err, 'createDatabase');
+            this.errorHandler(err, 'createDatabase');
         }
     }
 
@@ -1004,22 +996,20 @@ class Extron extends utils.Adapter {
      * called to create a list of all states in the database
      */
     async createStatesListAsync(){
-        const self = this;
-        self.stateList = Object.keys(await self.getStatesAsync('*'));
+        this.stateList = Object.keys(await this.getStatesAsync('*'));
     }
 
     /**
      * called to get all database item status from device
      */
     async getDeviceStatusAsync() {
-        const self = this;
         try {
             // if status has not been requested
-            if (!self.statusRequested && self.isVerboseMode) {
-                self.log.info('Extron request device status started');
+            if (!this.statusRequested && this.isVerboseMode) {
+                this.log.info('Extron request device status started');
                 // iterate through stateList to request status from device
-                for (let index = 0; index < self.stateList.length; index++) {
-                    const id = self.stateList[index];
+                for (let index = 0; index < this.stateList.length; index++) {
+                    const id = this.stateList[index];
                     const baseId = id.substr(0, id.lastIndexOf('.'));
                     const stateName = id.substr(id.lastIndexOf('.') + 1);
                     const idArray = id.split('.');
@@ -1030,87 +1020,87 @@ class Extron extends utils.Adapter {
                         // @ts-ignore
                         switch (stateName) {
                             case 'mute' :
-                                if (idType === 'connections') self.getVideoMute(id);
-                                else self.getMuteStatus(id);
+                                if (idType === 'connections') this.getVideoMute(id);
+                                else this.getMuteStatus(id);
                                 break;
 
                             case 'source' :
-                                self.getSource(id);
+                                this.getSource(id);
                                 break;
 
                             case 'level' :
                                 if (idType ==='groups') {
-                                    self.getGroupLevel(grpId);
+                                    this.getGroupLevel(grpId);
                                 } else {
-                                    self.getGainLevel(id);
+                                    this.getGainLevel(id);
                                 }
                                 break;
 
                             case 'playmode' :
-                                if (self.devices[self.config.device].short === 'smd202') {
-                                    self.getPlayVideo();
-                                } else self.getPlayMode(id);
+                                if (this.devices[this.config.device].short === 'smd202') {
+                                    this.getPlayVideo();
+                                } else this.getPlayMode(id);
                                 break;
 
                             case 'repeatmode' :
-                                self.getRepeatMode(id);
+                                this.getRepeatMode(id);
                                 break;
 
                             case 'filename' :
-                                self.getFileName(id);
+                                this.getFileName(id);
                                 break;
 
                             case 'filepath' :
-                                self.getVideoFile();
+                                this.getVideoFile();
                                 break;
 
                             case 'loopmode' :
-                                self.getLoopVideo();
+                                this.getLoopVideo();
                                 break;
 
                             case 'streammode' :
-                                self.getStreamMode();
+                                this.getStreamMode();
                                 break;
 
                             case 'dir' :
-                                self.listUserFiles();
+                                this.listUserFiles();
                                 break;
 
                             case 'status' :
-                                self.getLimitStatus(id);
+                                this.getLimitStatus(id);
                                 break;
 
                             case 'threshold':
-                                self.getLimitThreshold(id);
+                                this.getLimitThreshold(id);
                                 break;
 
                             case 'name' :
                                 if (idType ==='groups') {
-                                    self.getGroupName(grpId);
-                                } else self.getIOName(id);
+                                    this.getGroupName(grpId);
+                                } else this.getIOName(id);
                                 break;
 
                             case 'type' :
-                                self.getGroupType(grpId);
+                                this.getGroupType(grpId);
                                 break;
 
                             case 'upperLimit' :
                             case 'lowerLimit' :
-                                self.getGroupLimits(grpId);
+                                this.getGroupLimits(grpId);
                                 break;
 
                             case 'members' :
-                                self.getGroupMembers(grpId);
+                                this.getGroupMembers(grpId);
                                 break;
                         }
                     }
                 }
-                self.statusRequested = true;
-                self.log.info('Extron request device status completed');
-                self.queryStatus();
+                this.statusRequested = true;
+                this.log.info('Extron request device status completed');
+                this.queryStatus();
             }
         } catch (err) {
-            self.errorHandler(err, 'getDeviceStatus');
+            this.errorHandler(err, 'getDeviceStatus');
         }
     }
 
@@ -1118,18 +1108,17 @@ class Extron extends utils.Adapter {
      * called to set all database item states to device
      */
     async setDeviceStatusAsync() {
-        const self = this;
         try {
             // if status has not been requested
-            if (!self.statusSended && self.isVerboseMode) {
-                self.log.info('Extron set device status started');
+            if (!this.statusSended && this.isVerboseMode) {
+                this.log.info('Extron set device status started');
                 // iterate through stateList to send status to device
-                for (let index = 0; index < self.stateList.length; index++) {
-                    const id = self.stateList[index];
-                    const state = await self.getStateAsync(id);
+                for (let index = 0; index < this.stateList.length; index++) {
+                    const id = this.stateList[index];
+                    const state = await this.getStateAsync(id);
                     // @ts-ignore
                     state.ack = false;
-                    self.onStateChange(id, state);
+                    this.onStateChange(id, state);
                     /**
                     const baseId = id.substr(0, id.lastIndexOf('.'));
                     const idArray = id.split('.');
@@ -1142,11 +1131,11 @@ class Extron extends utils.Adapter {
                         // @ts-ignore
                         if (state !== null) switch (stateName) {
                             case 'mute' :
-                                self.sendMuteStatus(baseId, state.val);
+                                this.sendMuteStatus(baseId, state.val);
                                 break;
 
                             case 'source' :
-                                self.sendSource(id, Number(state.val));
+                                this.sendSource(id, Number(state.val));
                                 break;
 
                             case 'level' :
@@ -1165,35 +1154,35 @@ class Extron extends utils.Adapter {
                                         calcMode = 'linAtt';
                                         break;
                                 }
-                                value = self.calculateFaderValue(Number(state.val),calcMode);
-                                self.sendGainLevel(id,value);
+                                value = this.calculateFaderValue(Number(state.val),calcMode);
+                                this.sendGainLevel(id,value);
                                 break;
 
                             case 'playmode' :
-                                self.sendPlayMode(baseId, state.val);
+                                this.sendPlayMode(baseId, state.val);
                                 break;
 
                             case 'repeatmode' :
-                                self.sendRepeatMode(baseId, state.val);
+                                this.sendRepeatMode(baseId, state.val);
                                 break;
 
                             case 'filename' :
-                                self.sendFileName(baseId, state.val.toString());
-                                self.playerLoaded[Number(self.id2oid(baseId))-1] = (state.val.toString() != '' ? true : false);
+                                this.sendFileName(baseId, state.val.toString());
+                                this.playerLoaded[Number(this.id2oid(baseId))-1] = (state.val.toString() != '' ? true : false);
                                 break;
 
                             case 'streammode' :
-                                self.sendStreamMode(Number(state.val));
+                                this.sendStreamMode(Number(state.val));
                                 break;
                         }
                     }
                     */
                 }
-                self.statusSended = true;
-                self.log.info('Extron set device status completed');
+                this.statusSended = true;
+                this.log.info('Extron set device status completed');
             }
         } catch (err) {
-            self.errorHandler(err, 'setDeviceStatus');
+            this.errorHandler(err, 'setDeviceStatus');
         }
     }
 
@@ -1203,8 +1192,7 @@ class Extron extends utils.Adapter {
      * @returns {boolean}
      */
     checkName(name) {
-        const self = this;
-        for (var char of self.invalidChars) {
+        for (const char of this.invalidChars) {
             if (name.includes(char)) return false;
         }
         return true;
@@ -1223,7 +1211,6 @@ class Extron extends utils.Adapter {
      * returns: Object with all 3 value types
      */
     calculateFaderValue(value, type) {
-        const self = this;
         const locObj = {};
 
         try {
@@ -1349,7 +1336,7 @@ class Extron extends utils.Adapter {
 
             }
         } catch (err) {
-            self.errorHandler(err, 'calculateFaderValue');
+            this.errorHandler(err, 'calculateFaderValue');
         }
 
         return locObj;
@@ -1364,21 +1351,20 @@ class Extron extends utils.Adapter {
      * cmd = DSM (mute), DSG (gain)
      */
     setGain(cmd, oid, value) {
-        const self = this;
         try {
-            const mixPoint = self.oid2id(oid);
+            const mixPoint = this.oid2id(oid);
             const idArray = mixPoint.split('.');
             const idType = idArray[1];
             const idBlock = idArray[3];
             let calcMode ='dev';
             if (cmd === 'DSM') {
-                self.setState(`${mixPoint}mute`, Number(value) >0 ? true : false, true);
+                this.setState(`${mixPoint}mute`, Number(value) >0 ? true : false, true);
             } else {
                 switch (idBlock) {
                     case 'gain' :
                         calcMode = 'devGain';
                         if (idType === 'auxInputs') calcMode = 'devAux';
-                        if (self.devices[self.config.device].short === 'sme211') calcMode = 'devAux';
+                        if (this.devices[this.config.device].short === 'sme211') calcMode = 'devAux';
                         break;
 
                     case 'postmix' :
@@ -1390,10 +1376,10 @@ class Extron extends utils.Adapter {
                         break;
                 }
 
-                const faderVal = self.calculateFaderValue(value.toString(), calcMode);
+                const faderVal = this.calculateFaderValue(value.toString(), calcMode);
                 if (faderVal) {
-                    self.setState(`${mixPoint}level_db`, Number(faderVal.logValue), true);
-                    self.setState(`${mixPoint}level`, Number(faderVal.linValue), true);
+                    this.setState(`${mixPoint}level_db`, Number(faderVal.logValue), true);
+                    this.setState(`${mixPoint}level`, Number(faderVal.linValue), true);
                 }
             }
         } catch (err) {
@@ -1407,11 +1393,10 @@ class Extron extends utils.Adapter {
      * @param {string | boolean} value
      */
     sendMuteStatus(baseId, value) {
-        const self = this;
         try {
-            const oid = self.id2oid(baseId);
+            const oid = this.id2oid(baseId);
             if (oid) {
-                self.streamSend(`WM${oid}*${Number(value)>0 ? '1' : '0'}AU\r`);
+                this.streamSend(`WM${oid}*${Number(value)>0 ? '1' : '0'}AU\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendMuteStatus');
@@ -1423,11 +1408,10 @@ class Extron extends utils.Adapter {
      * @param {string} baseId
      */
     getMuteStatus(baseId) {
-        const self = this;
         try {
-            const oid = self.id2oid(baseId);
+            const oid = this.id2oid(baseId);
             if (oid) {
-                self.streamSend(`WM${oid}AU\r`);
+                this.streamSend(`WM${oid}AU\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'getMuteStatus');
@@ -1440,13 +1424,12 @@ class Extron extends utils.Adapter {
      * @param {string | any} value
      */
     sendGainLevel(baseId, value) {
-        const self = this;
         try {
-            let oid = self.id2oid(baseId);
+            let oid = this.id2oid(baseId);
             if (oid) {
                 let sendData = `WG${oid}*${value.devValue}AU\r`;
-                self.streamSend(sendData);
-                if (self.devices[self.config.device].short === 'sme211') { // on SME211 we have stereo controls
+                this.streamSend(sendData);
+                if (this.devices[this.config.device].short === 'sme211') { // on SME211 we have stereo controls
                     switch (Number(oid)) {
                         case 40000 :
                             oid = '40001';
@@ -1462,7 +1445,7 @@ class Extron extends utils.Adapter {
                             break;
                     }
                     sendData = `WG${oid}*${value.devValue}AU\r`;
-                    self.streamSend(sendData);
+                    this.streamSend(sendData);
                 }
             }
         } catch (err) {
@@ -1475,11 +1458,10 @@ class Extron extends utils.Adapter {
      * @param {string} baseId
      */
     getGainLevel(baseId) {
-        const self = this;
         try {
-            const oid = self.id2oid(baseId);
+            const oid = this.id2oid(baseId);
             if (oid) {
-                self.streamSend(`WG${oid}AU\r`);
+                this.streamSend(`WG${oid}AU\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendGainLevel');
@@ -1493,10 +1475,9 @@ class Extron extends utils.Adapter {
      * cmd = DSD (source)
      */
     setSource(oid, value) {
-        const self = this;
         try {
-            const channel = self.oid2id(oid);
-            self.setState(`${channel}source`, Number(value), true);
+            const channel = this.oid2id(oid);
+            this.setState(`${channel}source`, Number(value), true);
         } catch (err) {
             this.errorHandler(err, 'setSource');
         }
@@ -1508,11 +1489,10 @@ class Extron extends utils.Adapter {
      * @param {string | number} value
      */
     sendSource(baseId, value) {
-        const self = this;
         try {
-            const oid = self.id2oid(`${baseId}.source`);
+            const oid = this.id2oid(`${baseId}.source`);
             if (oid) {
-                self.streamSend(`WD${oid}*${value === '' ? 0: value}AU\r`);
+                this.streamSend(`WD${oid}*${value === '' ? 0: value}AU\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendSource');
@@ -1524,11 +1504,10 @@ class Extron extends utils.Adapter {
      * @param {string} baseId
      */
     getSource(baseId) {
-        const self = this;
         try {
-            const oid = self.id2oid(`${baseId}.source`);
+            const oid = this.id2oid(`${baseId}.source`);
             if (oid) {
-                self.streamSend(`WD${oid}AU\r`);
+                this.streamSend(`WD${oid}AU\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'getSource');
@@ -1540,32 +1519,31 @@ class Extron extends utils.Adapter {
      * @param {string} Id
      */
     getIOName(Id) {
-        const self = this;
         try {
             const ioType = Id.split('.')[3];
             const ioNumber = Number(Id.split('.')[4]);
             switch (ioType) {
                 case 'inputs' :
-                    self.streamSend(`W${ioNumber}NI\r`);
-                break;
+                    this.streamSend(`W${ioNumber}NI\r`);
+                    break;
                 case 'auxInputs' :
-                    self.streamSend(`W${ioNumber+12}NI\r`);
-                break;
+                    this.streamSend(`W${ioNumber+12}NI\r`);
+                    break;
                 case 'virtualReturns' :
-                    self.streamSend(`W${ioNumber}NL\r`);
-                break;
+                    this.streamSend(`W${ioNumber}NL\r`);
+                    break;
                 case 'expansionInputs':
-                    self.streamSend(`WA${ioNumber}EXPD\r`);
-                break;
+                    this.streamSend(`WA${ioNumber}EXPD\r`);
+                    break;
                 case 'outputs' :
-                    self.streamSend(`W${ioNumber}NO\r`);
-                break;
+                    this.streamSend(`W${ioNumber}NO\r`);
+                    break;
                 case 'auxOutputs' :
-                    self.streamSend(`W${ioNumber+8}NO\r`);
-                break;
+                    this.streamSend(`W${ioNumber+8}NO\r`);
+                    break;
                 case 'expansionOutputs' :
-                    self.streamSend(`W${ioNumber}NX\r`);
-                break;
+                    this.streamSend(`W${ioNumber}NX\r`);
+                    break;
             }
         } catch (err) {
             this.errorHandler(err, 'getIOName');
@@ -1578,32 +1556,31 @@ class Extron extends utils.Adapter {
      * @param {string} name
      */
     sendIOName(Id, name) {
-        const self = this;
         try {
             const ioType = Id.split('.')[3];
             const ioNumber = Number(Id.split('.')[4]);
             switch (ioType) {
                 case 'inputs' :
-                    self.streamSend(`W${ioNumber},${name}NI\r`);
-                break;
+                    this.streamSend(`W${ioNumber},${name}NI\r`);
+                    break;
                 case 'auxInputs' :
-                    self.streamSend(`W${ioNumber+12},${name}NI\r`);
-                break;
+                    this.streamSend(`W${ioNumber+12},${name}NI\r`);
+                    break;
                 case 'virtualReturns' :
-                    self.streamSend(`W${ioNumber},${name}NL\r`);
-                break;
+                    this.streamSend(`W${ioNumber},${name}NL\r`);
+                    break;
                 case 'expansionInputs':
-                    self.streamSend(`WA${ioNumber}*${name}EXPD\r`);
-                break;
+                    this.streamSend(`WA${ioNumber}*${name}EXPD\r`);
+                    break;
                 case 'outputs' :
-                    self.streamSend(`W${ioNumber},${name}NO\r`);
-                break;
+                    this.streamSend(`W${ioNumber},${name}NO\r`);
+                    break;
                 case 'auxOutputs' :
-                    self.streamSend(`W${ioNumber+8},${name}NO\r`);
-                break;
+                    this.streamSend(`W${ioNumber+8},${name}NO\r`);
+                    break;
                 case 'expansionOutputs' :
-                    self.streamSend(`W${ioNumber},${name}NX\r`);
-                break;
+                    this.streamSend(`W${ioNumber},${name}NX\r`);
+                    break;
             }
         } catch (err) {
             this.errorHandler(err, 'sendIOName');
@@ -1616,11 +1593,10 @@ class Extron extends utils.Adapter {
      * @param {string} name
      */
     setIOName(IO, name) {
-        const self = this;
         try {
-            const id = self.oid2id(IO);
+            const id = this.oid2id(IO);
             if (id) {
-                self.setState(`${id}`, `${name}`, true);
+                this.setState(`${id}`, `${name}`, true);
             }
         } catch (err) {
             this.errorHandler(err, 'setIOName');
@@ -1633,10 +1609,9 @@ class Extron extends utils.Adapter {
      * @param {string | number} value
      */
     setLimitStatus(oid, value) {
-        const self = this;
         try {
-            const channel = self.oid2id(oid);
-            self.setState(`${channel}status`, Number(value)>0?true:false, true);
+            const channel = this.oid2id(oid);
+            this.setState(`${channel}status`, Number(value)>0?true:false, true);
         } catch (err) {
             this.errorHandler(err, 'setLimitStatus');
         }
@@ -1648,11 +1623,10 @@ class Extron extends utils.Adapter {
      * cmd WE[oid]AU
      */
     getLimitStatus(baseId) {
-        const self = this;
         try {
-            const oid = self.id2oid(`${baseId}.status`);
+            const oid = this.id2oid(`${baseId}.status`);
             if (oid) {
-                self.streamSend(`WE${oid}AU\r`);
+                this.streamSend(`WE${oid}AU\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'getLimitStatus');
@@ -1666,11 +1640,10 @@ class Extron extends utils.Adapter {
      * cmd WE[oid]*[0/1]AU
      */
     sendLimitStatus(baseId, value) {
-        const self = this;
         try {
-            const oid = self.id2oid(baseId);
+            const oid = this.id2oid(baseId);
             if (oid) {
-                self.streamSend(`WE${oid}*${value ? '1' : '0'}AU\r`);
+                this.streamSend(`WE${oid}*${value ? '1' : '0'}AU\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendLimitStatus');
@@ -1683,10 +1656,9 @@ class Extron extends utils.Adapter {
      * @param {string | any} value
      */
     setLimitThreshold(oid, value) {
-        const self = this;
         try {
-            const channel = self.oid2id(oid);
-            self.setState(`${channel}threshold`, Number(0-value), true);
+            const channel = this.oid2id(oid);
+            this.setState(`${channel}threshold`, Number(0-value), true);
         } catch (err) {
             this.errorHandler(err, 'setLimitThreshold');
         }
@@ -1698,11 +1670,10 @@ class Extron extends utils.Adapter {
      * cmd WT[oid]AU
      */
     getLimitThreshold(baseId) {
-        const self = this;
         try {
-            const oid = self.id2oid(`${baseId}.status`);
+            const oid = this.id2oid(`${baseId}.status`);
             if (oid) {
-                self.streamSend(`WT${oid}AU\r`);
+                this.streamSend(`WT${oid}AU\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'getLimitThreshold');
@@ -1716,11 +1687,10 @@ class Extron extends utils.Adapter {
      * cmd WT[oid]*[value]AU
      */
     sendLimitThreshold(baseId, value) {
-        const self = this;
         try {
-            const oid = self.id2oid(baseId);
+            const oid = this.id2oid(baseId);
             if (oid) {
-                self.streamSend(`WT${oid}*${value}AU\r`);
+                this.streamSend(`WT${oid}*${value}AU\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendLimitThreshold');
@@ -1736,10 +1706,9 @@ class Extron extends utils.Adapter {
      * cmd = PLAY (playmode)
      */
     setPlayMode(oid, value) {
-        const self = this;
         try {
-            const player = self.oid2id(oid);
-            self.setState(`${player}playmode`, value === '1' ? true : false, true);
+            const player = this.oid2id(oid);
+            this.setState(`${player}playmode`, value === '1' ? true : false, true);
         } catch (err) {
             this.errorHandler(err, 'setPlayMode');
         }
@@ -1751,11 +1720,10 @@ class Extron extends utils.Adapter {
      * @param {string | any} value
      */
     sendPlayMode(baseId, value) {
-        const self = this;
         try {
-            const oid = self.id2oid(baseId);
-            if (oid && self.playerLoaded[Number(oid)-1]) {
-                self.streamSend(`W${oid}*${(value?'1':'0')}PLAY\r`);
+            const oid = this.id2oid(baseId);
+            if (oid && this.playerLoaded[Number(oid)-1]) {
+                this.streamSend(`W${oid}*${(value?'1':'0')}PLAY\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendPlayMode');
@@ -1768,11 +1736,10 @@ class Extron extends utils.Adapter {
      * cmd = PLAY
      */
     getPlayMode(baseId) {
-        const self = this;
         try {
-            const oid = self.id2oid(baseId);
+            const oid = this.id2oid(baseId);
             if (oid) {
-                self.streamSend(`W${oid}PLAY\r`);
+                this.streamSend(`W${oid}PLAY\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'getPlayMode');
@@ -1786,10 +1753,9 @@ class Extron extends utils.Adapter {
      * cmd = CPLYM (repeatmode)
      */
     setRepeatMode(oid, value) {
-        const self = this;
         try {
-            const player = self.oid2id(oid);
-            self.setState(`${player}repeatmode`, value === '1' ? true : false, true);
+            const player = this.oid2id(oid);
+            this.setState(`${player}repeatmode`, value === '1' ? true : false, true);
         } catch (err) {
             this.errorHandler(err, 'setRepeatMode');
         }
@@ -1801,11 +1767,10 @@ class Extron extends utils.Adapter {
      * @param {string | any} value
      */
     sendRepeatMode(baseId, value) {
-        const self = this;
         try {
-            const oid = self.id2oid(baseId);
-            if (oid && self.playerLoaded[Number(oid)-1]) {
-                self.streamSend(`WM${oid}*${(value?'1':'0')}CPLY\r`);
+            const oid = this.id2oid(baseId);
+            if (oid && this.playerLoaded[Number(oid)-1]) {
+                this.streamSend(`WM${oid}*${(value?'1':'0')}CPLY\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendRepeatMode');
@@ -1818,11 +1783,10 @@ class Extron extends utils.Adapter {
      * cmd = CPLY
      */
     getRepeatMode(baseId) {
-        const self = this;
         try {
-            const oid = self.id2oid(baseId);
+            const oid = this.id2oid(baseId);
             if (oid) {
-                self.streamSend(`WM${oid}CPLY\r`);
+                this.streamSend(`WM${oid}CPLY\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'getRepeatMode');
@@ -1835,12 +1799,11 @@ class Extron extends utils.Adapter {
      * @param {string} value
      */
     sendFileName(baseId, value) {
-        const self = this;
         try {
-            const oid = self.id2oid(baseId);
+            const oid = this.id2oid(baseId);
             if (oid) {
                 const streamData = `WA${oid}*${(value === '' ? ' ' : value)}CPLY\r`;
-                self.streamSend(streamData);
+                this.streamSend(streamData);
             }
         } catch (err) {
             this.errorHandler(err, 'sendFileName');
@@ -1853,11 +1816,10 @@ class Extron extends utils.Adapter {
      * cmd = CPLY
      */
     clearFileName(baseId) {
-        const self = this;
         try {
-            const oid = self.id2oid(baseId);
+            const oid = this.id2oid(baseId);
             if (oid) {
-                self.streamSend(`WA${oid}* CPLY\r`);
+                this.streamSend(`WA${oid}* CPLY\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'clearFileName');
@@ -1871,11 +1833,10 @@ class Extron extends utils.Adapter {
      * cmd = CPLYA (associate file to player)
      */
     setFileName(oid, value) {
-        const self = this;
         try {
-            const player = self.oid2id(oid);
-            self.setState(`${player}filename`, value, true);
-            self.playerLoaded[Number(oid)-1] = (value != '' ? true : false);
+            const player = this.oid2id(oid);
+            this.setState(`${player}filename`, value, true);
+            this.playerLoaded[Number(oid)-1] = (value != '' ? true : false);
         } catch (err) {
             this.errorHandler(err, 'setFileName');
         }
@@ -1887,11 +1848,10 @@ class Extron extends utils.Adapter {
      * cmd = CPLY
      */
     getFileName(baseId) {
-        const self = this;
         try {
-            const oid = self.id2oid(baseId);
+            const oid = this.id2oid(baseId);
             if (oid) {
-                self.streamSend(`WA${oid}CPLY\r`);
+                this.streamSend(`WA${oid}CPLY\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'getFileName');
@@ -1904,7 +1864,6 @@ class Extron extends utils.Adapter {
      * @param {string} filePath
      */
     loadUserFile(filePath) {
-        const self = this;
         let chunk ='';
         try {
             fs.accessSync(filePath);                            // check if given path is accessible
@@ -1922,19 +1881,22 @@ class Extron extends utils.Adapter {
             const second = fileTimeStamp.slice(17,19);
             const streamData = `W+UF${fileStats.size}*5 ${month} ${day} ${year} ${hour} ${minute} ${second},${fileName}\r`;
             //const streamData = `W+UF${fileStats.size},${fileName}\r`;
-            self.streamSend(streamData);                        // issue upload command to device
+            this.streamSend(streamData);                        // issue upload command to device
             fileStream.on('readable', function() {              // start file transmission
                 while ((chunk=fileStream.read()) != null) {
-                    if (!self.fileSend) {
-                        self.log.debug('Extron loadUserFile started');
-                        self.fileSend = true;
+                    if (!this.fileSend) {
+                        // @ts-ignore
+                        this.log.debug('Extron loadUserFile started');
+                        this.fileSend = true;
                     }
-                    self.streamSend(chunk);
+                    // @ts-ignore
+                    this.streamSend(chunk);
                 }
             });
             fileStream.on('end', function() {                   // on transmission end
-                self.fileSend = false;
-                self.log.debug('Extron loadUserFile completed');
+                this.fileSend = false;
+                // @ts-ignore
+                this.log.debug('Extron loadUserFile completed');
             });
         } catch (err) {
             this.errorHandler(err, 'loadUserFile');
@@ -1946,10 +1908,9 @@ class Extron extends utils.Adapter {
      * @param {string} value
      */
     eraseUserFile(value) {
-        const self = this;
         try {
             const streamData = `W${(value === '' ? ' ' : value)}EF\r`;
-            self.streamSend(streamData);
+            this.streamSend(streamData);
         } catch (err) {
             this.errorHandler(err, 'eraseUserFile');
         }
@@ -1959,12 +1920,11 @@ class Extron extends utils.Adapter {
      *
      */
     listUserFiles() {
-        const self = this;
         try {
-            self.streamSend(`WDF\r`);
-            if (self.config.type === 'telnet') self.requestDir = true;
+            this.streamSend(`WDF\r`);
+            if (this.config.type === 'telnet') this.requestDir = true;
         } catch (err) {
-            self.requestDir = false;
+            this.requestDir = false;
             this.errorHandler(err, 'listUserFiles');
         }
     }
@@ -1973,10 +1933,9 @@ class Extron extends utils.Adapter {
      * @param {string | Uint8Array} data
      */
     async setUserFilesAsync(data) {
-        const self = this;
         let userFileList = [''];
         try {
-            switch (self.config.type) {
+            switch (this.config.type) {
                 case 'ssh' :
                     userFileList = data.toString().split('\r\r\n');               // split the list into separate lines
                     break;
@@ -1986,33 +1945,33 @@ class Extron extends utils.Adapter {
             }
             //const actFiles = userFileList.length;
             let i;
-            for (i=1; i<= self.fileList.files.length; i++) {
-                await self.delObjectAsync(`fs.files.${i}.filename`);                  // delete filename state from database
-                await self.delObjectAsync(`fs.files.${i}`);                         // delete file object from database
+            for (i=1; i<= this.fileList.files.length; i++) {
+                await this.delObjectAsync(`fs.files.${i}.filename`);                  // delete filename state from database
+                await this.delObjectAsync(`fs.files.${i}`);                         // delete file object from database
             }
             i = 1;
             for (const userFile of userFileList) {                              // check each line
-                if (self.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
+                if (this.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
                 // @ts-ignore
-                else self.fileList.freeSpace = userFile.match(/(\d+\b Bytes Left)/g)?`${userFile.match(/(\d+\b Bytes Left)/g)[0]}`:'';     //check for last line containing remaining free space
-                if (self.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
+                else this.fileList.freeSpace = userFile.match(/(\d+\b Bytes Left)/g)?`${userFile.match(/(\d+\b Bytes Left)/g)[0]}`:'';     //check for last line containing remaining free space
+                if (this.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
                 // @ts-ignore
-                self.file.fileName = userFile.match(/^(.+\.\w{3}\b)/g)?`${userFile.match(/^(.+\.\w{3}\b)/g)[0]}`:'';    // extract filename
+                this.file.fileName = userFile.match(/^(.+\.\w{3}\b)/g)?`${userFile.match(/^(.+\.\w{3}\b)/g)[0]}`:'';    // extract filename
                 // @ts-ignore
-                self.file.timeStamp = userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)?`${userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)[0]}`:''; //extract timestamp
+                this.file.timeStamp = userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)?`${userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)[0]}`:''; //extract timestamp
                 // @ts-ignore
-                self.file.fileSize = userFile.match(/(\d+)$/g)?`${userFile.match(/(\d+)$/g)[0]}`:''; // extract filesize
-                if (self.file.fileName.match(/.raw$/)) {        // check if AudioFile
-                    self.fileList.files[i] = self.file;                             // add to filelist array
-                    await self.setObjectNotExistsAsync(`fs.files.${i}`, self.objectsTemplate.userflash.files[0]);
-                    await self.setObjectNotExistsAsync(`fs.files.${i}.filename`, self.objectsTemplate.userflash.files[1]);
-                    self.setState(`fs.files.${i}.filename`, self.file.fileName, true);
+                this.file.fileSize = userFile.match(/(\d+)$/g)?`${userFile.match(/(\d+)$/g)[0]}`:''; // extract filesize
+                if (this.file.fileName.match(/.raw$/)) {        // check if AudioFile
+                    this.fileList.files[i] = this.file;                             // add to filelist array
+                    await this.setObjectNotExistsAsync(`fs.files.${i}`, this.objectsTemplate.userflash.files[0]);
+                    await this.setObjectNotExistsAsync(`fs.files.${i}.filename`, this.objectsTemplate.userflash.files[1]);
+                    this.setState(`fs.files.${i}.filename`, this.file.fileName, true);
                     i++;
                 }
             }
-            self.setState('fs.freespace',self.fileList.freeSpace,true);
+            this.setState('fs.freespace',this.fileList.freeSpace,true);
         } catch (err) {
-            self.requestDir = false;
+            this.requestDir = false;
             this.errorHandler(err, 'setUserFiles');
         }
     }
@@ -2025,9 +1984,8 @@ class Extron extends utils.Adapter {
      * cmd = O[group]GRPM
      */
     getGroupMembers(group) {
-        const self = this;
         try {
-            self.streamSend(`WO${group}GRPM\r`);
+            this.streamSend(`WO${group}GRPM\r`);
         }
         catch (err) {
             this.errorHandler(err, 'getGroupMembers');
@@ -2040,11 +1998,10 @@ class Extron extends utils.Adapter {
      * cmd = O[group]*[oid]GRPM
     */
     sendGroupMember(group, baseId) {
-        const self = this;
-        const oid = self.id2oid(baseId);
+        const oid = this.id2oid(baseId);
         if (oid) {
             try {
-                self.streamSend(`WO${group}*${oid}GRPM\r`);
+                this.streamSend(`WO${group}*${oid}GRPM\r`);
             }
             catch (err) {
                 this.errorHandler(err, 'sendGroupMember');
@@ -2057,26 +2014,27 @@ class Extron extends utils.Adapter {
      * @param {array} members
      */
     setGroupMembers(group, members) {
-        const self = this;
-        if (members == '') {self.log.debug(`setGroupMembers(): no member for group ${group}`);} else {
-        let curMembers = self.groupMembers[group].split(',');   // split stringified list into array
-        self.log.debug(`setGroupMembers(): group ${group} curMembers: "${curMembers}"`);
-        if (members.length == 1) { // add single member to grop
-            if(curMembers.includes(members[0])) {
-                self.log.debug(`setGroupMembers(): OID ${members[0]} already included with group ${group}`);
-            } else {
-                curMembers.push(members[0]);
-                self.log.debug(`setGroupMembers(): added OID "${members[0]}" to group ${group} now holding "${curMembers}"`);
+        if ((members === undefined) || (members.length === 0)) {
+            this.log.debug(`setGroupMembers(): no member for group ${group}`);
+        } else {
+            let curMembers = this.groupMembers[group].split(',');   // split stringified list into array
+            this.log.debug(`setGroupMembers(): group ${group} curMembers: "${curMembers}"`);
+            if (members.length == 1) { // add single member to grop
+                if(curMembers.includes(members[0])) {
+                    this.log.debug(`setGroupMembers(): OID ${members[0]} already included with group ${group}`);
+                } else {
+                    curMembers.push(members[0]);
+                    this.log.debug(`setGroupMembers(): added OID "${members[0]}" to group ${group} now holding "${curMembers}"`);
+                }
+            } else curMembers = members;    // replace list of members
+            this.groupMembers[group] = `${curMembers}`; // store stringified array
+            try {
+                this.setState(`groups.${('00' + group.toString()).slice(-2)}.members`, this.groupMembers[group], true);
+                this.setState(`groups.${('00' + group.toString()).slice(-2)}.deleted`, this.groupMembers[group]==''?true:false, true);
+                this.log.debug(`setGroupMembers(): group ${group} now has members ${this.groupMembers[group]}`);
+            } catch (err) {
+                this.errorHandler(err, 'setGroupMembers');
             }
-        } else curMembers = members;    // replace list of members
-        self.groupMembers[group] = `${curMembers}`; // store stringified array
-        try {
-            self.setState(`groups.${('00' + group.toString()).slice(-2)}.members`, self.groupMembers[group], true);
-            self.setState(`groups.${('00' + group.toString()).slice(-2)}.deleted`, self.groupMembers[group]==''?true:false, true);
-            self.log.debug(`setGroupMembers(): group ${group} now has members ${self.groupMembers[group]}`);
-        } catch (err) {
-            this.errorHandler(err, 'setGroupMembers');
-        }
         }
     }
 
@@ -2085,9 +2043,8 @@ class Extron extends utils.Adapter {
      * cmd = Z[group]GRPM
      */
     sendDeleteGroup(group) {
-        const self = this;
         try {
-            self.streamSend(`WZ${group}GRPM\r`);
+            this.streamSend(`WZ${group}GRPM\r`);
         }
         catch (err) {
             this.errorHandler(err, 'deleteGroup');
@@ -2099,9 +2056,8 @@ class Extron extends utils.Adapter {
      * cmd = D[group]GRPM
      */
     getGroupLevel(group) {
-        const self = this;
         try {
-            self.streamSend(`WD${group}GRPM\r`);
+            this.streamSend(`WD${group}GRPM\r`);
         }
         catch (err) {
             this.errorHandler(err, 'getGroupLevel');
@@ -2114,14 +2070,13 @@ class Extron extends utils.Adapter {
      * cmd = D[group]*[level]GRPM
      */
     sendGroupLevel(group, level) {
-        const self = this;
         try {
-            switch (self.groupTypes[group]) {
+            switch (this.groupTypes[group]) {
                 case 6: // gain group
-                    self.streamSend(`WD${group}*${self.calculateFaderValue(level, "lin").devValue}GRPM\r`);
+                    this.streamSend(`WD${group}*${this.calculateFaderValue(level, 'lin').devValue}GRPM\r`);
                     break;
                 case 12:    // mute group
-                    self.streamSend(`WD${group}*${level}GRPM\r`);
+                    this.streamSend(`WD${group}*${level}GRPM\r`);
                     break;
             }
         }
@@ -2135,18 +2090,17 @@ class Extron extends utils.Adapter {
      * @param {number} level
      */
     setGroupLevel(group, level) {
-        const self = this;
         try {
-            switch (self.groupTypes[group]) {
+            switch (this.groupTypes[group]) {
                 case 6 :           // gain group
-                    self.setState(`groups.${('00' + group.toString()).slice(-2)}.level_db`, Number(self.calculateFaderValue(level, "log").logValue), true);
-                    self.setState(`groups.${('00' + group.toString()).slice(-2)}.level`, Number(self.calculateFaderValue(level, "log").linValue), true);
-                break;
+                    this.setState(`groups.${('00' + group.toString()).slice(-2)}.level_db`, Number(this.calculateFaderValue(level, 'log').logValue), true);
+                    this.setState(`groups.${('00' + group.toString()).slice(-2)}.level`, Number(this.calculateFaderValue(level, 'log').linValue), true);
+                    break;
 
                 case 12 :    // mute group
-                    self.setState(`groups.${('00' + group.toString()).slice(-2)}.level_db`, level?1:0, true);
-                    self.setState(`groups.${('00' + group.toString()).slice(-2)}.level`, level?1:0, true);
-                break;
+                    this.setState(`groups.${('00' + group.toString()).slice(-2)}.level_db`, level?1:0, true);
+                    this.setState(`groups.${('00' + group.toString()).slice(-2)}.level`, level?1:0, true);
+                    break;
             }
         } catch (err) {
             this.errorHandler(err, 'setGroupLevel');
@@ -2158,9 +2112,8 @@ class Extron extends utils.Adapter {
      * cmd = P[group]GRPM
      */
     getGroupType(group) {
-        const self = this;
         try {
-            self.streamSend(`WP${group}GRPM\r`);
+            this.streamSend(`WP${group}GRPM\r`);
         }
         catch (err) {
             this.errorHandler(err, 'getGroupType');
@@ -2173,9 +2126,8 @@ class Extron extends utils.Adapter {
      * cmd = P[group]*[type]GRPM
      */
     sendGroupType(group, type) {
-        const self = this;
         try {
-            self.streamSend(`WP${group}*${type}GRPM\r`);
+            this.streamSend(`WP${group}*${type}GRPM\r`);
         }
         catch (err) {
             this.errorHandler(err, 'sendGroupType');
@@ -2187,10 +2139,9 @@ class Extron extends utils.Adapter {
      * @param {number} type
      */
     setGroupType(group, type) {
-        const self = this;
-        self.groupTypes[Number(group)] = Number(type);
+        this.groupTypes[Number(group)] = Number(type);
         try {
-            self.setState(`groups.${('00' + group.toString()).slice(-2)}.type`, type, true);
+            this.setState(`groups.${('00' + group.toString()).slice(-2)}.type`, type, true);
         } catch (err) {
             this.errorHandler(err, 'setGroupType');
         }
@@ -2201,9 +2152,8 @@ class Extron extends utils.Adapter {
      * cmd = L[group]GRPM
      */
     getGroupLimits(group) {
-        const self = this;
         try {
-            self.streamSend(`WL${group}GRPM\r`);
+            this.streamSend(`WL${group}GRPM\r`);
         }
         catch (err) {
             this.errorHandler(err, 'getGroupLimits');
@@ -2217,9 +2167,8 @@ class Extron extends utils.Adapter {
      * cmd = L[group]*[upper]*[lower]GRPM
     */
     sendGroupLimits(group, upper, lower) {
-        const self = this;
         try {
-            self.streamSend(`WL${group}*${upper}*${lower}GRPM\r`);
+            this.streamSend(`WL${group}*${upper}*${lower}GRPM\r`);
         }
         catch (err) {
             this.errorHandler(err, 'sendGroupLimits');
@@ -2232,10 +2181,9 @@ class Extron extends utils.Adapter {
      * @param {number} lower
      */
     setGroupLimits(group, upper, lower) {
-        const self = this;
         try {
-            self.setState(`groups.${('00' + group.toString()).slice(-2)}.upperLimit`, upper, true);
-            self.setState(`groups.${('00' + group.toString()).slice(-2)}.lowerLimit`, lower, true);
+            this.setState(`groups.${('00' + group.toString()).slice(-2)}.upperLimit`, upper, true);
+            this.setState(`groups.${('00' + group.toString()).slice(-2)}.lowerLimit`, lower, true);
         } catch (err) {
             this.errorHandler(err, 'setGroupLimits');
         }
@@ -2246,9 +2194,8 @@ class Extron extends utils.Adapter {
      * cmd = N[group]GRPM
      */
     getGroupName(group) {
-        const self = this;
         try {
-            self.streamSend(`WN${group}GRPM\r`);
+            this.streamSend(`WN${group}GRPM\r`);
         }
         catch (err) {
             this.errorHandler(err, 'getGroupName');
@@ -2261,9 +2208,8 @@ class Extron extends utils.Adapter {
      * cmd = N[group]*[name]GRPM
      */
     sendGroupName(group, name) {
-        const self = this;
         try {
-            self.streamSend(`WN${group}*${name}GRPM\r`);
+            this.streamSend(`WN${group}*${name}GRPM\r`);
         }
         catch (err) {
             this.errorHandler(err, 'sendGroupName');
@@ -2275,9 +2221,8 @@ class Extron extends utils.Adapter {
      * @param {string} name
     */
     setGroupName(group, name) {
-        const self = this;
         try {
-            self.setState(`groups.${('00' + group.toString()).slice(-2)}.name`, name, true);
+            this.setState(`groups.${('00' + group.toString()).slice(-2)}.name`, name, true);
         } catch (err) {
             this.errorHandler(err, 'setGroupName');
         }
@@ -2292,14 +2237,13 @@ class Extron extends utils.Adapter {
      * cmd = Inx, x=1..8; value=[1,2] All if not All set for all and log a warning
      */
     setTie(cmd, value) {
-        const self = this;
         try {
             const input = cmd.substr(2,1);
             const valArray = value.split(' ');
             if (valArray[1] !== 'All') {
-                self.log.warn(`Extron received tie status "${valArray[1]}". Only "All" supported. andle like "All"`);
+                this.log.warn(`Extron received tie status "${valArray[1]}". Only "All" supported. andle like "All"`);
             }
-            self.setState(`connections.${valArray[0]}.tie`, Number(input), true);
+            this.setState(`connections.${valArray[0]}.tie`, Number(input), true);
 
         } catch (err) {
             this.errorHandler(err, 'setTie');
@@ -2312,15 +2256,14 @@ class Extron extends utils.Adapter {
      * @param {string | any} value
      */
     sendTieCommand(baseId, value) {
-        const self = this;
         try {
             const idArray = baseId.split('.');
             if (idArray[2] === 'connections') {         // video.output
                 if (Number(idArray[3]) <= 2) {
-                    self.streamSend(`${value}*${idArray[3]}!\r`);   // tie input 'value' to output 'idArray[3]'
+                    this.streamSend(`${value}*${idArray[3]}!\r`);   // tie input 'value' to output 'idArray[3]'
                 } else {
-                    if (value > 0) self.streamSend(`W${value}LOUT\r`);  // set loop out input to 'value'
-                    else self.streamSend(`${value}*${idArray[3]}!\r`);  // untie loopOut
+                    if (value > 0) this.streamSend(`W${value}LOUT\r`);  // set loop out input to 'value'
+                    else this.streamSend(`${value}*${idArray[3]}!\r`);  // untie loopOut
                 }
             }
         } catch (err) {
@@ -2334,12 +2277,11 @@ class Extron extends utils.Adapter {
      * @param {string | any} value
      */
     sendVideoMute(baseId, value) {
-        const self = this;
         try {
             const idArray = baseId.split('.');
             if (idArray[2] === 'connections') {         // video.output
-                if (self.devices[self.config.device].short === 'sme211') self.streamSend(`${value}B\r`);
-                else self.streamSend(`${idArray[3]}*${value}B\r`);
+                if (this.devices[this.config.device].short === 'sme211') this.streamSend(`${value}B\r`);
+                else this.streamSend(`${idArray[3]}*${value}B\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendVideoMute');
@@ -2351,12 +2293,11 @@ class Extron extends utils.Adapter {
      * @param {string} baseId
      */
     getVideoMute(baseId) {
-        const self = this;
         try {
             const idArray = baseId.split('.');
             if (idArray[2] === 'connections') {         // video.output
-                if (self.devices[self.config.device].short === 'sme211') self.streamSend(`B\r`);
-                else self.streamSend(`${idArray[3]}*B\r`);
+                if (this.devices[this.config.device].short === 'sme211') this.streamSend(`B\r`);
+                else this.streamSend(`${idArray[3]}*B\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'getVideoMute');
@@ -2371,9 +2312,8 @@ class Extron extends utils.Adapter {
      * cmd = WS1*1PLYR
      */
     sendPlayVideo() {
-        const self = this;
         try {
-            self.streamSend('WS1*1PLYR\r');
+            this.streamSend('WS1*1PLYR\r');
         } catch (err) {
             this.errorHandler(err, 'sendPlayVideo');
         }
@@ -2383,9 +2323,8 @@ class Extron extends utils.Adapter {
      * cmd = E1PLYR
      */
     sendPauseVideo() {
-        const self = this;
         try {
-            self.streamSend('WE1PLYR\r');
+            this.streamSend('WE1PLYR\r');
         } catch (err) {
             this.errorHandler(err, 'sendPauseVideo');
         }
@@ -2395,9 +2334,8 @@ class Extron extends utils.Adapter {
      * cmd = O1PLYR
      */
     sendStopVideo() {
-        const self = this;
         try {
-            self.streamSend('WO1PLYR\r');
+            this.streamSend('WO1PLYR\r');
         } catch (err) {
             this.errorHandler(err, 'sendStopVideo');
         }
@@ -2407,9 +2345,8 @@ class Extron extends utils.Adapter {
      * cmd = Y1PLYR
      */
     getPlayVideo() {
-        const self = this;
         try {
-            self.streamSend('WY1PLYR\r');
+            this.streamSend('WY1PLYR\r');
         } catch (err) {
             this.errorHandler(err, 'getPlayVideo');
         }
@@ -2420,9 +2357,8 @@ class Extron extends utils.Adapter {
      * @param {number} mode
      */
     setPlayVideo(id, mode) {
-        const self = this;
         try {
-            self.setState(`${id}playmode`, mode, true);
+            this.setState(`${id}playmode`, mode, true);
         } catch (err) {
             this.errorHandler(err, 'setPlayVideo');
         }
@@ -2434,9 +2370,8 @@ class Extron extends utils.Adapter {
      * cmd = R1*[mode]PLYR
      */
     sendLoopVideo(id, mode) {
-        const self = this;
         try {
-            self.streamSend(`WR${self.id2oid(id)}*${mode?1:0}PLYR\r`);
+            this.streamSend(`WR${this.id2oid(id)}*${mode?1:0}PLYR\r`);
         } catch (err) {
             this.errorHandler(err, 'sendLoopVideo');
         }
@@ -2446,9 +2381,8 @@ class Extron extends utils.Adapter {
      * cmd = R1*[mode]PLYR
      */
     getLoopVideo() {
-        const self = this;
         try {
-            self.streamSend('WR1PLYR\r');
+            this.streamSend('WR1PLYR\r');
         } catch (err) {
             this.errorHandler(err, 'getLoopVideo');
         }
@@ -2459,9 +2393,8 @@ class Extron extends utils.Adapter {
      * @param {boolean | string} mode
      */
     setLoopVideo(id, mode) {
-        const self = this;
         try {
-            self.setState(`${id}loopmode`, Number(mode)?true:false, true);
+            this.setState(`${id}loopmode`, Number(mode)?true:false, true);
         } catch (err) {
             this.errorHandler(err, 'setLoopVideo');
         }
@@ -2473,9 +2406,8 @@ class Extron extends utils.Adapter {
      * cmd = U1*[path]
      */
     sendVideoFile(id, path) {
-        const self = this;
         try {
-            self.streamSend(`WU${self.id2oid(id)}*${path}PLYR\r`);
+            this.streamSend(`WU${this.id2oid(id)}*${path}PLYR\r`);
         } catch (err) {
             this.errorHandler(err, 'sendVideoFile');
         }
@@ -2485,9 +2417,8 @@ class Extron extends utils.Adapter {
      * cmd = U1PLYR
      */
     getVideoFile() {
-        const self = this;
         try {
-            self.streamSend('WU1PLYR\r');
+            this.streamSend('WU1PLYR\r');
         } catch (err) {
             this.errorHandler(err, 'getVideoFile');
         }
@@ -2499,10 +2430,9 @@ class Extron extends utils.Adapter {
      * @param {string} path
      */
     setVideoFile(id, path) {
-        const self = this;
         try {
-            self.setState(`${id}filepath`, path, true);
-            self.playerLoaded[0] = (path != '' ? true : false);
+            this.setState(`${id}filepath`, path, true);
+            this.playerLoaded[0] = (path != '' ? true : false);
         } catch (err) {
             this.errorHandler(err, 'setVideoFile');
         }
@@ -2515,9 +2445,8 @@ class Extron extends utils.Adapter {
      *  cmd = Y[mode]STRM
     */
     sendStreamMode(mode) {
-        const self = this;
         try {
-            self.streamSend(`WY${mode}STRM\r`);
+            this.streamSend(`WY${mode}STRM\r`);
         } catch (err) {
             this.errorHandler(err, 'sendStreamMode');
         }
@@ -2528,9 +2457,8 @@ class Extron extends utils.Adapter {
      * @param {number} mode
      */
     setStreamMode(id, mode) {
-        const self = this;
         try {
-            self.setState(`${id}streammode`, mode);
+            this.setState(`${id}streammode`, mode);
         } catch (err) {
             this.errorHandler(err, 'setStreamMode');
         }
@@ -2540,9 +2468,8 @@ class Extron extends utils.Adapter {
      *  cmd = YSTRM
      */
     getStreamMode() {
-        const self = this;
         try {
-            self.streamSend('WYSTRM\r');
+            this.streamSend('WYSTRM\r');
         } catch (err) {
             this.errorHandler(err, 'getStreamMode');
         }
@@ -2555,7 +2482,6 @@ class Extron extends utils.Adapter {
      * returns: String with complete base id to mixPoint or the gainBlock
      */
     oid2id(oid) {
-        const self = this;
         let retId = '';
         try {
             if (oid.length < 2) {
@@ -2569,172 +2495,172 @@ class Extron extends utils.Adapter {
                 const where = Number(oid.substr(1,2));
                 const val = Number(oid.substr(3,2));
                 if (whatstr === 'N') {
-                        switch (oid.substr(1,2)) {
-                            case 'MI' :
-                                if (val < 13) retId = `in.inputs.${('00' + (val).toString()).slice(-2)}.name`;
-                                if (val > 12) retId = `in.auxInputs.${('00' + (val-12).toString()).slice(-2)}.name`;
-                                break;
-                            case 'ML' :
-                                retId = `in.virtualReturns.${('00' + (val).toString()).slice(-2)}.name`;
-                                break;
-                            case 'EI' :
-                                retId = `in.expansionInputs.${('00' + (val).toString()).slice(-2)}.name`;
-                                break;
-                            case 'MO' :
-                                if (val < 9) retId = `out.outputs.${('00' + (val).toString()).slice(-2)}.name`;
-                                if (val > 8) retId = `out.auxOutputs.${('00' + (val-8).toString()).slice(-2)}.name`;
-                                break;
-                            case 'EX' :
-                                retId = `out.expansionOutputs.${('00' + (val).toString()).slice(-2)}.name`;
-                                break;
-                        }
-                } else if (`${oid.substr(0,5)}` === 'EXPDA') retId = `in.expansionInputs.${('00' + oid.substr(5)).slice(-2)}.name`;    
+                    switch (oid.substr(1,2)) {
+                        case 'MI' :
+                            if (val < 13) retId = `in.inputs.${('00' + (val).toString()).slice(-2)}.name`;
+                            if (val > 12) retId = `in.auxInputs.${('00' + (val-12).toString()).slice(-2)}.name`;
+                            break;
+                        case 'ML' :
+                            retId = `in.virtualReturns.${('00' + (val).toString()).slice(-2)}.name`;
+                            break;
+                        case 'EI' :
+                            retId = `in.expansionInputs.${('00' + (val).toString()).slice(-2)}.name`;
+                            break;
+                        case 'MO' :
+                            if (val < 9) retId = `out.outputs.${('00' + (val).toString()).slice(-2)}.name`;
+                            if (val > 8) retId = `out.auxOutputs.${('00' + (val-8).toString()).slice(-2)}.name`;
+                            break;
+                        case 'EX' :
+                            retId = `out.expansionOutputs.${('00' + (val).toString()).slice(-2)}.name`;
+                            break;
+                    }
+                } else if (`${oid.substr(0,5)}` === 'EXPDA') retId = `in.expansionInputs.${('00' + oid.substr(5)).slice(-2)}.name`;
                 else
-                switch (what) {
-                    case 2:                         // mixpoints
-                        if (self.devices[self.config.device].short === 'cp82') {    // mixpoints on CP82
-                            if ( where < 2) {
-                                retId = `in.programInputs.${('00' + (where +1).toString()).slice(-2)}.mixPoints.`;
-                            } else if (where < 4) {
-                                retId = `in.inputs.${('00' + (where -1).toString()).slice(-2)}.mixPoints.`;
-                            } else if (where < 6) {
-                                retId = `in.lineInputs.${('00' + (where -3).toString()).slice(-2)}.mixPoints.`;
-                            } else if (where < 8) {
-                                retId = `in.playerInputs.${('00' + (where -5).toString()).slice(-2)}.mixPoints.`;
-                            }
-                        } else                      // mixpoints on dmp128
-                        if (where <= 11) {          // from input 1 - 12
-                            retId = `in.inputs.${('00' + (where + 1).toString()).slice(-2)}.mixPoints.`;
-                        } else if (where <= 19) {   // aux input 1 - 8
-                            retId = `in.auxInputs.${('00' + (where - 11).toString()).slice(-2)}.mixPoints.`;
-                        } else if (where <= 35) {   // virtual return 1 - 16 (A-P)
-                            retId = `in.virtualReturns.${('00' + (where - 19).toString()).slice(-2)}.mixPoints.`;
-                        } else if (where <= 83) {   // AT input 1 - 48
-                            retId = `in.expansionInputs.${('00' + (where - 35).toString()).slice(-2)}.mixPoints.`;
-                        } else {
-                            throw { 'message': 'no known mixpoint input',
-                                'stack'  : `oid: ${oid}` };
-                        }
-                        // now determine the output
-                        if (self.devices[self.config.device].short === 'cp82') {    // mixpoints on CP82
-                            retId += `O${('00' + (val -1).toString()).slice(-2)}.`; // on CP82 mixpooint output OID count starts at 2
-                        } else                      // mixpoints on dmp128
-                        if (val <= 7) {             // output 1 -8
-                            retId += `O${('00' + (val + 1).toString()).slice(-2)}.`;
-                        } else if (val <= 15) {     // aux output 1 - 8
-                            retId += `A${('00' + (val - 7).toString()).slice(-2)}.`;
-                        } else if (val <= 31) {     // virtual send bus 1 - 16
-                            retId += `V${('00' + (val - 15).toString()).slice(-2)}.`;
-                        } else if (val <= 47) {     // expansion output 1 - 16
-                            retId += `E${('00' + (val - 31).toString()).slice(-2)}.`;
-                        } else {
-                            throw { 'message': 'no known mixpoint output',
-                                'stack'  : `oid: ${oid}` };
-                        }
-                        break;
-
-                    case 3:                         // VideoLine inputs on CP82
-                        if (where === 0) {          // Input Gain Control
-                            return `in.videoInputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
-                        }
-                        break;
-
-                    case 4:                         // input block
-                        if (where === 0) {          // Input gain block
-                            if (self.devices[self.config.device].short === 'cp82'){ // Inputs on CP82
-                                if ( val < 2) {
-                                    return `in.inputs.${('00' + (val +1).toString()).slice(-2)}.gain.`;
-                                } else if (val < 4) {
-                                    return `in.lineInputs.${('00' + (val -1).toString()).slice(-2)}.gain.`;
-                                } else if (val < 6) {
-                                    return `in.playerInputs.${('00' + (val -3).toString()).slice(-2)}.gain.`;
+                    switch (what) {
+                        case 2:                         // mixpoints
+                            if (this.devices[this.config.device].short === 'cp82') {    // mixpoints on CP82
+                                if ( where < 2) {
+                                    retId = `in.programInputs.${('00' + (where +1).toString()).slice(-2)}.mixPoints.`;
+                                } else if (where < 4) {
+                                    retId = `in.inputs.${('00' + (where -1).toString()).slice(-2)}.mixPoints.`;
+                                } else if (where < 6) {
+                                    retId = `in.lineInputs.${('00' + (where -3).toString()).slice(-2)}.mixPoints.`;
+                                } else if (where < 8) {
+                                    retId = `in.playerInputs.${('00' + (where -5).toString()).slice(-2)}.mixPoints.`;
                                 }
-                            } else if (val <= 11) {        // input 1 - 12
-                                return `in.inputs.${('00' + (val + 1).toString()).slice(-2)}.gain.`;
+                            } else                      // mixpoints on dmp128
+                            if (where <= 11) {          // from input 1 - 12
+                                retId = `in.inputs.${('00' + (where + 1).toString()).slice(-2)}.mixPoints.`;
+                            } else if (where <= 19) {   // aux input 1 - 8
+                                retId = `in.auxInputs.${('00' + (where - 11).toString()).slice(-2)}.mixPoints.`;
+                            } else if (where <= 35) {   // virtual return 1 - 16 (A-P)
+                                retId = `in.virtualReturns.${('00' + (where - 19).toString()).slice(-2)}.mixPoints.`;
+                            } else if (where <= 83) {   // AT input 1 - 48
+                                retId = `in.expansionInputs.${('00' + (where - 35).toString()).slice(-2)}.mixPoints.`;
+                            } else {
+                                throw { 'message': 'no known mixpoint input',
+                                    'stack'  : `oid: ${oid}` };
                             }
-                            if (val <= 19) {        // aux input 1 - 8
-                                return `in.auxInputs.${('00' + (val - 11).toString()).slice(-2)}.gain.`;
+                            // now determine the output
+                            if (this.devices[this.config.device].short === 'cp82') {    // mixpoints on CP82
+                                retId += `O${('00' + (val -1).toString()).slice(-2)}.`; // on CP82 mixpooint output OID count starts at 2
+                            } else                      // mixpoints on dmp128
+                            if (val <= 7) {             // output 1 -8
+                                retId += `O${('00' + (val + 1).toString()).slice(-2)}.`;
+                            } else if (val <= 15) {     // aux output 1 - 8
+                                retId += `A${('00' + (val - 7).toString()).slice(-2)}.`;
+                            } else if (val <= 31) {     // virtual send bus 1 - 16
+                                retId += `V${('00' + (val - 15).toString()).slice(-2)}.`;
+                            } else if (val <= 47) {     // expansion output 1 - 16
+                                retId += `E${('00' + (val - 31).toString()).slice(-2)}.`;
+                            } else {
+                                throw { 'message': 'no known mixpoint output',
+                                    'stack'  : `oid: ${oid}` };
                             }
-                        } else if (where === 1) {   // premix gain block
-                            if (self.devices[self.config.device].short === 'cp82'){ // Inputs on CP82
-                                if ( val < 2) {
-                                    return `in.inputs.${('00' + (val +1).toString()).slice(-2)}.premix.`;
-                                } else if (val < 4) {
-                                    return `in.lineInputs.${('00' + (val -1).toString()).slice(-2)}.premix.`;
-                                } else if (val < 6) {
-                                    return `in.playerInputs.${('00' + (val -3).toString()).slice(-2)}.premix.`;
+                            break;
+
+                        case 3:                         // VideoLine inputs on CP82
+                            if (where === 0) {          // Input Gain Control
+                                return `in.videoInputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
+                            }
+                            break;
+
+                        case 4:                         // input block
+                            if (where === 0) {          // Input gain block
+                                if (this.devices[this.config.device].short === 'cp82'){ // Inputs on CP82
+                                    if ( val < 2) {
+                                        return `in.inputs.${('00' + (val +1).toString()).slice(-2)}.gain.`;
+                                    } else if (val < 4) {
+                                        return `in.lineInputs.${('00' + (val -1).toString()).slice(-2)}.gain.`;
+                                    } else if (val < 6) {
+                                        return `in.playerInputs.${('00' + (val -3).toString()).slice(-2)}.gain.`;
+                                    }
+                                } else if (val <= 11) {        // input 1 - 12
+                                    return `in.inputs.${('00' + (val + 1).toString()).slice(-2)}.gain.`;
                                 }
-                            } else if (val <= 11) {        // input 1 - 12
-                                return `in.inputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
-                            } else if (val <= 19) {        // aux input 1 - 8
-                                return `in.auxInputs.${('00' + (val - 11).toString()).slice(-2)}.premix.`;
+                                if (val <= 19) {        // aux input 1 - 8
+                                    return `in.auxInputs.${('00' + (val - 11).toString()).slice(-2)}.gain.`;
+                                }
+                            } else if (where === 1) {   // premix gain block
+                                if (this.devices[this.config.device].short === 'cp82'){ // Inputs on CP82
+                                    if ( val < 2) {
+                                        return `in.inputs.${('00' + (val +1).toString()).slice(-2)}.premix.`;
+                                    } else if (val < 4) {
+                                        return `in.lineInputs.${('00' + (val -1).toString()).slice(-2)}.premix.`;
+                                    } else if (val < 6) {
+                                        return `in.playerInputs.${('00' + (val -3).toString()).slice(-2)}.premix.`;
+                                    }
+                                } else if (val <= 11) {        // input 1 - 12
+                                    return `in.inputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
+                                } else if (val <= 19) {        // aux input 1 - 8
+                                    return `in.auxInputs.${('00' + (val - 11).toString()).slice(-2)}.premix.`;
+                                }
                             }
-                        }
-                        throw { 'message': 'no known input',
-                            'stack'  : `oid: ${oid}` };
+                            throw { 'message': 'no known input',
+                                'stack'  : `oid: ${oid}` };
 
-                    case 5:                         // virtual return or ext input or program
-                        if (where === 0) {           // program inputs on CP82
-                            return `in.programInputs.${('00' + (val +1).toString()).slice(-2)}.premix.`;
-                        }
-                        if (where === 1) {          // virtual returns
-                            if (val <= 15) {        // virtual return 1 - 16 (A-P)
-                                return `in.virtualReturns.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
+                        case 5:                         // virtual return or ext input or program
+                            if (where === 0) {           // program inputs on CP82
+                                return `in.programInputs.${('00' + (val +1).toString()).slice(-2)}.premix.`;
                             }
-                        }
-                        if (where === 2) {          // expansion bus (AT inputs)
-                            if (val <= 47) {        // AT input 1 - 48
-                                return `in.expansionInputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
+                            if (where === 1) {          // virtual returns
+                                if (val <= 15) {        // virtual return 1 - 16 (A-P)
+                                    return `in.virtualReturns.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
+                                }
                             }
-                        }
-                        throw { 'message': 'no known input',
-                            'stack'  : `oid: ${oid}` };
+                            if (where === 2) {          // expansion bus (AT inputs)
+                                if (val <= 47) {        // AT input 1 - 48
+                                    return `in.expansionInputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
+                                }
+                            }
+                            throw { 'message': 'no known input',
+                                'stack'  : `oid: ${oid}` };
 
-                    case 6:                         // Output section
-                        if (where === 0) {          // Output attenuation block
-                            if (self.devices[self.config.device].short === 'cp82') {    // outputs on CP82
-                                return `out.outputs.${('00' + (val -1).toString()).slice(-2)}.attenuation.`; // ouput OID starts at 2 on CP82
+                        case 6:                         // Output section
+                            if (where === 0) {          // Output attenuation block
+                                if (this.devices[this.config.device].short === 'cp82') {    // outputs on CP82
+                                    return `out.outputs.${('00' + (val -1).toString()).slice(-2)}.attenuation.`; // ouput OID starts at 2 on CP82
+                                }
+                                if (val <= 7) {         // output 1 - 8
+                                    return `out.outputs.${('00' + (val + 1).toString()).slice(-2)}.attenuation.`;
+                                }
+                                if (val <= 15) {        // aux output 1 - 8
+                                    return `out.auxOutputs.${('00' + (val - 7).toString()).slice(-2)}.attenuation.`;
+                                }
+                                if (val <= 31) {        // expansion output 1-16
+                                    return `out.expansionOutputs.${('00' + (val - 15).toString()).slice(-2)}.attenuation.`;
+                                }
                             }
-                            if (val <= 7) {         // output 1 - 8
-                                return `out.outputs.${('00' + (val + 1).toString()).slice(-2)}.attenuation.`;
+                            if (where === 1) {          // postmix trim block
+                                if (val <= 7) {         // output 1 - 8
+                                    return `out.outputs.${('00' + (val + 1).toString()).slice(-2)}.postmix.`;
+                                }
+                                if (val <= 15) {        // aux output 1 - 8
+                                    return `out.auxOutputs.${('00' + (val - 7).toString()).slice(-2)}.postmix.`;
+                                }
+                                if (val <= 31) {        // expansion output 1-16
+                                    return `out.expansionOutputs.${('00' + (val - 15).toString()).slice(-2)}.postmix.`;
+                                }
                             }
-                            if (val <= 15) {        // aux output 1 - 8
-                                return `out.auxOutputs.${('00' + (val - 7).toString()).slice(-2)}.attenuation.`;
+                            if (where === 40) {          // limiter block
+                                if (val <= 7) {         // output 1 - 8
+                                    return `out.outputs.${('00' + (val + 1).toString()).slice(-2)}.limiter.`;
+                                }
+                                if (val <= 15) {        // aux output 1 - 8
+                                    return `out.auxOutputs.${('00' + (val - 7).toString()).slice(-2)}.limiter.`;
+                                }
+                                if (val <= 31) {        // expansion output 1-16
+                                    return `out.expansionOutputs.${('00' + (val - 15).toString()).slice(-2)}.limiter.`;
+                                }
                             }
-                            if (val <= 31) {        // expansion output 1-16
-                                return `out.expansionOutputs.${('00' + (val - 15).toString()).slice(-2)}.attenuation.`;
-                            }
-                        }
-                        if (where === 1) {          // postmix trim block
-                            if (val <= 7) {         // output 1 - 8
-                                return `out.outputs.${('00' + (val + 1).toString()).slice(-2)}.postmix.`;
-                            }
-                            if (val <= 15) {        // aux output 1 - 8
-                                return `out.auxOutputs.${('00' + (val - 7).toString()).slice(-2)}.postmix.`;
-                            }
-                            if (val <= 31) {        // expansion output 1-16
-                                return `out.expansionOutputs.${('00' + (val - 15).toString()).slice(-2)}.postmix.`;
-                            }
-                        }
-                        if (where === 40) {          // limiter block
-                            if (val <= 7) {         // output 1 - 8
-                                return `out.outputs.${('00' + (val + 1).toString()).slice(-2)}.limiter.`;
-                            }
-                            if (val <= 15) {        // aux output 1 - 8
-                                return `out.auxOutputs.${('00' + (val - 7).toString()).slice(-2)}.limiter.`;
-                            }
-                            if (val <= 31) {        // expansion output 1-16
-                                return `out.expansionOutputs.${('00' + (val - 15).toString()).slice(-2)}.limiter.`;
-                            }
-                        }
-                        throw { 'message': 'no known output', 'stack'  : `oid: ${oid}` };
+                            throw { 'message': 'no known output', 'stack'  : `oid: ${oid}` };
 
-                    default:
-                        throw { 'message': 'unknown OID', 'stack'  : `oid: ${oid}` };
-                }
+                        default:
+                            throw { 'message': 'unknown OID', 'stack'  : `oid: ${oid}` };
+                    }
             }
         } catch (err) {
-            self.errorHandler(err, 'oid2id');
+            this.errorHandler(err, 'oid2id');
             return '';
         }
         return retId;
@@ -2746,7 +2672,6 @@ class Extron extends utils.Adapter {
      * returns: String with complete base id to mixPoint or the gainBlock
      */
     id2oid(id) {
-        const self = this;
         let retOid = '';
         try {
             const idArray = id.split('.');
@@ -2821,7 +2746,7 @@ class Extron extends utils.Adapter {
                             switch (idBlock) {
                                 case 'attenuation' :
                                     retOid = `600${('00' + (idNumber - 1).toString()).slice(-2)}`;
-                                    if (self.devices[self.config.device].short === 'cp82') retOid = `600${('00' + (idNumber +1).toString()).slice(-2)}`; // output OID count starts at 2 on CP82
+                                    if (this.devices[this.config.device].short === 'cp82') retOid = `600${('00' + (idNumber +1).toString()).slice(-2)}`; // output OID count starts at 2 on CP82
                                     break;
                                 case 'limiter' :
                                     retOid = `640${('00' + (idNumber - 1).toString()).slice(-2)}`;
@@ -2866,7 +2791,7 @@ class Extron extends utils.Adapter {
                     switch (idType) {
                         case 'inputs':
                             retOid = `2${('00' + (idNumber -1).toString()).slice(-2)}`;
-                            if (self.devices[self.config.device].short === 'cp82') retOid = `2${('00' + (idNumber +1).toString()).slice(-2)}`; // Mic Inputs on CP82
+                            if (this.devices[this.config.device].short === 'cp82') retOid = `2${('00' + (idNumber +1).toString()).slice(-2)}`; // Mic Inputs on CP82
                             break;
 
                         case 'programInputs' :
@@ -2898,7 +2823,7 @@ class Extron extends utils.Adapter {
                     }
                     switch (outputType) {
                         case 'O':
-                            if (self.devices[self.config.device].short === 'cp82') {
+                            if (this.devices[this.config.device].short === 'cp82') {
                                 retOid += ('00' + (outputNumber +1).toString()).slice(-2);  // output OID count starts at 2 on CP82
                             } else {
                                 retOid += ('00' + (outputNumber - 1).toString()).slice(-2);
@@ -2925,7 +2850,7 @@ class Extron extends utils.Adapter {
                 }
             }
         } catch (err) {
-            self.errorHandler(err, 'id2oid');
+            this.errorHandler(err, 'id2oid');
             return '';
         }
         return retOid;
@@ -2966,14 +2891,13 @@ class Extron extends utils.Adapter {
      * @param {ioBroker.State | null | undefined} state
      */
     async onStateChange(id, state) {
-        const self = this;
         try {
             if (state) {
                 // The state was changed
-                // self.log.debug(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
+                // this.log.debug(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
                 if (!state.ack) {       // only react on not acknowledged state changes
                     if ((state.val === undefined) || (state.val === null)) state.val = '';
-                    self.log.debug(`onStateChange(): Extron state ${id} changed: ${state.val} (ack = ${state.ack})`);
+                    this.log.debug(`onStateChange(): Extron state ${id} changed: ${state.val} (ack = ${state.ack})`);
                     const baseId = id.substr(0, id.lastIndexOf('.'));
                     const idArray = id.split('.');
                     const idType = idArray[3];
@@ -2981,7 +2905,7 @@ class Extron extends utils.Adapter {
                     const idBlock = idArray[5];
                     const stateName = id.substr(id.lastIndexOf('.') + 1);
                     const timeStamp = Date.now();
-                    let stateTime = self.stateBuf[0];
+                    let stateTime = this.stateBuf[0];
                     let calcMode ='lin';
                     let elapsed = 0;
                     let member = '';
@@ -2989,31 +2913,31 @@ class Extron extends utils.Adapter {
                         switch (stateName) {
                             case 'mute' :
                                 if (idArray[2] === 'connections') {
-                                    self.sendVideoMute(id, state.val);
-                                } else self.sendMuteStatus(id,state.val);
+                                    this.sendVideoMute(id, state.val);
+                                } else this.sendMuteStatus(id, state.val.toString());
                                 break;
                             case 'source' :
-                                self.sendSource(id, `${state.val}`);
+                                this.sendSource(id, `${state.val}`);
                                 break;
                             case 'level' :
                                 // @ts-ignore
-                                stateTime = self.stateBuf.find(stateTime => stateTime.id === id);   // check if state has already been buffered
+                                stateTime = this.stateBuf.find(stateTime => stateTime.id === id);   // check if state has already been buffered
                                 if (stateTime === undefined) {
-                                    self.stateBuf.push({'id' : id, 'timestamp' : 0});               // push state to buffer array
+                                    this.stateBuf.push({'id' : id, 'timestamp' : 0});               // push state to buffer array
                                     // @ts-ignore
-                                    stateTime = self.stateBuf.find(stateTime => stateTime.id === id); // now it should be found
+                                    stateTime = this.stateBuf.find(stateTime => stateTime.id === id); // now it should be found
                                 }
                                 elapsed = timeStamp - stateTime.timestamp;  // calcualte elapsed milliseconds since last change
-                                if ( elapsed > self.config.stateDelay) {    // if configured stateDelay has been exceeded, process the change event
+                                if ( elapsed > this.config.stateDelay) {    // if configured stateDelay has been exceeded, process the change event
                                     switch (idBlock) {
                                         case 'gain' :
                                             calcMode = 'linGain';
                                             if (idType === 'auxInputs') calcMode = 'linAux';
-                                            if (self.devices[self.config.device].short === 'sme211') calcMode = 'linAux';
+                                            if (this.devices[this.config.device].short === 'sme211') calcMode = 'linAux';
                                             break;
 
                                         case 'premix' :
-                                            if (self.devices[self.config.device].short === 'cp82') calcMode = 'linAux';
+                                            if (this.devices[this.config.device].short === 'cp82') calcMode = 'linAux';
                                             break;
 
                                         case 'postmix' :
@@ -3026,8 +2950,8 @@ class Extron extends utils.Adapter {
                                     }
                                     stateTime.timestamp = timeStamp;    // update stored timestamp
                                     if (idArray[2] === 'groups') {
-                                        self.sendGroupLevel(idGrp, Number(state.val));
-                                    } else self.sendGainLevel(id,self.calculateFaderValue(`${state.val}`,calcMode));
+                                        this.sendGroupLevel(idGrp, Number(state.val));
+                                    } else this.sendGainLevel(id,this.calculateFaderValue(`${state.val}`,calcMode));
                                 }
                                 break;
                             case 'level_db' :
@@ -3040,7 +2964,7 @@ class Extron extends utils.Adapter {
                                         break;
 
                                     case 'premix' :
-                                        if (self.devices[self.config.device].short === 'cp82') calcMode = 'logAux';
+                                        if (this.devices[this.config.device].short === 'cp82') calcMode = 'logAux';
                                         break;
 
                                     case 'postmix' :
@@ -3052,106 +2976,106 @@ class Extron extends utils.Adapter {
                                         break;
                                 }
                                 if (idArray[2] === 'groups') {
-                                    self.sendGroupLevel(idGrp, Number(state.val));
-                                } else self.sendGainLevel(id,self.calculateFaderValue(`${state.val}`,calcMode));
+                                    this.sendGroupLevel(idGrp, Number(state.val));
+                                } else this.sendGainLevel(id,this.calculateFaderValue(`${state.val}`,calcMode));
                                 break;
 
                             case 'status' :
-                                self.sendLimitStatus(id, state.val);
+                                this.sendLimitStatus(id, state.val);
                                 break;
                             case 'threshold':
-                                self.sendLimitThreshold(id, Math.abs(Number((state.val < -800)?-800:(state.val>0)?0:state.val)));
+                                this.sendLimitThreshold(id, Math.abs(Number((state.val < -800)?-800:(state.val>0)?0:state.val)));
                                 break;
 
                             case 'playmode' :
-                                if (self.devices[self.config.device].short === 'smd202') {
+                                if (this.devices[this.config.device].short === 'smd202') {
                                     switch (state.val) {
-                                        case 0: self.sendStopVideo(); break;
-                                        case 1: self.sendPlayVideo(); break;
-                                        case 2: self.sendPauseVideo(); break;
+                                        case 0: this.sendStopVideo(); break;
+                                        case 1: this.sendPlayVideo(); break;
+                                        case 2: this.sendPauseVideo(); break;
                                     }
                                 }
-                                else self.sendPlayMode(id, state.val);
+                                else this.sendPlayMode(id, state.val);
                                 break;
 
                             case 'repeatmode' :
-                                self.sendRepeatMode(id, state.val);
+                                this.sendRepeatMode(id, state.val);
                                 break;
 
                             case 'filename' :
-                                if (self.checkName(`${state.val}`)) self.sendFileName(id, `${state.val}`);
-                                else self.log.error('filename includes invalid characters');
+                                if (this.checkName(`${state.val}`)) this.sendFileName(id, `${state.val}`);
+                                else this.log.error('filename includes invalid characters');
                                 break;
 
                             case 'tie' :
-                                self.sendTieCommand(baseId, state.val);
+                                this.sendTieCommand(baseId, state.val);
                                 break;
                             case 'loopmode' :
-                                self.sendLoopVideo(baseId, state.val?true:false);
+                                this.sendLoopVideo(baseId, state.val?true:false);
                                 break;
                             case 'filepath' :
-                                self.sendVideoFile(baseId, `${state.val}`);
+                                this.sendVideoFile(baseId, `${state.val}`);
                                 break;
                             case 'streammode' :
-                                self.sendStreamMode(Number(state.val));
+                                this.sendStreamMode(Number(state.val));
                                 break;
 
                             case 'dir' :
-                                self.listUserFiles();
+                                this.listUserFiles();
                                 break;
 
                             case 'upl' :
-                                self.loadUserFile(`${state.val}`);
+                                this.loadUserFile(`${state.val}`);
                                 break;
 
                             case 'name' :
-                                if (self.checkName(`${state.val}`)) {
-                                switch (idArray[2]) {
-                                    case 'groups' :
-                                        self.sendGroupName(idGrp, `${state.val}`);
-                                        break;
-                                    case 'in' :
-                                    case 'out' :
-                                        self.sendIOName(id,`${state.val}`);
-                                        break;
-                                }
-                                } else self.log.error('state name includes invalid characters');
+                                if (this.checkName(`${state.val}`)) {
+                                    switch (idArray[2]) {
+                                        case 'groups' :
+                                            this.sendGroupName(idGrp, `${state.val}`);
+                                            break;
+                                        case 'in' :
+                                        case 'out' :
+                                            this.sendIOName(id,`${state.val}`);
+                                            break;
+                                    }
+                                } else this.log.error('state name includes invalid characters');
                                 break;
 
                             case 'type' :
-                                self.sendGroupType(idGrp, Number(state.val));
+                                this.sendGroupType(idGrp, Number(state.val));
                                 switch (Number(state.val)) {
                                     case 6:     // gain group
-                                        self.sendGroupLimits(idGrp, 120, -1000);
+                                        this.sendGroupLimits(idGrp, 120, -1000);
                                         break;
                                     case 12:    // mute group
-                                        self.sendGroupLimits(idGrp, 1, 0);
+                                        this.sendGroupLimits(idGrp, 1, 0);
                                         break;
                                 }
                                 break;
 
                             case 'upperLimit' :
                             case 'lowerLimit' :
-                                // self.sendGroupLimits(idGrp, Number(state.val), Number(state.val));
+                                // this.sendGroupLimits(idGrp, Number(state.val), Number(state.val));
                                 break;
 
                             case 'members' :
                                 for (member of `${state.val}`.split(',')) {
-                                    self.sendGroupMember(idGrp, `${member}`);
+                                    this.sendGroupMember(idGrp, `${member}`);
                                 }
                                 break;
                             case 'deleted' :
-                                self.sendDeleteGroup(idGrp);
+                                this.sendDeleteGroup(idGrp);
                                 break;
                         }
                     }
                 }
             } else {
                 // The state was deleted
-                self.log.info(`Extron state ${id} deleted`);
+                this.log.info(`Extron state ${id} deleted`);
             }
         } catch (err) {
-            self.errorHandler(err, 'onStateChange');
+            this.errorHandler(err, 'onStateChange');
         }
     }
 

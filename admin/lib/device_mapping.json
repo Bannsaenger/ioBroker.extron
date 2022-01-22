@@ -157,6 +157,13 @@
             "files": {
                 "name" : "Flash Memory"
             }
+        },
+        "grp" : {
+            "groups" : {
+                "name" : "Group",
+                "short" : "GRP",
+                "amount" : 64
+            }
         }
     },
     "DMP128Plus_C_V_AT" : {
@@ -226,6 +233,13 @@
         "fs" :{
             "files": {
                 "name" : "Flash Memory"
+            }
+        },
+        "grp" : {
+            "groups" : {
+                "name" : "Groups",
+                "short" : "GRP",
+                "amount" : 64
             }
         }
     }

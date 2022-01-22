@@ -56,6 +56,18 @@
         },
         "inputs": [
             {
+                "_id": "name",
+                "type": "state",
+                "common": {
+                    "role": "text",
+                    "name": "input name",
+                    "type": "string",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            },
+            {
                 "_id": "gain",
                 "type": "channel",
                 "common": {
@@ -186,6 +198,17 @@
         ],
         "auxInputs": [
             {
+                "_id": "name",
+                "type": "state",
+                "common": {
+                    "role": "text",
+                    "name": "input name",
+                    "type": "string",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            },{
                 "_id": "gain",
                 "type": "channel",
                 "common": {
@@ -316,6 +339,18 @@
         ],
         "virtualReturns": [
             {
+                "_id": "name",
+                "type": "state",
+                "common": {
+                    "role": "text",
+                    "name": "input name",
+                    "type": "string",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            },
+            {
                 "_id": "premix",
                 "type": "channel",
                 "common": {
@@ -377,6 +412,18 @@
             }
         ],
         "expansionInputs": [
+            {
+                "_id": "name",
+                "type": "state",
+                "common": {
+                    "role": "text",
+                    "name": "input name",
+                    "type": "string",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            },
             {
                 "_id": "premix",
                 "type": "channel",
@@ -457,7 +504,7 @@
                 "type": "state",
                 "common": {
                     "role": "level.volume",
-                    "name": "Level linear from 0 to 1000 (0 db is 764)",
+                    "name": "Level linear from 0 to 1000 (0 dB is 764)",
                     "type": "number",
                     "read": true,
                     "write": true,
@@ -472,7 +519,7 @@
                 "type": "state",
                 "common": {
                     "role": "level.volume",
-                    "name": "Level logarithmic from -100 to 12 in 0.1 db steps",
+                    "name": "Level logarithmic from -100 to 12 in 0.1 dB steps",
                     "type": "number",
                     "read": true,
                     "write": true,
@@ -551,6 +598,18 @@
         },
         "outputs": [
             {
+                "_id": "name",
+                "type": "state",
+                "common": {
+                    "role": "text",
+                    "name": "input name",
+                    "type": "string",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            },
+            {
                 "_id": "postmix",
                 "type": "channel",
                 "common": {
@@ -609,7 +668,7 @@
                     "write": true,
                     "min": -800,
                     "max": 0,
-                    "def": -100
+                    "def": 0
                 },
                 "native": {}
             },
@@ -681,6 +740,18 @@
         ],
         "auxOutputs": [
             {
+                "_id": "name",
+                "type": "state",
+                "common": {
+                    "role": "text",
+                    "name": "input name",
+                    "type": "string",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            },
+            {
                 "_id": "postmix",
                 "type": "channel",
                 "common": {
@@ -739,7 +810,7 @@
                     "write": true,
                     "min": -800,
                     "max": 0,
-                    "def": -100
+                    "def": 0
                 },
                 "native": {}
             },
@@ -826,6 +897,18 @@
         ],
         "expansionOutputs": [
             {
+                "_id": "name",
+                "type": "state",
+                "common": {
+                    "role": "text",
+                    "name": "input name",
+                    "type": "string",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            },
+            {
                 "_id": "postmix",
                 "type": "channel",
                 "common": {
@@ -884,7 +967,7 @@
                     "write": true,
                     "min": -800,
                     "max": 0,
-                    "def": -100
+                    "def": 0
                 },
                 "native": {}
             },
@@ -950,6 +1033,128 @@
                     "read": true,
                     "write": true,
                     "def": true
+                },
+                "native": {}
+            }
+        ],
+        "group": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "Group"
+            },
+            "native": {}
+        },
+        "groups": [
+            {
+                "_id": "name",
+                "type": "text",
+                "common": {
+                    "role": "value",
+                    "name": "group name",
+                    "type": "string",
+                    "read": true,
+                    "write": true,
+                    "def":""
+                },
+                "native": {}
+            },
+            {
+                "_id": "type",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group type",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "states": "6:Gain;12:Mute",
+                    "def": 6
+                },
+                "native": {}
+            },
+            {
+                "_id": "level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1000,
+                    "min": 0,
+                    "def": 764
+                },
+                "native": {}
+            },
+            {
+                "_id": "level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level in 0.1 dB steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 12.0,
+                    "min": -100.0,
+                    "def": 0.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "upperLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level upper limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 32767,
+                    "min": -32767,
+                    "def": 32767
+                },
+                "native": {}
+            },
+            {
+                "_id": "lowerLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level lower limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 32767,
+                    "min": -32767,
+                    "def": -32767
+                },
+                "native": {}
+            },
+            {
+                "_id": "members",
+                "type": "state",
+                "common": {
+                    "role": "list",
+                    "name": "group members [OID]",
+                    "type": "array",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "deleted",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "group is deleted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def" : true
                 },
                 "native": {}
             }
@@ -1828,7 +2033,7 @@
             "_id": "fs",
             "type": "folder",
             "common": {
-                "name": "User Flash"
+                "name": "User Filesystem"
             },
             "native": {}  
         },
