@@ -5,43 +5,122 @@
     "news": {
       "0.1.10": {
         "en": "added support for groups in DSP DMP128",
-        "de": "Unterstützung für Gruppen im DSP DMP128 hinzugefügt"
-      },
+        "de": "Unterstützung für Gruppen im DSP DMP128 hinzugefügt",
+        "ru": "добавлена поддержка групп в DSP DMP128",
+        "pt": "adicionado suporte para grupos em DSP DMP128",
+        "nl": "ondersteuning toegevoegd voor groepen in DSP DMP128",
+        "fr": "ajout de la prise en charge des groupes dans DSP DMP128",
+        "it": "aggiunto il supporto per i gruppi in DSP DMP128",
+        "es": "soporte agregado para grupos en DSP DMP128",
+        "pl": "dodano obsługę grup w DSP DMP128",
+        "zh-cn": "增加了对 DSP DMP128 中的组的支持"      },
       "0.1.9": {
         "en": "fixed setting of info.connection in telnet mode",
-        "de": "info.connection im Telnet Mode gefixed"
+        "de": "info.connection im Telnet Mode gefixed",
+        "ru": "исправлена настройка инфо.соединения в режиме telnet",
+        "pt": "configuração fixa de info.connection no modo telnet",
+        "nl": "vaste instelling van info.verbinding in telnet-modus",
+        "fr": "réglage fixe de info.connection en mode telnet",
+        "it": "impostazione fissa di info.connection in modalità telnet",
+        "es": "configuración fija de info.connection en modo telnet",
+        "pl": "poprawione ustawienie info.połączenia w trybie telnet",
+        "zh-cn": "修复了 telnet 模式下 info.connection 的设置"
       },
       "0.1.7": {
         "en": "added plain Telnet communication for DMP128",
-        "de": "Telnet Kommunikation für DMP128 hinzugefügt"
+        "de": "Telnet Kommunikation für DMP128 hinzugefügt",
+        "ru": "добавлена простая связь Telnet для DMP128",
+        "pt": "adicionada comunicação Telnet simples para DMP128",
+        "nl": "toegevoegde duidelijke Telnet-communicatie voor DMP128",
+        "fr": "ajout d'une communication Telnet simple pour DMP128",
+        "it": "aggiunta semplice comunicazione Telnet per DMP128",
+        "es": "comunicación Telnet simple agregada para DMP128",
+        "pl": "dodano zwykłą komunikację Telnet dla DMP128",
+        "zh-cn": "为 DMP128 添加了普通 Telnet 通信"
       },
       "0.1.6": {
         "en": "added limiter section for DMP128",
-        "de": "Limitersteuerung für DMP128 hinzugefügt"
+        "de": "Limitersteuerung für DMP128 hinzugefügt",
+        "ru": "добавлена секция лимитера для DMP128",
+        "pt": "seção de limitador adicionada para DMP128",
+        "nl": "toegevoegd limiter-gedeelte voor DMP128",
+        "fr": "section limiteur ajoutée pour DMP128",
+        "it": "aggiunta sezione limitatore per DMP128",
+        "es": "sección limitada añadida para DMP128",
+        "pl": "dodano sekcję limitera dla DMP128",
+        "zh-cn": "为 DMP128 添加了限制器部分"
       },
       "0.1.5": {
-        "en": "fixes on device communication SME211",
-        "de": "Fehlerkorrektur in der Gerätekommunikation für SME211"
+        "en": "fixed errors in the device communication for SME211",
+        "de": "Fehler in der Gerätekommunikation für SME211 behoben",
+        "ru": "исправлены ошибки связи устройства для SME211",
+        "pt": "corrigidos erros na comunicação do dispositivo para SME211",
+        "nl": "opgeloste fouten in de apparaatcommunicatie voor SME211",
+        "fr": "correction d'erreurs dans la communication de l'appareil pour SME211",
+        "it": "errori corretti nella comunicazione del dispositivo per SME211",
+        "es": "errores fijos en la comunicación del dispositivo para SME211",
+        "pl": "naprawiono błędy w komunikacji urządzenia dla SME211",
+        "zh-cn": "修复了 SME211 设备通信中的错误"
       },
       "0.1.4": {
-        "en": "fixes on device communication CP82 / SMD202",
-        "de": "Fehlerkorrektur in der Gerätekommunikation für CP82 und SMD202"
+        "en": "fixed errors in the device communication for CP82 / SMD202",
+        "de": "Fehler in der Gerätekommunikation für CP82 / SMD202 behoben",
+        "ru": "исправлены ошибки связи устройства для CP82/SMD202",
+        "pt": "corrigidos erros na comunicação do dispositivo para CP82 / SMD202",
+        "nl": "opgeloste fouten in de apparaatcommunicatie voor CP82 / SMD202",
+        "fr": "correction d'erreurs dans la communication de l'appareil pour CP82 / SMD202",
+        "it": "errori corretti nella comunicazione del dispositivo per CP82 / SMD202",
+        "es": "errores fijos en la comunicación del dispositivo para CP82 / SMD202",
+        "pl": "naprawiono błędy w komunikacji urządzenia dla CP82 / SMD202",
+        "zh-cn": "修复了 CP82 / SMD202 设备通信中的错误"
       },
       "0.1.3": {
-        "en": "fixes on device communication and user flash file management",
-        "de": "Fehlerkorrektur in der Gerätekommunikation und im Dateimanagement"
+        "en": "fixed errors in the device communication and user flash file management",
+        "de": "Fehler in der Gerätekommunikation und Benutzer-Flash-Dateiverwaltung behoben",
+        "ru": "исправлены ошибки при обмене данными с устройством и управлении пользовательскими флеш-файлами",
+        "pt": "erros corrigidos na comunicação do dispositivo e gerenciamento de arquivos flash do usuário",
+        "nl": "opgeloste fouten in de apparaatcommunicatie en gebruikersflash-bestandsbeheer",
+        "fr": "correction d'erreurs dans la communication de l'appareil et la gestion des fichiers flash utilisateur",
+        "it": "corretti gli errori nella comunicazione del dispositivo e nella gestione dei file flash dell'utente",
+        "es": "errores corregidos en la comunicación del dispositivo y la gestión de archivos flash del usuario",
+        "pl": "naprawiono błędy w komunikacji urządzenia i zarządzaniu plikami flash użytkownika",
+        "zh-cn": "修复了设备通信和用户闪存文件管理中的错误"
       },
       "0.1.2": {
-        "en": "extend device/database structure to add user flash memory",
-        "de": "Datenbankstruktur erweitert, user flash hinzugefügt"
+        "en": "extended device/database structure to add user flash memory",
+        "de": "Geräte-/Datenbankstruktur erweitert zum Hinzufügen von user flash memory",
+        "ru": "расширенная структура устройства/базы данных для добавления пользовательской флэш-памяти",
+        "pt": "estrutura estendida de dispositivo/banco de dados para adicionar memória flash do usuário",
+        "nl": "uitgebreide apparaat-/databasestructuur om gebruikersflashgeheugen toe te voegen",
+        "fr": "structure de périphérique/base de données étendue pour ajouter de la mémoire flash utilisateur",
+        "it": "struttura estesa del dispositivo/database per aggiungere memoria flash utente",
+        "es": "dispositivo extendido/estructura de base de datos para agregar memoria flash de usuario",
+        "pl": "rozszerzona struktura urządzenia/bazy danych w celu dodania pamięci flash użytkownika",
+        "zh-cn": "扩展设备/数据库结构以添加用户闪存"
       },
       "0.1.1": {
         "en": "extend device/database structure to add devices CP82, SMD202, SME211",
-        "de": "Datenbankstruktur erweitert, Geräte CP82, SMD202 ,SME211 hinzugefügt"
+        "de": "Erweiterung der Geräte-/Datenbankstruktur um die Geräte CP82, SMD202, SME211",
+        "ru": "расширить структуру устройства/базы данных для добавления устройств CP82, SMD202, SME211",
+        "pt": "estender a estrutura do dispositivo/banco de dados para adicionar dispositivos CP82, SMD202, SME211",
+        "nl": "apparaat-/databasestructuur uitbreiden om apparaten CP82, SMD202, SME211 toe te voegen",
+        "fr": "étendre la structure de l'appareil/de la base de données pour ajouter des appareils CP82, SMD202, SME211",
+        "it": "estendere la struttura del dispositivo/database per aggiungere dispositivi CP82, SMD202, SME211",
+        "es": "ampliar la estructura del dispositivo/base de datos para agregar dispositivos CP82, SMD202, SME211",
+        "pl": "rozszerzenie struktury urządzenia/bazy danych o urządzenia CP82, SMD202, SME211",
+        "zh-cn": "扩展设备/数据库结构以添加设备 CP82、SMD202、SME211"
       },
       "0.1.0": {
         "en": "extend device/database structure to cover all controllable elements",
-        "de": "Datenbankstruktur erweitert um alle steuerbaren Elemente abzubilden"
+        "de": "Datenbankstruktur erweitert um alle steuerbaren Elemente abzubilden",
+        "ru": "расширить структуру устройства/базы данных, чтобы охватить все контролируемые элементы",
+        "pt": "estender a estrutura do dispositivo/banco de dados para cobrir todos os elementos controláveis",
+        "nl": "de apparaat-/databasestructuur uitbreiden om alle bestuurbare elementen te dekken",
+        "fr": "étendre la structure de l'appareil/de la base de données pour couvrir tous les éléments contrôlables",
+        "it": "estendere la struttura del dispositivo/database per coprire tutti gli elementi controllabili",
+        "es": "extender la estructura del dispositivo/base de datos para cubrir todos los elementos controlables",
+        "pl": "rozszerzyć strukturę urządzenia/bazy danych o wszystkie elementy, którymi można sterować",
+        "zh-cn": "扩展设备/数据库结构以覆盖所有可控元素"
       },
       "0.0.3": {
         "en": "fix dependencies for integration test",
