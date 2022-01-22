@@ -55,7 +55,14 @@ class Extron extends utils.Adapter {
         // this.on('objectChange', this.onObjectChange.bind(this));
         // this.on('message', this.onMessage.bind(this));
         this.on('unload', this.onUnload.bind(this));
+    }
 
+    /**
+     * called to initialize internal variables
+     */
+    initVars() {
+        const self = this;
+        this.log.debug('initVars(): Extron initializing internal variables');
         // Send buffer (Array of commands to send)
         this.sendBuffer = [];
         // Status variables
@@ -68,7 +75,6 @@ class Extron extends utils.Adapter {
         this.statusSended = false;          // will be true once database settings have been sended to device
         this.clientReady = false;           // will be true if device connection is ready
         // Some timers and intervalls
-        //this.intervallQueryStatus = class Timer {};
         this.timers = {};
         // Create a client socket to connect to the device
         // first implementation only ssh
@@ -86,11 +92,15 @@ class Extron extends utils.Adapter {
         this.pollCount = 0;             // count sent status query
         this.playerLoaded = [false, false, false, false, false, false, false,false];    // remember which player has a file assigned
         this.auxOutEnabled = [false, false, false, false, false, false, false,false];   // remember which aux output is enabled
+        this.groupTypes = new Array(65);    // prepare array to hold the type of groups
+        this.groupMembers = new Array(65);  // prepare array to hold actual group members
+        this.groupMembers.fill('');
         this.fileSend = false;          // flag to signal a file is currently sended
         this.requestDir = false;        // flag to signal a list user files command has been issued and a directory list is to be received
         this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize':''};         // file object
         this.fileList = {'freeSpace' : '', 'files' : [this.file]};              // array to hold current file list
         this.stateBuf = [{'id': '', 'timestamp' : 0}];
+        this.invalidChars = ['+','~',',','@','=',"'",'[',']','{','}','<','>',"`",'"',':',';','|','\\','?'];
     }
 
     /**
@@ -101,13 +111,14 @@ class Extron extends utils.Adapter {
         try {
             // Initialize your adapter here
             const startTime = Date.now();
+            self.initVars();
 
             // Reset the connection indicator during startup
             self.setState('info.connection', false, true);
 
             // The adapters config (in the instance object everything under the attribute "native") is accessible via
             // this.config:
-            self.log.info('configured host/port: ' + self.config.host + ':' + self.config.port);
+            self.log.info('onReady(): configured host/port: ' + self.config.host + ':' + self.config.port);
 
 
             // read Objects template for object generation
@@ -158,9 +169,9 @@ class Extron extends utils.Adapter {
                     self.net.on('end', this.onClientEnd.bind(this));
                     break;
             }
-            this.timers.timeoutQueryStatus = setTimeout(self.extronQueryStatus.bind(self), self.config.pollDelay);
+            self.timers.timeoutQueryStatus = setTimeout(self.queryStatus.bind(self), self.config.pollDelay);
 
-            self.log.info(`Extron took ${Date.now() - startTime}ms to initialize and setup db`);
+            self.log.info(`onReady(): Extron took ${Date.now() - startTime}ms to initialize and setup db`);
 
             self.clientConnect();
         } catch (err) {
@@ -174,7 +185,7 @@ class Extron extends utils.Adapter {
     clientConnect() {
         const self = this;
         try {
-            self.log.info('Extron connecting to: ' + self.config.host + ':' + self.config.port);
+            self.log.info(`clientConnect(): Extron connecting via ${self.config.type} to: ${self.config.host}:${self.config.port}`);
             switch (self.config.type) {
                 case 'ssh' :
                     self.client.connect({
@@ -205,18 +216,8 @@ class Extron extends utils.Adapter {
      */
     clientReConnect() {
         const self = this;
-        self.log.info('closing client');
         // Status variables to be reset
-        this.isDeviceChecked = false;       // will be true if device sends banner and will be verified
-        this.isLoggedIn = false;            // will be true once telnet login completed
-        this.isVerboseMode = false;         // will be true if verbose mode 3 is active
-        this.initDone = false;              // will be true if all init is done
-        this.versionSet = false;            // will be true if the version is once set in the db
-        this.statusRequested = false;       // will be true once device status has been requested after init
-        this.statusSended = false;          // will be true once database settings have been sended to device
-        this.clientReady = false;           // will be true if device connection is ready
-        this.streamAvailable = true;        // if false wait for continue event
-
+        self.initVars();
         switch (self.config.type) {
             case 'ssh' :
                 self.client.end();
@@ -225,7 +226,7 @@ class Extron extends utils.Adapter {
                 self.net.destroy();
                 break;
         }
-        self.log.info(`reconnecting after ${self.config.reconnectDelay}ms`);
+        self.log.info(`clientReConnect(): reconnecting after ${self.config.reconnectDelay}ms`);
         self.timers.timeoutReconnectClient = setTimeout(self.clientConnect.bind(self),self.config.reconnectDelay);
     }
 
@@ -240,7 +241,7 @@ class Extron extends utils.Adapter {
     onClientKeyboard(_name, _instructions, _instructionsLang, _prompts, finish) {
         const self = this;
         try {
-            this.log.info('Extron keyboard autentication in progress. Send back password');
+            this.log.info('onClientKeyboard(): Extron keyboard autentication in progress. Send back password');
             finish([this.config.pass]);
         } catch (err) {
             self.errorHandler(err, 'onClientKeyboard');
@@ -255,18 +256,18 @@ class Extron extends utils.Adapter {
         try {
             switch (self.config.type) {
                 case 'ssh' :
-                    self.log.info('Extron is authenticated successfully, now open the stream');
+                    self.log.info('onClientReady(): Extron is authenticated successfully, now open the stream');
                     self.client.shell(function (error, channel) {
                         try {
                             if (error) throw error;
-                            self.log.info('Extron shell established channel');
+                            self.log.info('onClientReady(): Extron shell established channel');
                             self.stream = channel;
                             self.stream.on('error', self.onStreamError.bind(self));
                             self.stream.on('close', self.onStreamClose.bind(self));
                             self.stream.on('data', self.onStreamData.bind(self));
                             self.stream.on('continue', self.onStreamContinue.bind(self));
                             // Set the connection indicator after authentication and an open stream
-                            self.log.info('Extron connected');
+                            self.log.info('onClientReady(): Extron connected');
                             self.setState('info.connection', true, true);
                         } catch (err) {
                             self.errorHandler(err, 'onClientReady');
@@ -275,9 +276,9 @@ class Extron extends utils.Adapter {
                     break;
                 case 'telnet' :
                     try {
-                        self.log.info('Extron established connection');
+                        self.log.info('onClientReady(): Extron established connection');
                         // Set the connection indicator after authentication and an open stream
-                        self.log.info('Extron connected');
+                        self.log.info('onClientReady(): Extron connected');
                         self.setState('info.connection', true, true);
                     } catch (err) {
                         self.errorHandler(err, 'onClientReady');
@@ -295,7 +296,7 @@ class Extron extends utils.Adapter {
      * @param {string} language
      */
     onClientBanner(message, language) {
-        this.log.info('Extron sent back banner: "' + message + '" in language: "' + language + '"');
+        this.log.info(`onClientBanner(): Extron sent back banner: "${message}" in language: "${language}"`);
     }
 
     /**
@@ -304,7 +305,7 @@ class Extron extends utils.Adapter {
     onClientClose() {
         const self = this;
         try {
-            self.log.info('Extron client closed');
+            self.log.info('onClientClose(): Extron client closed');
             // Reset the connection indicator
             self.setState('info.connection', false, true);
             self.clientReady = false;
@@ -325,7 +326,7 @@ class Extron extends utils.Adapter {
     onClientEnd() {
         const self = this;
         try {
-            self.log.info('Extron client socket disconnected');
+            self.log.info('onClientEnd(): Extron client socket disconnected');
         } catch (err) {
             self.errorHandler(err, 'onClientEnd');
         }
@@ -335,6 +336,7 @@ class Extron extends utils.Adapter {
      * @param {any} err
      */
     onClientError(err) {
+        self.log.info('onClientError(): error detected');
         this.errorHandler(err, 'onClientError');
     }
 
@@ -346,7 +348,7 @@ class Extron extends utils.Adapter {
         const self = this;
         try {
             if (self.streamAvailable) {
-                self.log.debug(`Extron sends data to the stream: "${self.fileSend?'file data':self.decodeBufferToLog(data)}"`);
+                self.log.debug(`streamSend(): Extron sends data to the ${self.config.type} stream: "${self.fileSend?'file data':self.decodeBufferToLog(data)}"`);
                 switch (self.config.type) {
                     case 'ssh' :
                         self.streamAvailable = self.stream.write(data);
@@ -357,7 +359,7 @@ class Extron extends utils.Adapter {
                 }
             } else {
                 const bufSize = self.sendBuffer.push(data);
-                self.log.debug(`Extron push data to the send buffer: "${self.fileSend?'file data':self.decodeBufferToLog(data)}" new buffersize:${bufSize.toString()}`);
+                self.log.warn(`streamSend(): Extron push data to the send buffer: "${self.fileSend?'file data':self.decodeBufferToLog(data)}" new buffersize:${bufSize}`);
             }
         } catch (err) {
             self.errorHandler(err, 'streamSend');
@@ -371,17 +373,21 @@ class Extron extends utils.Adapter {
      */
     async onStreamData(data) {
         const self = this;
+        let members = [];
+
+        self.streamAvailable = true;    // if we receive data the stream is available
         if (self.fileSend) return; // do nothing during file transmission
         try {
-            self.log.debug('Extron got data: "' + self.decodeBufferToLog(data) + '"');
+            self.log.debug(`onStreamData(): Extron got data: "${self.decodeBufferToLog(data)}"`);
 
             if (!self.isDeviceChecked) {        // the first data has to be the banner with device info
                 if (data.toString().includes(self.devices[self.config.device].name)) {
                     self.isDeviceChecked = true;
-                    self.log.info(`Device ${self.devices[self.config.device].name} verified`);
+                    self.log.info(`onStreamData(): Device ${self.devices[self.config.device].name} verified`);
+                    self.setState('info.connection', true, true);
                     if (self.config.type === 'ssh') {
                         if (!self.isVerboseMode) {          // enter the verbose mode
-                            self.extronSwitchMode();
+                            self.switchMode();
                             return;
                         }
                     }
@@ -394,16 +400,16 @@ class Extron extends utils.Adapter {
             if (self.config.type === 'telnet') {
                 if (!self.isLoggedIn) {
                     if (data.toString().includes('Password:')) {
-                        self.log.info('Extron received Telnet Password request');
+                        self.log.info('onStreamData(): Extron received Telnet Password request');
                         self.streamSend(`${self.config.pass}\r`);
                         return;
                     }
                     if (data.toString().includes('Login Administrator')) {
                         self.isLoggedIn = true;
-                        self.log.info('Extron Telnet logged in');
+                        self.log.info('onStreamData(): Extron Telnet logged in');
                         self.setState('info.connection', true, true);
                         if (!self.isVerboseMode) {          // enter the verbose mode
-                            self.extronSwitchMode();
+                            self.switchMode();
                             return;
                         }
                         return;
@@ -421,20 +427,19 @@ class Extron extends utils.Adapter {
             for (const cmdPart of data.toString().split('\n')) {
 
                 if (cmdPart.includes('3CV')) {
-                    self.log.debug('Extron device switched to verbose mode 3');
+                    self.log.debug('onStreamData(): Extron device switched to verbose mode 3');
                     self.isVerboseMode = true;
                     this.timers.timeoutQueryStatus.refresh();
                     return;
                 }
                 if (cmdPart.includes('Vrb3')) {
-                    self.log.debug('Extron device entered verbose mode 3');
+                    self.log.debug('onStreamData(): Extron device entered verbose mode 3');
                     self.isVerboseMode = true;
                     if (!self.initDone) {
                         this.streamSend('Q');       // query Version
                         this.streamSend('1I');      // query Model
                         this.streamSend('WCN\r');   // query deviceName
                         self.initDone = true;
-                        //self.timers.intervallQueryStatus = setInterval(self.extronQueryStatus.bind(self), self.config.pollDelay);
                         this.timers.timeoutQueryStatus.refresh();
                         if (self.config.pushDeviceStatus === true) {
                             await self.setDeviceStatusAsync();
@@ -446,7 +451,7 @@ class Extron extends utils.Adapter {
                     return;
                 }
 
-                const answer = cmdPart.replace(/[\r\n]/gm, '');
+                const answer = cmdPart.replace(/[\r\n]/gm, ''); // remove [CR] and [LF] from string
                 // Error handling
                 if (answer.match(/^E\d\d/gim)) {    // received an error
                     throw { 'message': 'Error response from device',
@@ -464,7 +469,7 @@ class Extron extends utils.Adapter {
 
                     switch (command) {
                         case 'VER':             // received a Version (answer to status query)
-                            self.log.silly(`Extron got version: "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got version: "${ext2}"`);
                             if (!self.versionSet) {
                                 self.versionSet = true;
                                 self.setState('device.version', ext2, true);
@@ -472,47 +477,47 @@ class Extron extends utils.Adapter {
                             break;
 
                         case 'IPN':             // received a device name
-                            self.log.silly(`Extron got devicename: "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got devicename: "${ext2}"`);
                             self.setState('device.name', ext2, true);
                             break;
 
                         case 'INF':             // received a device model
-                            self.log.silly(`Extron got device model: "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got device model: "${ext2}"`);
                             self.setState('device.model', ext2, true);
                             break;
 
                         case 'DSM':             // received a mute command
                         case 'DSG':             // received a gain level
-                            self.log.silly(`Extron got mute/gain ${command} from OID: "${ext1}" value: ${ext2}`);
+                            self.log.debug(`onStreamData(): Extron got mute/gain ${command} from OID: "${ext1}" value: ${ext2}`);
                             self.setGain(command, ext1, ext2);
                             break;
 
                         case 'DSD':             //received a set source command
-                            self.log.silly(`Extron got source ${command} from OID: "${ext1}" value: "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got source ${command} from OID: "${ext1}" value: "${ext2}"`);
                             self.setSource(ext1, ext2);
                             break;
 
                         case 'DSE' :            //received a limiter status change
-                            self.log.silly(`Extron got a limiter status change from OID : "${ext1}" value: "-${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got a limiter status change from OID : "${ext1}" value: "-${ext2}"`);
                             self.setLimitStatus(ext1, ext2);
                             break;
                         case 'DST' :            //received a limiter threshold change
-                            self.log.silly(`Extron got a limiter threshold change from OID : "${ext1}" value: "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got a limiter threshold change from OID : "${ext1}" value: "${ext2}"`);
                             self.setLimitThreshold(ext1, ext2);
                             break;
 
                         case 'PLAY':             //received a play mode command
-                            self.log.silly(`Extron got play mode ${command} for Player: "${ext1}" value: "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got play mode ${command} for Player: "${ext1}" value: "${ext2}"`);
                             self.setPlayMode(ext1, ext2);
                             break;
 
                         case 'CPLYA':           //received a file association to a player
-                            self.log.silly(`Extron got filename for Player: "${ext1}" value: "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got filename for Player: "${ext1}" value: "${ext2}"`);
                             self.setFileName(ext1, ext2);
                             break;
 
                         case 'CPLYM':           //received a set repeat mode command
-                            self.log.silly(`Extron got repeat mode ${command} for Player: "${ext1}" value: "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got repeat mode ${command} for Player: "${ext1}" value: "${ext2}"`);
                             self.setRepeatMode(ext1, ext2);
                             break;
 
@@ -524,69 +529,110 @@ class Extron extends utils.Adapter {
                         case 'IN6':
                         case 'IN7':
                         case 'IN8':
-                            self.log.silly(`Extron got tie command ${command} for output: ${ext2}`);
+                            self.log.debug(`onStreamData(): Extron got tie command ${command} for output: ${ext2}`);
                             self.setTie(command, ext2);
                             break;
 
                         case 'LOUT':            // received a tie command for loop out
-                            self.log.silly(`Extron got tie command input "${ext1}" to loop output`);
+                            self.log.debug(`onStreamData(): Extron got tie command input "${ext1}" to loop output`);
                             self.setState(`connections.3.tie`, Number(ext1), true);
                             break;
 
                         case 'VMT':             // received a video mute
-                            self.log.silly(`Extron got video mute for output "${ext1}" value "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got video mute for output "${ext1}" value "${ext2}"`);
                             if (self.devices[self.config.device].short === 'sme211') self.setState(`connections.1.mute`, Number(ext1), true);
                             else self.setState(`connections.${ext1}.mute`, Number(ext2), true);
                             break;
 
                         case 'PLYRS' :          // received video playing
-                            self.log.silly(`Extron got video playing for output "${ext1}" value "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got video playing for output "${ext1}" value "${ext2}"`);
                             self.setPlayVideo(`ply.players.${ext1}.common.`, 1);
                             break;
                         case'PLYRE' :           // received Video paused
-                            self.log.silly(`Extron got video paused for output "${ext1}" value "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got video paused for output "${ext1}" value "${ext2}"`);
                             self.setPlayVideo(`ply.players.${ext1}.common.`, 2);
                             break;
                         case 'PLYRO' :          // received video stopped
-                            self.log.silly(`Extron got video stopped for output "${ext1}" value "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got video stopped for output "${ext1}" value "${ext2}"`);
                             self.setPlayVideo(`ply.players.${ext1}.common.`, 0);
                             break;
                         case 'PLYR1' :          // received loop state
-                            self.log.silly(`Extron got video loop mode for output "${ext1}" value "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got video loop mode for output "${ext1}" value "${ext2}"`);
                             self.setLoopVideo(`ply.players.${ext1}.common.`,ext2);
                             break;
                         case 'PLYRU' :          // received video filepath
-                            self.log.silly(`Extron got video video filepath for output "${ext1}" value "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got video video filepath for output "${ext1}" value "${ext2}"`);
                             self.setVideoFile(`ply.players.${ext1}.common.`,ext2);
                             break;
                         case 'PLYRY' :
-                            self.log.silly(`Extron got video playmmode "${ext1}" value "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got video playmmode "${ext1}" value "${ext2}"`);
                             self.setPlayVideo(`ply.players.1.common.`,Number(ext1));
                             break;
 
                         case 'STRM' :
-                            self.log.silly(`Extron got streammode "${ext1}" value "${ext2}"`);
+                            self.log.debug(`onStreamData(): Extron got streammode "${ext1}" value "${ext2}"`);
                             self.setStreamMode(`ply.players.1.common.`,Number(ext1));
                             break;
 
                         case 'UPL' :
                             self.fileSend = false;   // reset file transmission flag
-                            self.log.silly(`Extron got upload file confirmation command size: "${ext1}" name: "${ext2}"`);
-                            //self.log.silly(`Extron requesting current user file list`);
-                            //self.listUserFiles();
+                            self.log.debug(`onStreamData(): Extron got upload file confirmation command size: "${ext1}" name: "${ext2}"`);
                             break;
                         case 'WDF' :
-                            self.log.debug(`Extron got list directory command`);
+                            self.log.debug(`onStreamData(): Extron got list directory command`);
                             self.requestDir = true;     // set directory transmission flag
                             break;
                         case 'W+UF' :
-                            self.log.debug(`Extron got upload file command: ${ext1} ${ext2}`);
+                            self.log.debug(`onStreamData(): Extron got upload file command: ${ext1} ${ext2}`);
                             self.fileSend = true;   // set file transmission flag
+                            break;
+
+                        case 'GRPMZ' :      // delete Group command
+                            self.log.debug(`onStreamData(): Extron got delete group #"${ext1}`);
+                            self.groupTypes[Number(ext1)] = undefined;
+                            self.groupMembers[Number(ext1)] = '';
+                            self.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.members`,'',true);
+                            self.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.deleted`,true,true);
+                            break;
+                        case 'GRPMD' :      // set Group fader value
+                            self.log.debug(`onStreamData(): Extron got Group #'${ext1}" fader value:"${ext2}"`);
+                            self.setGroupLevel(Number(ext1),Number(ext2));
+                            break;
+                        case 'GRPMP' :      // set Group type
+                            self.log.debug(`onStreamData(): Extron got set group #"${ext1}" type: "${ext2}"`);
+                            self.setGroupType(Number(ext1), Number(ext2));
+                            break;
+                        case 'GRPMO' :      // add group member
+                            members = ext2.split('*');
+                            if (members.length >1) {
+                                self.log.debug(`onStreamData(): Extron got group #"${ext1}" add OID's: "${members}"`);
+                            } else {
+                                self.log.debug(`onStreamData(): Extron got group #"${ext1}" add OID: "${members}"`);
+                            }
+                            self.setGroupMembers(Number(ext1),members);
+                            break;
+                        case 'GRPML' :      // set group limits
+                            self.log.debug(`onStreamData(): Extron got set group #"${ext1}" limits upper: "${ext2.split("*")[0]}" lower: "${ext2.split("*")[1]}""`);
+                            self.setGroupLimits(Number(ext1),Number(ext2.split("*")[0]),Number(ext2.split("*")[1]));
+                            break;
+                        case 'GRPMN' :      // group name
+                            self.log.debug(`onStreamData(): Extron got group #"${ext1}" name: "${ext2}"`);
+                            self.setGroupName(Number(ext1), ext2);
+                            break;
+                        
+                        case 'NMI' :   // I/O Name
+                        case 'NML' :
+                        case 'NEI' :
+                        case 'NMO' :
+                        case 'NEX' :
+                        case 'EXPDA' :
+                            self.log.debug(`onStreamData(): Extron got I/O Name "${ext2}" for I/O: "${self.oid2id(`${command}${ext1}`)}"`);
+                            self.setIOName(`${command}${ext1}`, ext2);
                             break;
                     }
                 } else {
                     if ((answer != 'Q') && (answer != '') && (self.fileSend === false) && !(answer.match(/\d\*\d\w+/)) && !(answer.match(/\d\w/))) {
-                        self.log.debug('Extron received data which cannot be handled "' + cmdPart + '"');
+                        self.log.debug('onStreamData(): Extron received data which cannot be handled "' + cmdPart + '"');
                     }
                 }
             }
@@ -647,7 +693,8 @@ class Extron extends utils.Adapter {
     async onStreamContinue() {
         const self = this;
         try {
-            self.log.silly('Extron stream can continue');
+            self.log.silly('onStreamContinue(): Extron stream can continue');
+            self.streamAvailable = true;
             self.streamSend(self.sendBuffer.pop());
         } catch (err) {
             self.errorHandler(err, 'onStreamContinue');
@@ -660,7 +707,7 @@ class Extron extends utils.Adapter {
      */
     onStreamError(err) {
         this.errorHandler(err, 'onStreamError');
-        this.log.info('Extron onSteamError is calling clientReConnect');
+        this.log.info('onSteamError(): Extron is calling clientReConnect');
         this.clientReConnect();
     }
 
@@ -669,16 +716,17 @@ class Extron extends utils.Adapter {
      */
     onStreamClose() {
         const self = this;
-        self.log.debug('onStreamClose clear query timer');
+        self.log.debug('onStreamClose(): clear query timer');
         clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
         try {
-            self.log.info('Extron stream closed calling client.end()');
             switch (self.config.type) {
                 case 'ssh' :
+                    self.log.info('onStreamClose(): Extron stream closed calling client.end()');
                     self.client.end();
                     break;
                 case 'telnet' :
-                    self.net.end();
+                    self.log.info('onStreamClose(): Extron stream closed calling net.destroy()');
+                    self.net.destroy();
                     break;
             }
         } catch (err) {
@@ -689,36 +737,36 @@ class Extron extends utils.Adapter {
     /**
      * called to switch the verbose mode
      */
-    extronSwitchMode() {
+    switchMode() {
         const self = this;
         try {
-            self.log.debug('Extron switching to verbose mode 3');
+            self.log.debug('switchMode(): Extron switching to verbose mode 3');
             self.streamSend('W3CV\r');
         } catch (err) {
-            this.errorHandler(err, 'extronSwitchMode');
+            this.errorHandler(err, 'switchMode');
         }
     }
 
     /**
      * called to send a status query
      */
-    extronQueryStatus() {
+    queryStatus() {
         const self = this;
         try {
-            self.log.debug('Extron send a status query');
-            if (!self.fileSend) {
-                self.streamSend('Q');
-                self.pollCount += 1;
-            }
             if (self.pollCount > maxPollCount) {
-                self.log.error('maxPollCount exceeded');
+                self.log.error('queryStatus(): maxPollCount exceeded');
                 self.pollCount = 0;
                 self.clientReConnect();
             } else {
                 self.timers.timeoutQueryStatus.refresh();
+                if (!self.fileSend) {
+                    self.streamSend('Q');
+                    self.pollCount += 1;
+                    self.log.debug(`queryStatus(): Extron send a status query #${self.pollCount}`);
+                }
             }
         } catch (err) {
-            this.errorHandler(err, 'extronQueryStatus');
+            this.errorHandler(err, 'queryStatus');
         }
     }
 
@@ -849,6 +897,7 @@ class Extron extends utils.Adapter {
                     }
                 }
             }
+            // if we have players on the device
             if (self.devices[self.config.device] && self.devices[self.config.device].ply) {
                 // at this point the device has players
                 await self.setObjectNotExistsAsync('ply', {
@@ -879,6 +928,7 @@ class Extron extends utils.Adapter {
                     }
                 }
             }
+            // if we have outputs on the device
             if (self.devices[self.config.device] && self.devices[self.config.device].out) {
                 // at this point the device has outputs
                 await self.setObjectNotExistsAsync('out', {
@@ -904,7 +954,6 @@ class Extron extends utils.Adapter {
                         await self.setObjectNotExistsAsync(actOutput, self.objectsTemplate[self.devices[self.config.device].objects[1]].output);
                         // and the common structure of a output
                         switch (outputs) {
-
                             case 'outputs' :
                                 for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].outputs) {
                                     await self.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
@@ -922,8 +971,27 @@ class Extron extends utils.Adapter {
                                     await self.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
                                 }
                                 break;
-
                         }
+                    }
+                }
+            }
+            // if we have groups on the device
+            if (self.devices[self.config.device] && self.devices[self.config.device].grp) {
+                await self.setObjectNotExistsAsync('groups', {
+                    'type': 'folder',
+                    'common': {
+                        'name': 'All Groups'
+                    },
+                    'native': {}
+                });
+                // create the amount of groups
+                for (let i = 1; i <= self.devices[self.config.device].grp.groups.amount; i++) {
+                    const actGroup = `groups.${('00' + i.toString()).slice(-2)}`;
+                    // create the group folder
+                    await self.setObjectNotExistsAsync(actGroup, self.objectsTemplate[self.devices[self.config.device].objects[1]].group);
+                    // and the common structure of a group
+                    for (const element of self.objectsTemplate[self.devices[self.config.device].objects[1]].groups) {
+                        await self.setObjectNotExistsAsync(actGroup + '.' + element._id, element);
                     }
                 }
             }
@@ -956,6 +1024,7 @@ class Extron extends utils.Adapter {
                     const stateName = id.substr(id.lastIndexOf('.') + 1);
                     const idArray = id.split('.');
                     const idType = idArray[2];
+                    const grpId = Number(idArray[3]);
 
                     if (typeof(baseId) !== 'undefined' && baseId !== null) {
                         // @ts-ignore
@@ -970,7 +1039,11 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'level' :
-                                self.getGainLevel(id);
+                                if (idType ==='groups') {
+                                    self.getGroupLevel(grpId);
+                                } else {
+                                    self.getGainLevel(id);
+                                }
                                 break;
 
                             case 'playmode' :
@@ -1006,14 +1079,35 @@ class Extron extends utils.Adapter {
                             case 'status' :
                                 self.getLimitStatus(id);
                                 break;
+
                             case 'threshold':
                                 self.getLimitThreshold(id);
+                                break;
+
+                            case 'name' :
+                                if (idType ==='groups') {
+                                    self.getGroupName(grpId);
+                                } else self.getIOName(id);
+                                break;
+
+                            case 'type' :
+                                self.getGroupType(grpId);
+                                break;
+
+                            case 'upperLimit' :
+                            case 'lowerLimit' :
+                                self.getGroupLimits(grpId);
+                                break;
+
+                            case 'members' :
+                                self.getGroupMembers(grpId);
                                 break;
                         }
                     }
                 }
                 self.statusRequested = true;
                 self.log.info('Extron request device status completed');
+                self.queryStatus();
             }
         } catch (err) {
             self.errorHandler(err, 'getDeviceStatus');
@@ -1101,6 +1195,19 @@ class Extron extends utils.Adapter {
         } catch (err) {
             self.errorHandler(err, 'setDeviceStatus');
         }
+    }
+
+    /**
+     * check names for invalid characters
+     * @param {string} name
+     * @returns {boolean}
+     */
+    checkName(name) {
+        const self = this;
+        for (var char of self.invalidChars) {
+            if (name.includes(char)) return false;
+        }
+        return true;
     }
 
     /**
@@ -1265,7 +1372,7 @@ class Extron extends utils.Adapter {
             const idBlock = idArray[3];
             let calcMode ='dev';
             if (cmd === 'DSM') {
-                self.setState(`${mixPoint}mute`, value === '1' ? true : false, true);
+                self.setState(`${mixPoint}mute`, Number(value) >0 ? true : false, true);
             } else {
                 switch (idBlock) {
                     case 'gain' :
@@ -1297,14 +1404,14 @@ class Extron extends utils.Adapter {
     /**
      * Send the mute status to the device
      * @param {string} baseId
-     * @param {string | any} value
+     * @param {string | boolean} value
      */
     sendMuteStatus(baseId, value) {
         const self = this;
         try {
             const oid = self.id2oid(baseId);
             if (oid) {
-                self.streamSend(`WM${oid}*${value ? '1' : '0'}AU\r`);
+                self.streamSend(`WM${oid}*${Number(value)>0 ? '1' : '0'}AU\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendMuteStatus');
@@ -1429,18 +1536,94 @@ class Extron extends utils.Adapter {
     }
 
     /**
-     * get the input name from device
-     * @param {string} baseId
+     * get the i/o name from device
+     * @param {string} Id
      */
-    getInputName(baseId) {
+    getIOName(Id) {
         const self = this;
         try {
-            const oid = self.id2oid(`${baseId}.name`);
-            if (oid) {
-                self.streamSend(`${oid}NI\r`);
+            const ioType = Id.split('.')[3];
+            const ioNumber = Number(Id.split('.')[4]);
+            switch (ioType) {
+                case 'inputs' :
+                    self.streamSend(`W${ioNumber}NI\r`);
+                break;
+                case 'auxInputs' :
+                    self.streamSend(`W${ioNumber+12}NI\r`);
+                break;
+                case 'virtualReturns' :
+                    self.streamSend(`W${ioNumber}NL\r`);
+                break;
+                case 'expansionInputs':
+                    self.streamSend(`WA${ioNumber}EXPD\r`);
+                break;
+                case 'outputs' :
+                    self.streamSend(`W${ioNumber}NO\r`);
+                break;
+                case 'auxOutputs' :
+                    self.streamSend(`W${ioNumber+8}NO\r`);
+                break;
+                case 'expansionOutputs' :
+                    self.streamSend(`W${ioNumber}NX\r`);
+                break;
             }
         } catch (err) {
-            this.errorHandler(err, 'getInputName');
+            this.errorHandler(err, 'getIOName');
+        }
+    }
+
+    /**
+     * send the i/o name to device
+     * @param {string} Id
+     * @param {string} name
+     */
+    sendIOName(Id, name) {
+        const self = this;
+        try {
+            const ioType = Id.split('.')[3];
+            const ioNumber = Number(Id.split('.')[4]);
+            switch (ioType) {
+                case 'inputs' :
+                    self.streamSend(`W${ioNumber},${name}NI\r`);
+                break;
+                case 'auxInputs' :
+                    self.streamSend(`W${ioNumber+12},${name}NI\r`);
+                break;
+                case 'virtualReturns' :
+                    self.streamSend(`W${ioNumber},${name}NL\r`);
+                break;
+                case 'expansionInputs':
+                    self.streamSend(`WA${ioNumber}*${name}EXPD\r`);
+                break;
+                case 'outputs' :
+                    self.streamSend(`W${ioNumber},${name}NO\r`);
+                break;
+                case 'auxOutputs' :
+                    self.streamSend(`W${ioNumber+8},${name}NO\r`);
+                break;
+                case 'expansionOutputs' :
+                    self.streamSend(`W${ioNumber},${name}NX\r`);
+                break;
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendIOName');
+        }
+    }
+
+    /**
+     * set the i/o name from device
+     * @param {string} IO
+     * @param {string} name
+     */
+    setIOName(IO, name) {
+        const self = this;
+        try {
+            const id = self.oid2id(IO);
+            if (id) {
+                self.setState(`${id}`, `${name}`, true);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'setIOName');
         }
     }
 
@@ -1625,7 +1808,7 @@ class Extron extends utils.Adapter {
                 self.streamSend(`WM${oid}*${(value?'1':'0')}CPLY\r`);
             }
         } catch (err) {
-            this.errorHandler(err, 'sendPlayMode');
+            this.errorHandler(err, 'sendRepeatMode');
         }
     }
 
@@ -1642,7 +1825,7 @@ class Extron extends utils.Adapter {
                 self.streamSend(`WM${oid}CPLY\r`);
             }
         } catch (err) {
-            this.errorHandler(err, 'sendPlayMode');
+            this.errorHandler(err, 'getRepeatMode');
         }
     }
 
@@ -1677,7 +1860,7 @@ class Extron extends utils.Adapter {
                 self.streamSend(`WA${oid}* CPLY\r`);
             }
         } catch (err) {
-            this.errorHandler(err, 'sendFileName');
+            this.errorHandler(err, 'clearFileName');
         }
     }
 
@@ -1711,7 +1894,7 @@ class Extron extends utils.Adapter {
                 self.streamSend(`WA${oid}CPLY\r`);
             }
         } catch (err) {
-            this.errorHandler(err, 'sendFileName');
+            this.errorHandler(err, 'getFileName');
         }
     }
     /** END integrated audio player control */
@@ -1827,7 +2010,7 @@ class Extron extends utils.Adapter {
                     i++;
                 }
             }
-            this.setState('fs.freespace',self.fileList.freeSpace,true);
+            self.setState('fs.freespace',self.fileList.freeSpace,true);
         } catch (err) {
             self.requestDir = false;
             this.errorHandler(err, 'setUserFiles');
@@ -1835,8 +2018,273 @@ class Extron extends utils.Adapter {
     }
     /** END user flash memory file management */
 
-    /** BEGIN cp82 Video control */
+    /** BEGIN group control */
+    /**
+     * get all member OID's of a given group from device
+     * @param {number} group
+     * cmd = O[group]GRPM
+     */
+    getGroupMembers(group) {
+        const self = this;
+        try {
+            self.streamSend(`WO${group}GRPM\r`);
+        }
+        catch (err) {
+            this.errorHandler(err, 'getGroupMembers');
+        }
+    }
 
+    /** add member OID to group on device
+     * @param {number} group
+     * @param {string} baseId
+     * cmd = O[group]*[oid]GRPM
+    */
+    sendGroupMember(group, baseId) {
+        const self = this;
+        const oid = self.id2oid(baseId);
+        if (oid) {
+            try {
+                self.streamSend(`WO${group}*${oid}GRPM\r`);
+            }
+            catch (err) {
+                this.errorHandler(err, 'sendGroupMember');
+            }
+        }
+    }
+
+    /** store group members in database
+     * @param {number} group
+     * @param {array} members
+     */
+    setGroupMembers(group, members) {
+        const self = this;
+        if (members == '') {self.log.debug(`setGroupMembers(): no member for group ${group}`);} else {
+        let curMembers = self.groupMembers[group].split(',');   // split stringified list into array
+        self.log.debug(`setGroupMembers(): group ${group} curMembers: "${curMembers}"`);
+        if (members.length == 1) { // add single member to grop
+            if(curMembers.includes(members[0])) {
+                self.log.debug(`setGroupMembers(): OID ${members[0]} already included with group ${group}`);
+            } else {
+                curMembers.push(members[0]);
+                self.log.debug(`setGroupMembers(): added OID "${members[0]}" to group ${group} now holding "${curMembers}"`);
+            }
+        } else curMembers = members;    // replace list of members
+        self.groupMembers[group] = `${curMembers}`; // store stringified array
+        try {
+            self.setState(`groups.${('00' + group.toString()).slice(-2)}.members`, self.groupMembers[group], true);
+            self.setState(`groups.${('00' + group.toString()).slice(-2)}.deleted`, self.groupMembers[group]==''?true:false, true);
+            self.log.debug(`setGroupMembers(): group ${group} now has members ${self.groupMembers[group]}`);
+        } catch (err) {
+            this.errorHandler(err, 'setGroupMembers');
+        }
+        }
+    }
+
+    /** clear group on device
+     * @param {number} group
+     * cmd = Z[group]GRPM
+     */
+    sendDeleteGroup(group) {
+        const self = this;
+        try {
+            self.streamSend(`WZ${group}GRPM\r`);
+        }
+        catch (err) {
+            this.errorHandler(err, 'deleteGroup');
+        }
+    }
+
+    /** get group fader level from device
+     * @param {number} group
+     * cmd = D[group]GRPM
+     */
+    getGroupLevel(group) {
+        const self = this;
+        try {
+            self.streamSend(`WD${group}GRPM\r`);
+        }
+        catch (err) {
+            this.errorHandler(err, 'getGroupLevel');
+        }
+    }
+
+    /** send group fader level to device
+     * @param {number} group
+     * @param {number} level
+     * cmd = D[group]*[level]GRPM
+     */
+    sendGroupLevel(group, level) {
+        const self = this;
+        try {
+            switch (self.groupTypes[group]) {
+                case 6: // gain group
+                    self.streamSend(`WD${group}*${self.calculateFaderValue(level, "lin").devValue}GRPM\r`);
+                    break;
+                case 12:    // mute group
+                    self.streamSend(`WD${group}*${level}GRPM\r`);
+                    break;
+            }
+        }
+        catch (err) {
+            this.errorHandler(err, 'sendGroupLevel');
+        }
+    }
+
+    /** store group level in database
+     * @param {number} group
+     * @param {number} level
+     */
+    setGroupLevel(group, level) {
+        const self = this;
+        try {
+            switch (self.groupTypes[group]) {
+                case 6 :           // gain group
+                    self.setState(`groups.${('00' + group.toString()).slice(-2)}.level_db`, Number(self.calculateFaderValue(level, "log").logValue), true);
+                    self.setState(`groups.${('00' + group.toString()).slice(-2)}.level`, Number(self.calculateFaderValue(level, "log").linValue), true);
+                break;
+
+                case 12 :    // mute group
+                    self.setState(`groups.${('00' + group.toString()).slice(-2)}.level_db`, level?1:0, true);
+                    self.setState(`groups.${('00' + group.toString()).slice(-2)}.level`, level?1:0, true);
+                break;
+            }
+        } catch (err) {
+            this.errorHandler(err, 'setGroupLevel');
+        }
+    }
+
+    /** get group type from device
+     * @param {number} group
+     * cmd = P[group]GRPM
+     */
+    getGroupType(group) {
+        const self = this;
+        try {
+            self.streamSend(`WP${group}GRPM\r`);
+        }
+        catch (err) {
+            this.errorHandler(err, 'getGroupType');
+        }
+    }
+
+    /** send group type to device
+     * @param {number} group
+     * @param {number} type
+     * cmd = P[group]*[type]GRPM
+     */
+    sendGroupType(group, type) {
+        const self = this;
+        try {
+            self.streamSend(`WP${group}*${type}GRPM\r`);
+        }
+        catch (err) {
+            this.errorHandler(err, 'sendGroupType');
+        }
+    }
+
+    /** store group type in database
+     * @param {number} group
+     * @param {number} type
+     */
+    setGroupType(group, type) {
+        const self = this;
+        self.groupTypes[Number(group)] = Number(type);
+        try {
+            self.setState(`groups.${('00' + group.toString()).slice(-2)}.type`, type, true);
+        } catch (err) {
+            this.errorHandler(err, 'setGroupType');
+        }
+    }
+
+    /** get group level limits from device
+     * @param {number} group
+     * cmd = L[group]GRPM
+     */
+    getGroupLimits(group) {
+        const self = this;
+        try {
+            self.streamSend(`WL${group}GRPM\r`);
+        }
+        catch (err) {
+            this.errorHandler(err, 'getGroupLimits');
+        }
+    }
+
+    /** send group limits to device
+     * @param {number} group
+     * @param {number} upper
+     * @param {number} lower
+     * cmd = L[group]*[upper]*[lower]GRPM
+    */
+    sendGroupLimits(group, upper, lower) {
+        const self = this;
+        try {
+            self.streamSend(`WL${group}*${upper}*${lower}GRPM\r`);
+        }
+        catch (err) {
+            this.errorHandler(err, 'sendGroupLimits');
+        }
+    }
+
+    /** store group limits in database
+     * @param {number} group
+     * @param {number} upper
+     * @param {number} lower
+     */
+    setGroupLimits(group, upper, lower) {
+        const self = this;
+        try {
+            self.setState(`groups.${('00' + group.toString()).slice(-2)}.upperLimit`, upper, true);
+            self.setState(`groups.${('00' + group.toString()).slice(-2)}.lowerLimit`, lower, true);
+        } catch (err) {
+            this.errorHandler(err, 'setGroupLimits');
+        }
+    }
+
+    /** get group name from device
+     * @param {number} group
+     * cmd = N[group]GRPM
+     */
+    getGroupName(group) {
+        const self = this;
+        try {
+            self.streamSend(`WN${group}GRPM\r`);
+        }
+        catch (err) {
+            this.errorHandler(err, 'getGroupName');
+        }
+    }
+
+    /** send group name to device
+     * @param {number} group
+     * @param {string} name
+     * cmd = N[group]*[name]GRPM
+     */
+    sendGroupName(group, name) {
+        const self = this;
+        try {
+            self.streamSend(`WN${group}*${name}GRPM\r`);
+        }
+        catch (err) {
+            this.errorHandler(err, 'sendGroupName');
+        }
+    }
+
+    /** store group name in database
+     * @param {number} group
+     * @param {string} name
+    */
+    setGroupName(group, name) {
+        const self = this;
+        try {
+            self.setState(`groups.${('00' + group.toString()).slice(-2)}.name`, name, true);
+        } catch (err) {
+            this.errorHandler(err, 'setGroupName');
+        }
+    }
+    /** END group control*/
+
+    /** BEGIN cp82 Video control */
     /**
      * Set the database values for the tie state of an output
      * @param {string} cmd
@@ -2110,13 +2558,38 @@ class Extron extends utils.Adapter {
         const self = this;
         let retId = '';
         try {
-            if (Number(oid) < 9) {
-                retId = `ply.players.${Number(oid)}.common.`;
+            if (oid.length < 2) {
+                retId = `ply.players.${oid}.common.`;
+            } else if (oid.length < 3) {
+                retId = `groups.${oid}.`;
             }
             else {
-                const what = Number(oid.substr(0,1));
+                const whatstr = oid.substr(0,1);
+                const what = Number(whatstr);
                 const where = Number(oid.substr(1,2));
                 const val = Number(oid.substr(3,2));
+                if (whatstr === 'N') {
+                        switch (oid.substr(1,2)) {
+                            case 'MI' :
+                                if (val < 13) retId = `in.inputs.${('00' + (val).toString()).slice(-2)}.name`;
+                                if (val > 12) retId = `in.auxInputs.${('00' + (val-12).toString()).slice(-2)}.name`;
+                                break;
+                            case 'ML' :
+                                retId = `in.virtualReturns.${('00' + (val).toString()).slice(-2)}.name`;
+                                break;
+                            case 'EI' :
+                                retId = `in.expansionInputs.${('00' + (val).toString()).slice(-2)}.name`;
+                                break;
+                            case 'MO' :
+                                if (val < 9) retId = `out.outputs.${('00' + (val).toString()).slice(-2)}.name`;
+                                if (val > 8) retId = `out.auxOutputs.${('00' + (val-8).toString()).slice(-2)}.name`;
+                                break;
+                            case 'EX' :
+                                retId = `out.expansionOutputs.${('00' + (val).toString()).slice(-2)}.name`;
+                                break;
+                        }
+                } else if (`${oid.substr(0,5)}` === 'EXPDA') retId = `in.expansionInputs.${('00' + oid.substr(5)).slice(-2)}.name`;    
+                else
                 switch (what) {
                     case 2:                         // mixpoints
                         if (self.devices[self.config.device].short === 'cp82') {    // mixpoints on CP82
@@ -2254,12 +2727,10 @@ class Extron extends utils.Adapter {
                                 return `out.expansionOutputs.${('00' + (val - 15).toString()).slice(-2)}.limiter.`;
                             }
                         }
-                        throw { 'message': 'no known output',
-                            'stack'  : `oid: ${oid}` };
+                        throw { 'message': 'no known output', 'stack'  : `oid: ${oid}` };
 
                     default:
-                        throw { 'message': 'unknown OID',
-                            'stack'  : `oid: ${oid}` };
+                        throw { 'message': 'unknown OID', 'stack'  : `oid: ${oid}` };
                 }
             }
         } catch (err) {
@@ -2289,7 +2760,10 @@ class Extron extends utils.Adapter {
                 outputNumber = Number(idArray[6].substr(1,2));
             }
             if (idType === 'players') {
-                retOid = idNumber.toString();
+                retOid = `${idNumber}`;
+            }
+            else if (idArray[2] === 'groups') {
+                retOid = `${idArray[3]}`;
             }
             else
             {
@@ -2472,10 +2946,12 @@ class Extron extends utils.Adapter {
             // close client connection
             switch (this.config.type) {
                 case 'ssh' :
+                    this.log.debug('onUnload(): calling this.client.end()');
                     this.client.end();
                     break;
                 case 'telnet' :
-                    this.net.end();
+                    this.log.debug('onUnload(): calling this.net.destroy()');
+                    this.net.destroy();
                     break;
             }
             callback();
@@ -2496,17 +2972,19 @@ class Extron extends utils.Adapter {
                 // The state was changed
                 // self.log.debug(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
                 if (!state.ack) {       // only react on not acknowledged state changes
-                    self.log.info(`Extron state ${id} changed: ${state.val} (ack = ${state.ack})`);
                     if ((state.val === undefined) || (state.val === null)) state.val = '';
+                    self.log.debug(`onStateChange(): Extron state ${id} changed: ${state.val} (ack = ${state.ack})`);
                     const baseId = id.substr(0, id.lastIndexOf('.'));
                     const idArray = id.split('.');
                     const idType = idArray[3];
+                    const idGrp = Number(idArray[3]);
                     const idBlock = idArray[5];
                     const stateName = id.substr(id.lastIndexOf('.') + 1);
                     const timeStamp = Date.now();
                     let stateTime = self.stateBuf[0];
                     let calcMode ='lin';
                     let elapsed = 0;
+                    let member = '';
                     if (typeof(baseId) !== 'undefined' && baseId !== null) {
                         switch (stateName) {
                             case 'mute' :
@@ -2515,7 +2993,7 @@ class Extron extends utils.Adapter {
                                 } else self.sendMuteStatus(id,state.val);
                                 break;
                             case 'source' :
-                                self.sendSource(id, state.val.toString());
+                                self.sendSource(id, `${state.val}`);
                                 break;
                             case 'level' :
                                 // @ts-ignore
@@ -2547,7 +3025,9 @@ class Extron extends utils.Adapter {
                                             break;
                                     }
                                     stateTime.timestamp = timeStamp;    // update stored timestamp
-                                    self.sendGainLevel(id,self.calculateFaderValue(state.val.toString(),calcMode));
+                                    if (idArray[2] === 'groups') {
+                                        self.sendGroupLevel(idGrp, Number(state.val));
+                                    } else self.sendGainLevel(id,self.calculateFaderValue(`${state.val}`,calcMode));
                                 }
                                 break;
                             case 'level_db' :
@@ -2571,7 +3051,9 @@ class Extron extends utils.Adapter {
                                         calcMode = 'logAtt';
                                         break;
                                 }
-                                self.sendGainLevel(id,self.calculateFaderValue(state.val.toString(),calcMode));
+                                if (idArray[2] === 'groups') {
+                                    self.sendGroupLevel(idGrp, Number(state.val));
+                                } else self.sendGainLevel(id,self.calculateFaderValue(`${state.val}`,calcMode));
                                 break;
 
                             case 'status' :
@@ -2597,7 +3079,8 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'filename' :
-                                self.sendFileName(id, state.val.toString());
+                                if (self.checkName(`${state.val}`)) self.sendFileName(id, `${state.val}`);
+                                else self.log.error('filename includes invalid characters');
                                 break;
 
                             case 'tie' :
@@ -2607,7 +3090,7 @@ class Extron extends utils.Adapter {
                                 self.sendLoopVideo(baseId, state.val?true:false);
                                 break;
                             case 'filepath' :
-                                self.sendVideoFile(baseId, state.val.toString());
+                                self.sendVideoFile(baseId, `${state.val}`);
                                 break;
                             case 'streammode' :
                                 self.sendStreamMode(Number(state.val));
@@ -2619,6 +3102,46 @@ class Extron extends utils.Adapter {
 
                             case 'upl' :
                                 self.loadUserFile(`${state.val}`);
+                                break;
+
+                            case 'name' :
+                                if (self.checkName(`${state.val}`)) {
+                                switch (idArray[2]) {
+                                    case 'groups' :
+                                        self.sendGroupName(idGrp, `${state.val}`);
+                                        break;
+                                    case 'in' :
+                                    case 'out' :
+                                        self.sendIOName(id,`${state.val}`);
+                                        break;
+                                }
+                                } else self.log.error('state name includes invalid characters');
+                                break;
+
+                            case 'type' :
+                                self.sendGroupType(idGrp, Number(state.val));
+                                switch (Number(state.val)) {
+                                    case 6:     // gain group
+                                        self.sendGroupLimits(idGrp, 120, -1000);
+                                        break;
+                                    case 12:    // mute group
+                                        self.sendGroupLimits(idGrp, 1, 0);
+                                        break;
+                                }
+                                break;
+
+                            case 'upperLimit' :
+                            case 'lowerLimit' :
+                                // self.sendGroupLimits(idGrp, Number(state.val), Number(state.val));
+                                break;
+
+                            case 'members' :
+                                for (member of `${state.val}`.split(',')) {
+                                    self.sendGroupMember(idGrp, `${member}`);
+                                }
+                                break;
+                            case 'deleted' :
+                                self.sendDeleteGroup(idGrp);
                                 break;
                         }
                     }

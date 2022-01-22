@@ -1,169 +1,174 @@
 {
-    "common": {
-        "name": "extron",
-        "version": "0.1.9",
-        "news": {
-            "0.0.1": {
-                "en": "initial release",
-                "de": "Erstveröffentlichung",
-                "ru": "Начальная версия",
-                "pt": "lançamento inicial",
-                "nl": "Eerste uitgave",
-                "fr": "Première version",
-                "it": "Versione iniziale",
-                "es": "Versión inicial",
-                "pl": "Pierwsze wydanie",
-                "zh-cn": "首次出版"
-            },
-            "0.0.2": {
-                "en": "minor changes for the publication of the first release",
-                "de": "geringfügige Änderungen für die Veröffentlichung der ersten Version",
-                "ru": "мелкие изменения для публикации первого релиза",
-                "pt": "pequenas alterações para a publicação do primeiro lançamento",
-                "nl": "kleine wijzigingen voor de publicatie van de eerste release",
-                "fr": "changements mineurs pour la publication de la première version",
-                "it": "modifiche minori per la pubblicazione della prima release",
-                "es": "cambios menores para la publicación del primer lanzamiento",
-                "pl": "drobne zmiany dotyczące publikacji pierwszego wydania",
-                "zh-cn": "对第一个发行版的微小更改"
-            },
-            "0.0.3": {
-                "en": "fix dependencies for integration test",
-                "de": "Abhängigkeiten für den Integrationstest korrigieren",
-                "ru": "исправить зависимости для интеграционного теста",
-                "pt": "corrigir dependências para teste de integração",
-                "nl": "afhankelijkheden repareren voor integratietest",
-                "fr": "corriger les dépendances pour le test d'intégration",
-                "it": "correggere le dipendenze per il test di integrazione",
-                "es": "arreglar dependencias para la prueba de integración",
-                "pl": "napraw zależności dla testu integracji",
-                "zh-cn": "修复依赖关系以进行集成测试"
-            },
-            "0.1.0": {
-                "en": "extend device/database structure to cover all controllable elements",
-                "de": "Datenbankstruktur erweitert um alle steuerbaren Elemente abzubilden"
-            },
-            "0.1.1": {
-                "en": "extend device/database structure to add devices CP82, SMD202, SME211",
-                "de": "Datenbankstruktur erweitert, Geräte CP82, SMD202 ,SME211 hinzugefügt"
-            },
-            "0.1.2": {
-                "en": "extend device/database structure to add user flash memory",
-                "de": "Datenbankstruktur erweitert, user flash hinzugefügt"
-            },
-            "0.1.3": {
-                "en": "fixes on device communication and user flash file management",
-                "de": "Fehlerkorrektur in der Gerätekommunikation und im Dateimanagement"
-            },
-            "0.1.4": {
-                "en": "fixes on device communication CP82 / SMD202",
-                "de": "Fehlerkorrektur in der Gerätekommunikation für CP82 und SMD202"
-            },
-            "0.1.5": {
-                "en": "fixes on device communication SME211",
-                "de": "Fehlerkorrektur in der Gerätekommunikation für SME211"
-            },
-            "0.1.6": {
-                "en": "added limiter section for DMP128",
-                "de": "Limitersteuerung für DMP128 hinzugefügt"
-            },
-            "0.1.7": {
-                "en": "added plain Telnet communication for DMP128",
-                "de": "Telnet Kommunikation für DMP128 hinzugefügt"
-            },
-            "0.1.9": {
-                "en": "fixed setting of info.connection in telnet mode",
-                "de": "info.connection im Telnet Mode gefixed"
-            }
-        },
-        "title": "Extron SIS",
-        "titleLang": {
-            "en": "Extron SIS",
-            "de": "Extron SIS",
-            "ru": "Extron SIS",
-            "pt": "Extron SIS",
-            "nl": "Extron SIS",
-            "fr": "Extron SIS",
-            "it": "Extron SIS",
-            "es": "Extron SIS",
-            "pl": "Extron SIS",
-            "zh-cn": "Extron SIS"
-        },
-        "desc": {
-            "en": "Extron SIS adapter",
-            "de": "Extron SIS-Adapter",
-            "ru": "Адаптер Extron SIS",
-            "pt": "Adaptador Extron SIS",
-            "nl": "Extron SIS-adapter",
-            "fr": "Adaptateur SIS Extron",
-            "it": "Adattatore SIS di Extron",
-            "es": "Adaptador SIS de Extron",
-            "pl": "Adapter Extron SIS",
-            "zh-cn": "Extron SIS适配器"
-        },
-        "authors": [
-            "Bannsaenger <bannsaenger@gmx.de>",
-            "mschlg <mschlgl@gmail.com>"
-        ],
-        "keywords": [
-            "extron"
-        ],
-        "license": "CC-BY-NC-4.0",
-        "platform": "Javascript/Node.js",
-        "main": "main.js",
-        "icon": "extron.png",
-        "enabled": false,
-        "extIcon": "https://raw.githubusercontent.com/Bannsaenger/ioBroker.extron/master/admin/extron.png",
-        "readme": "https://github.com/Bannsaenger/ioBroker.extron/blob/master/README.md",
-        "loglevel": "info",
-        "mode": "daemon",
-        "type": "hardware",
-        "connectionType": "local",
-        "dataSource": "push",
-        "compact": true,
-        "materialize": true,
-        "dependencies": [
-            {
-                "js-controller": ">=2.0.0"
-            }
-        ]
+  "common": {
+    "name": "extron",
+    "version": "0.1.10",
+    "news": {
+      "0.0.1": {
+        "en": "initial release",
+        "de": "Erstveröffentlichung",
+        "ru": "Начальная версия",
+        "pt": "lançamento inicial",
+        "nl": "Eerste uitgave",
+        "fr": "Première version",
+        "it": "Versione iniziale",
+        "es": "Versión inicial",
+        "pl": "Pierwsze wydanie",
+        "zh-cn": "首次出版"
+      },
+      "0.0.2": {
+        "en": "minor changes for the publication of the first release",
+        "de": "geringfügige Änderungen für die Veröffentlichung der ersten Version",
+        "ru": "мелкие изменения для публикации первого релиза",
+        "pt": "pequenas alterações para a publicação do primeiro lançamento",
+        "nl": "kleine wijzigingen voor de publicatie van de eerste release",
+        "fr": "changements mineurs pour la publication de la première version",
+        "it": "modifiche minori per la pubblicazione della prima release",
+        "es": "cambios menores para la publicación del primer lanzamiento",
+        "pl": "drobne zmiany dotyczące publikacji pierwszego wydania",
+        "zh-cn": "对第一个发行版的微小更改"
+      },
+      "0.0.3": {
+        "en": "fix dependencies for integration test",
+        "de": "Abhängigkeiten für den Integrationstest korrigieren",
+        "ru": "исправить зависимости для интеграционного теста",
+        "pt": "corrigir dependências para teste de integração",
+        "nl": "afhankelijkheden repareren voor integratietest",
+        "fr": "corriger les dépendances pour le test d'intégration",
+        "it": "correggere le dipendenze per il test di integrazione",
+        "es": "arreglar dependencias para la prueba de integración",
+        "pl": "napraw zależności dla testu integracji",
+        "zh-cn": "修复依赖关系以进行集成测试"
+      },
+      "0.1.0": {
+        "en": "extend device/database structure to cover all controllable elements",
+        "de": "Datenbankstruktur erweitert um alle steuerbaren Elemente abzubilden"
+      },
+      "0.1.1": {
+        "en": "extend device/database structure to add devices CP82, SMD202, SME211",
+        "de": "Datenbankstruktur erweitert, Geräte CP82, SMD202 ,SME211 hinzugefügt"
+      },
+      "0.1.2": {
+        "en": "extend device/database structure to add user flash memory",
+        "de": "Datenbankstruktur erweitert, user flash hinzugefügt"
+      },
+      "0.1.3": {
+        "en": "fixes on device communication and user flash file management",
+        "de": "Fehlerkorrektur in der Gerätekommunikation und im Dateimanagement"
+      },
+      "0.1.4": {
+        "en": "fixes on device communication CP82 / SMD202",
+        "de": "Fehlerkorrektur in der Gerätekommunikation für CP82 und SMD202"
+      },
+      "0.1.5": {
+        "en": "fixes on device communication SME211",
+        "de": "Fehlerkorrektur in der Gerätekommunikation für SME211"
+      },
+      "0.1.6": {
+        "en": "added limiter section for DMP128",
+        "de": "Limitersteuerung für DMP128 hinzugefügt"
+      },
+      "0.1.7": {
+        "en": "added plain Telnet communication for DMP128",
+        "de": "Telnet Kommunikation für DMP128 hinzugefügt"
+      },
+      "0.1.9": {
+        "en": "fixed setting of info.connection in telnet mode",
+        "de": "info.connection im Telnet Mode gefixed"
+      },
+      "0.1.10": {
+        "en": "added support for groups in DSP DMP128",
+        "de": "Unterstützung für Gruppen im DSP DMP128 hinzugefügt"
+      }
     },
-    "native": {
-        "host": "127.0.0.1",
-        "type": "ssh",
-        "port": "22023",
-        "device": "",
-        "user": "admin",
-        "pass": "",
-        "pollDelay": 10000,
-        "reconnectDelay": 30000,
-        "answerTimeout": 500,
-        "inactivityTimeout": 100000,
-        "pushDeviceStatus": true,
-        "stateDelay" : 50
+    "title": "Extron SIS",
+    "titleLang": {
+      "en": "Extron SIS",
+      "de": "Extron SIS",
+      "ru": "Extron SIS",
+      "pt": "Extron SIS",
+      "nl": "Extron SIS",
+      "fr": "Extron SIS",
+      "it": "Extron SIS",
+      "es": "Extron SIS",
+      "pl": "Extron SIS",
+      "zh-cn": "Extron SIS"
     },
-    "objects": [],
-    "instanceObjects": [
-        {
-            "_id": "info",
-            "type": "channel",
-            "common": {
-                "name": "Information"
-            },
-            "native": {}
-        },
-        {
-            "_id": "info.connection",
-            "type": "state",
-            "common": {
-                "role": "indicator.connected",
-                "name": "Device or service connected",
-                "type": "boolean",
-                "read": true,
-                "write": false,
-                "def": false
-            },
-            "native": {}
-        }
-    ]
+    "desc": {
+      "en": "Extron SIS adapter",
+      "de": "Extron SIS-Adapter",
+      "ru": "Адаптер Extron SIS",
+      "pt": "Adaptador Extron SIS",
+      "nl": "Extron SIS-adapter",
+      "fr": "Adaptateur SIS Extron",
+      "it": "Adattatore SIS di Extron",
+      "es": "Adaptador SIS de Extron",
+      "pl": "Adapter Extron SIS",
+      "zh-cn": "Extron SIS适配器"
+    },
+    "authors": [
+      "Bannsaenger <bannsaenger@gmx.de>",
+      "mschlg <mschlgl@gmail.com>"
+    ],
+    "keywords": [
+      "extron"
+    ],
+    "license": "CC-BY-NC-4.0",
+    "platform": "Javascript/Node.js",
+    "main": "main.js",
+    "icon": "extron.png",
+    "enabled": false,
+    "extIcon": "https://raw.githubusercontent.com/Bannsaenger/ioBroker.extron/master/admin/extron.png",
+    "readme": "https://github.com/Bannsaenger/ioBroker.extron/blob/master/README.md",
+    "loglevel": "info",
+    "mode": "daemon",
+    "type": "hardware",
+    "connectionType": "local",
+    "dataSource": "push",
+    "compact": true,
+    "materialize": true,
+    "dependencies": [
+      {
+        "js-controller": ">=2.0.0"
+      }
+    ],
+    "installedFrom": "iobroker.extron@0.1.9"
+  },
+  "native": {
+    "host": "127.0.0.1",
+    "type": "ssh",
+    "port": "22023",
+    "device": "",
+    "user": "admin",
+    "pass": "",
+    "pollDelay": 10000,
+    "reconnectDelay": 30000,
+    "answerTimeout": 500,
+    "inactivityTimeout": 100000,
+    "pushDeviceStatus": true,
+    "stateDelay": 50
+  },
+  "objects": [],
+  "instanceObjects": [
+    {
+      "_id": "info",
+      "type": "channel",
+      "common": {
+        "name": "Information"
+      },
+      "native": {}
+    },
+    {
+      "_id": "info.connection",
+      "type": "state",
+      "common": {
+        "role": "indicator.connected",
+        "name": "Device or service connected",
+        "type": "boolean",
+        "read": true,
+        "write": false,
+        "def": false
+      },
+      "native": {}
+    }
+  ]
 }

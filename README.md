@@ -76,6 +76,9 @@ If you are a non commercial organisation or use it for private use you can get a
 ### 0.1.9
 * (Bannsaenger) fixed setting of info.connection in telnet mode
 
+### 0.1.10
+* (mschlgl) added support for groups in DSP DMP128
+
 ## License
 Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
 
