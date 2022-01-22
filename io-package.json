@@ -1,8 +1,20 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.1.10",
+    "version": "0.1.11",
     "news": {
+      "0.1.11": {
+        "en": "fixed support for groups in DSP DMP128",
+        "de": "Unterstützung für Gruppen in DSP DMP128 gefixed",
+        "ru": "исправлена поддержка групп в DSP DMP128",
+        "pt": "suporte fixo para grupos em DSP DMP128",
+        "nl": "vaste ondersteuning voor groepen in DSP DMP128",
+        "fr": "prise en charge fixe des groupes dans DSP DMP128",
+        "it": "supporto fisso per i gruppi in DSP DMP128",
+        "es": "soporte fijo para grupos en DSP DMP128",
+        "pl": "poprawiono obsługę grup w DSP DMP128",
+        "zh-cn": "固定支持 DSP DMP128 中的组"        
+      },
       "0.1.10": {
         "en": "added support for groups in DSP DMP128",
         "de": "Unterstützung für Gruppen im DSP DMP128 hinzugefügt",

@@ -39,6 +39,9 @@ If you are a non commercial organisation or use it for private use you can get a
 
 ## Changelog
 
+### 0.1.11
+* (Bannsaenger) fixed support for groups in DSP DMP128
+
 ### 0.1.10
 * (mschlgl) added support for groups in DSP DMP128
 
