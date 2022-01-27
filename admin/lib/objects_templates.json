@@ -1048,9 +1048,9 @@
         "groups": [
             {
                 "_id": "name",
-                "type": "text",
+                "type": "state",
                 "common": {
-                    "role": "value",
+                    "role": "text",
                     "name": "group name",
                     "type": "string",
                     "read": true,

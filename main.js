@@ -1390,7 +1390,7 @@ class Extron extends utils.Adapter {
     /**
      * Send the mute status to the device
      * @param {string} baseId
-     * @param {string | boolean} value
+     * @param {string | boolean | number} value
      */
     sendMuteStatus(baseId, value) {
         try {
@@ -2914,7 +2914,7 @@ class Extron extends utils.Adapter {
                             case 'mute' :
                                 if (idArray[2] === 'connections') {
                                     this.sendVideoMute(id, state.val);
-                                } else this.sendMuteStatus(id, state.val.toString());
+                                } else this.sendMuteStatus(id, state.val);
                                 break;
                             case 'source' :
                                 this.sendSource(id, `${state.val}`);
