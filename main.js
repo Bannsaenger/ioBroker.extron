@@ -588,7 +588,7 @@ class Extron extends utils.Adapter {
                         case 'GRPMZ' :      // delete Group command
                             this.log.debug(`onStreamData(): Extron got delete group #"${ext1}`);
                             this.groupTypes[Number(ext1)] = undefined;
-                            this.groupMembers[Number(ext1)] = '';
+                            this.groupMembers[Number(ext1)] = [];
                             this.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.members`,'',true);
                             this.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.deleted`,true,true);
                             break;
@@ -1010,8 +1010,8 @@ class Extron extends utils.Adapter {
                 // iterate through stateList to request status from device
                 for (let index = 0; index < this.stateList.length; index++) {
                     const id = this.stateList[index];
-                    const baseId = id.substr(0, id.lastIndexOf('.'));
-                    const stateName = id.substr(id.lastIndexOf('.') + 1);
+                    const baseId = id.slice(0, id.lastIndexOf('.'));
+                    const stateName = id.slice(id.lastIndexOf('.') + 1);
                     const idArray = id.split('.');
                     const idType = idArray[2];
                     const grpId = Number(idArray[3]);
@@ -1120,11 +1120,11 @@ class Extron extends utils.Adapter {
                     state.ack = false;
                     this.onStateChange(id, state);
                     /**
-                    const baseId = id.substr(0, id.lastIndexOf('.'));
+                    const baseId = id.slice(0, id.lastIndexOf('.'));
                     const idArray = id.split('.');
                     const idType = idArray[3];
                     const idBlock = idArray[5];
-                    const stateName = id.substr(id.lastIndexOf('.') + 1);
+                    const stateName = id.slice(id.lastIndexOf('.') + 1);
                     let calcMode ='lin';
 
                     if (typeof(baseId) !== 'undefined' && baseId !== null) {
@@ -2017,7 +2017,7 @@ class Extron extends utils.Adapter {
         if ((members === undefined) || (members.length === 0)) {
             this.log.debug(`setGroupMembers(): no member for group ${group}`);
         } else {
-            let curMembers = this.groupMembers[group].split(',');   // split stringified list into array
+            let curMembers = this.groupMembers[group];
             this.log.debug(`setGroupMembers(): group ${group} curMembers: "${curMembers}"`);
             if (members.length == 1) { // add single member to grop
                 if(curMembers.includes(members[0])) {
@@ -2029,8 +2029,8 @@ class Extron extends utils.Adapter {
             } else curMembers = members;    // replace list of members
             this.groupMembers[group] = `${curMembers}`; // store stringified array
             try {
-                this.setState(`groups.${('00' + group.toString()).slice(-2)}.members`, this.groupMembers[group], true);
-                this.setState(`groups.${('00' + group.toString()).slice(-2)}.deleted`, this.groupMembers[group]==''?true:false, true);
+                this.setState(`groups.${('00' + group.toString()).slice(-2)}.members`, this.groupMembers[group].join(','), true);
+                this.setState(`groups.${('00' + group.toString()).slice(-2)}.deleted`, this.groupMembers[group].length == 0?true:false, true);
                 this.log.debug(`setGroupMembers(): group ${group} now has members ${this.groupMembers[group]}`);
             } catch (err) {
                 this.errorHandler(err, 'setGroupMembers');
@@ -2238,7 +2238,7 @@ class Extron extends utils.Adapter {
      */
     setTie(cmd, value) {
         try {
-            const input = cmd.substr(2,1);
+            const input = cmd.slice(2,3);
             const valArray = value.split(' ');
             if (valArray[1] !== 'All') {
                 this.log.warn(`Extron received tie status "${valArray[1]}". Only "All" supported. andle like "All"`);
@@ -2305,7 +2305,7 @@ class Extron extends utils.Adapter {
     }
 
 
-    /** END CP83 Video control */
+    /** END CP82 Video control */
 
     /** BEGIN SMD202 Video Player control */
     /** send start payback command
@@ -2490,12 +2490,12 @@ class Extron extends utils.Adapter {
                 retId = `groups.${oid}.`;
             }
             else {
-                const whatstr = oid.substr(0,1);
+                const whatstr = oid.slice(0,1);
                 const what = Number(whatstr);
-                const where = Number(oid.substr(1,2));
-                const val = Number(oid.substr(3,2));
+                const where = Number(oid.slice(1,2));
+                const val = Number(oid.slice(3,7));
                 if (whatstr === 'N') {
-                    switch (oid.substr(1,2)) {
+                    switch (oid.slice(1,3)) {
                         case 'MI' :
                             if (val < 13) retId = `in.inputs.${('00' + (val).toString()).slice(-2)}.name`;
                             if (val > 12) retId = `in.auxInputs.${('00' + (val-12).toString()).slice(-2)}.name`;
@@ -2514,7 +2514,7 @@ class Extron extends utils.Adapter {
                             retId = `out.expansionOutputs.${('00' + (val).toString()).slice(-2)}.name`;
                             break;
                     }
-                } else if (`${oid.substr(0,5)}` === 'EXPDA') retId = `in.expansionInputs.${('00' + oid.substr(5)).slice(-2)}.name`;
+                } else if (`${oid.slice(0,4)}` === 'EXPDA') retId = `in.expansionInputs.${('00' + oid.slice(5)).slice(-2)}.name`;
                 else
                     switch (what) {
                         case 2:                         // mixpoints
@@ -2561,7 +2561,7 @@ class Extron extends utils.Adapter {
 
                         case 3:                         // VideoLine inputs on CP82
                             if (where === 0) {          // Input Gain Control
-                                return `in.videoInputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
+                                return `in.VideoInputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
                             }
                             break;
 
@@ -2681,8 +2681,8 @@ class Extron extends utils.Adapter {
             let outputType = 'O';
             let outputNumber = 1;
             if (idArray.length >= 7) {
-                outputType = idArray[6].substr(0,1);
-                outputNumber = Number(idArray[6].substr(1,2));
+                outputType = idArray[6].slice(0,1);
+                outputNumber = Number(idArray[6].slice(1,3));
             }
             if (idType === 'players') {
                 retOid = `${idNumber}`;
@@ -2898,12 +2898,12 @@ class Extron extends utils.Adapter {
                 if (!state.ack) {       // only react on not acknowledged state changes
                     if ((state.val === undefined) || (state.val === null)) state.val = '';
                     this.log.debug(`onStateChange(): Extron state ${id} changed: ${state.val} (ack = ${state.ack})`);
-                    const baseId = id.substr(0, id.lastIndexOf('.'));
+                    const baseId = id.slice(0, id.lastIndexOf('.'));
                     const idArray = id.split('.');
                     const idType = idArray[3];
                     const idGrp = Number(idArray[3]);
                     const idBlock = idArray[5];
-                    const stateName = id.substr(id.lastIndexOf('.') + 1);
+                    const stateName = id.slice(id.lastIndexOf('.') + 1);
                     const timeStamp = Date.now();
                     let stateTime = this.stateBuf[0];
                     let calcMode ='lin';

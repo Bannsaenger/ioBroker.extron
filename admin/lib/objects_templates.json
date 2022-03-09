@@ -131,7 +131,7 @@
                     "min" : 0,
                     "max" : 48,
                     "def": 0,
-                    "states" : "0:Analog; 1:AT#1; 2:AT#2; 3:AT#3; 4:AT#4; 5:AT#5; 6:AT#6; 7:AT#7; 8:AT#8; 9:AT#9; 10:AT#10; 11:AT#11; 12:AT#12; 13:AT#13; 14:AT#14; 15:AT#15; 16:AT#16; 17:AT#17; 18:AT#18; 19:AT#19; 20:AT#20; 21:AT#21; 22:AT#22; 23:AT#23; 24:AT#24; 25:AT#25; 26:AT#26; 27:AT#27; 28:AT#28; 29:AT#29; 30:AT#30; 31:AT#31; 32:AT#32; 33:AT#33; 34:AT#34; 35:AT#35; 36:AT#36; 37:AT#37; 38:AT#38; 39:AT#39; 40:AT#40; 41:AT#41; 42:AT#42; 43:AT#43; 44:AT#44; 45:AT#45; 46:AT#46; 47:AT#47; 48:AT#48"
+                    "states" :   {"0":"Analog", "1":"AT#1", "2":"AT#2", "3":"AT#3", "4":"AT#4", "5":"AT#5", "6":"AT#6", "7":"AT#7", "8":"AT#8", "9":"AT#9", "10":"AT#10", "11":"AT#11", "12":"AT#12", "13":"AT#13", "14":"AT#14", "15":"AT#15", "16":"AT#16", "17":"AT#17", "18":"AT#18", "19":"AT#19", "20":"AT#20", "21":"AT#21", "22":"AT#22", "23":"AT#23", "24":"AT#24", "25":"AT#25", "26":"AT#26", "27":"AT#27", "28":"AT#28", "29":"AT#29", "30":"AT#30", "31":"AT#31", "32":"AT#32", "33":"AT#33", "34":"AT#34", "35":"AT#35", "36":"AT#36", "37":"AT#37", "38":"AT#38", "39":"AT#39", "40":"AT#40", "41":"AT#41", "42":"AT#42", "43":"AT#43", "44":"AT#44", "45":"AT#45", "46":"AT#46", "47":"AT#47", "48":"AT#48"}
                 },
                 "native": {}
             },        
@@ -272,7 +272,7 @@
                     "min" : 0,
                     "max" : 24,
                     "def": 0,
-                    "states" : "0:disabled; 1:Player #1; 2:Player #2; 3:Player #3; 4:Player #4:; 5:Player #5; 6:Player #6; 7:Player #7; 8:Player #8; 9:USB1L; 10:USB1R; 11:USB2L; 12:USB2R; 17:VoIp #1; 18:VoIp #2; 19:VoIp #3; 20:VoIp #4; 21:VoIp #5; 22:VoIp #6; 23:VoIp #7; 24:VoIp #8"
+                    "states" : {"0":"disabled", "1":"Player #1", "2":"Player #2", "3":"Player #3", "4":"Player #4", "5":"Player #5", "6":"Player #6", "7":"Player #7", "8":"Player #8", "9":"USB1L", "10":"USB1R", "11":"USB2L", "12":"USB2R", "17":"VoIp #1", "18":"VoIp #2", "19":"VoIp #3", "20":"VoIp #4", "21":"VoIp #5", "22":"VoIp #6", "23":"VoIp #7", "24":"VoIp #8"}
                 },
                 "native": {}
             },        
@@ -1068,7 +1068,7 @@
                     "type": "number",
                     "read": true,
                     "write": true,
-                    "states": "6:Gain;12:Mute",
+                    "states": {"6":"Gain","12":"Mute"},
                     "def": 6
                 },
                 "native": {}
@@ -1139,9 +1139,10 @@
                 "common": {
                     "role": "list",
                     "name": "group members [OID]",
-                    "type": "array",
+                    "type": "string",
                     "read": true,
-                    "write": true
+                    "write": true,
+                    "def":""
                 },
                 "native": {}
             },
@@ -1186,7 +1187,7 @@
                     "role": "value",
                     "name": "Tied a/v input for this output",
                     "type": "number",
-                    "states": "0:untied;1:1 DP;2:2 HDMI;3:3 HDMI;4:4 HDMI;5:5 HDMI;6:6 HDMI;7:7 DTP2;8:8 DTP2",
+                    "states": {"0":"untied", "1":"1 DP","2":"2 HDMI","3":"3 HDMI","4":"4 HDMI","5":"5 HDMI","6":"6 HDMI","7":"7 DTP2","8":"8 DTP2"},
                     "read": true,
                     "write": true,
                     "def": 0
@@ -1200,7 +1201,7 @@
                     "role": "value",
                     "name": "Video mute status ouf the output",
                     "type": "number",
-                    "states": "0:unmute;1:mute video to black;2:mute video and sync",
+                    "states": {"0":"unmute","1":"mute video to black","2":"mute video and sync"},
                     "read": true,
                     "write": true,
                     "def": 0
@@ -1223,7 +1224,7 @@
                     "role": "value",
                     "name": "Tied a/v input for this output",
                     "type": "number",
-                    "states": "0:untied;1:1 DP;2:2 HDMI;3:3 HDMI;4:4 HDMI;5:5 HDMI;6:6 HDMI;7:7 DTP2;8:8 DTP2",
+                    "states": {"0":"untied","1":"1 DP","2":"2 HDMI","3":"3 HDMI","4":"4 HDMI","5":"5 HDMI","6":"6 HDMI","7":"7 DTP2","8":"8 DTP2"},
                     "read": true,
                     "write": true,
                     "def": 0
@@ -1237,7 +1238,7 @@
                     "role": "value",
                     "name": "Video mute status ouf the output",
                     "type": "number",
-                    "states": "0:unmute;1:mute video to black;2:mute video and sync",
+                    "states": {"0":"unmute","1":"mute video to black","2":"mute video and sync"},
                     "read": true,
                     "write": true,
                     "def": 0
@@ -1260,7 +1261,7 @@
                     "role": "value",
                     "name": "Tied a/v input for this output",
                     "type": "number",
-                    "states": "1:1 DP;2:2 HDMI;3:3 HDMI;4:4 HDMI;5:5 HDMI;6:6 HDMI;7:7 DTP2;8:8 DTP2",
+                    "states": {"1":"1 DP","2":"2 HDMI","3":"3 HDMI","4":"4 HDMI","5":"5 HDMI","6":"6 HDMI","7":"7 DTP2","8":"8 DTP2"},
                     "read": true,
                     "write": true,
                     "def": 1
@@ -1274,7 +1275,7 @@
                     "role": "value",
                     "name": "Video mute status ouf the output",
                     "type": "number",
-                    "states": "0:unmute;1:mute video to black;2:mute video and sync",
+                    "states": {"0":"unmute","1":"mute video to black","2":"mute video and sync"},
                     "read": true,
                     "write": true,
                     "def": 0
@@ -1714,6 +1715,22 @@
                     "def": -18.0
                 },
                 "native": {}
+            },
+            {
+                "_id": "premix.source",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "shows the input source",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min" : 0,
+                    "max" : 48,
+                    "def": 0,
+                    "states" : {"0":"Off", "1":"Active"}
+                },
+                "native": {}
             }
         ],
         "mixPoints": [
@@ -1850,7 +1867,7 @@
                     "role" : "value",
                     "name" : "if true the player is playing",
                     "type" : "number",
-                    "states" : "0:stop; 1:play; 2:pause",
+                    "states" : {"0":"stop", "1":"play", "2":"pause"},
                     "read" : true,
                     "write" : true,
                     "def" : 0
@@ -1911,7 +1928,7 @@
                     "role": "value",
                     "name": "Video mute status ouf the output",
                     "type": "number",
-                    "states": "0:unmute;1:mute video to black;2:mute video and sync",
+                    "states": {"0":"unmute","1":"mute video to black","2":"mute video and sync"},
                     "read": true,
                     "write": true,
                     "def": 0
@@ -2006,7 +2023,7 @@
                     "role" : "media.state",
                     "name" : "if true the player is playing",
                     "type" : "number",
-                    "states" : "0:stop; 1:play; 2:pause",
+                    "states" : {"0":"stop", "1":"play", "2":"pause"},
                     "read" : true,
                     "write" : true,
                     "def" : 0
