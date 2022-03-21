@@ -444,22 +444,23 @@ class Extron extends utils.Adapter {
                     }
                     return;
                 }
-                if (this.requestDir && cmdPart.match(/\.\w{3} /)) {
-                    this.log.info(`onStreamData(): detected file ${cmdPart}`);
-                    userFileList.push(cmdPart);
-                } else if (this.requestDir && cmdPart.includes('Bytes Left')) {
-                    this.log.info(`onStreamData(): detected freespace ${cmdPart}`);
-                    userFileList.push(cmdPart);
+                const answer = cmdPart.replace(/[\r\n]/gm, ''); // remove [CR] and [LF] from string
+                // Error handling
+                if (answer.match(/^E\d\d/gim)) {    // received an error
+                    throw { 'message': 'Error response from device',
+                        'stack'  : errCodes[answer] };
+                }
+
+                if (this.requestDir && answer.match(/\.\w{3} /)) {
+                    this.log.info(`onStreamData(): Extron got file data: "${answer}"`);
+                    userFileList.push(answer);
+                } else if (this.requestDir && answer.includes('Bytes Left')) {
+                    this.log.info(`onStreamData(): Extron got freespace: "${answer}"`);
+                    userFileList.push(answer);
                     this.requestDir = false;        // directory list has been received, clear flag
                     this.fileList.freeSpace = '';   // clear free space to be filled with new value from list
                     this.setUserFilesAsync(userFileList);        // call subroutine to set database values
                 } else {
-                    const answer = cmdPart.replace(/[\r\n]/gm, ''); // remove [CR] and [LF] from string
-                    // Error handling
-                    if (answer.match(/^E\d\d/gim)) {    // received an error
-                        throw { 'message': 'Error response from device',
-                            'stack'  : errCodes[answer] };
-                    }
                     // lookup the command
                     const matchArray = answer.match(/([A-Z][a-z]+[A-Z]|\w{3})(\d*)\*{0,1},{0,1} {0,1}(.*)/i);
                     if (matchArray) {       // if any match
