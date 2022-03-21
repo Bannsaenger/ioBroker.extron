@@ -328,6 +328,7 @@ class Extron extends utils.Adapter {
     onClientEnd() {
         try {
             this.log.info('onClientEnd(): Extron client socket disconnected');
+            this.setState('info.connection', false, true);
         } catch (err) {
             this.errorHandler(err, 'onClientEnd');
         }
@@ -359,6 +360,7 @@ class Extron extends utils.Adapter {
                 }
             } else {
                 const bufSize = this.sendBuffer.push(data);
+                this.setState('info.connection', false, true);
                 this.log.warn(`streamSend(): Extron push data to the send buffer: "${this.fileSend?'file data':this.decodeBufferToLog(data)}" new buffersize:${bufSize}`);
             }
         } catch (err) {
@@ -699,6 +701,7 @@ class Extron extends utils.Adapter {
         try {
             this.log.debug('onStreamContinue(): Extron stream can continue');
             this.streamAvailable = true;
+            this.setState('info.connection', true, true);
             this.streamSend(this.sendBuffer.pop());
         } catch (err) {
             this.errorHandler(err, 'onStreamContinue');
@@ -732,6 +735,7 @@ class Extron extends utils.Adapter {
                     this.net.destroy();
                     break;
             }
+            this.setState('info.connection', false, true);
         } catch (err) {
             this.errorHandler(err, 'onStreamClose');
         }
