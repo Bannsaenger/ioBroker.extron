@@ -160,6 +160,7 @@ class Extron extends utils.Adapter {
                     break;
 
                 case 'telnet' :
+                    this.net.on('ready', this.onClientReady.bind(this));
                     this.net.on('data', this.onStreamData.bind(this));
                     this.net.on('error', this.onStreamError.bind(this));
                     this.net.on('close', this.onStreamClose.bind(this));
@@ -213,7 +214,6 @@ class Extron extends utils.Adapter {
      */
     clientReConnect() {
         // Status variables to be reset
-        this.initVars();
         switch (this.config.type) {
             case 'ssh' :
                 this.client.end();
@@ -222,6 +222,7 @@ class Extron extends utils.Adapter {
                 this.net.destroy();
                 break;
         }
+        this.initVars();
         this.log.info(`clientReConnect(): reconnecting after ${this.config.reconnectDelay}ms`);
         this.timers.timeoutReconnectClient = setTimeout(this.clientConnect.bind(this),this.config.reconnectDelay);
     }
@@ -372,6 +373,7 @@ class Extron extends utils.Adapter {
      */
     async onStreamData(data) {
         let members = [];
+        const userFileList = [];
 
         this.streamAvailable = true;    // if we receive data the stream is available
         if (this.fileSend) return; // do nothing during file transmission
@@ -415,23 +417,17 @@ class Extron extends utils.Adapter {
                 }
             }
 
-            if (this.requestDir) {              // directory file list expected
-                this.requestDir = false;        // directory list has been received, clear flag
-                this.fileList.freeSpace = '';   // clear free space to be filled with new value from list
-                this.setUserFilesAsync(data);        // call subroutine to set database values
-                return;
-            }
             // iterate through multiple answers connected via [LF]
             for (const cmdPart of data.toString().split('\n')) {
 
                 if (cmdPart.includes('3CV')) {
-                    this.log.debug('onStreamData(): Extron device switched to verbose mode 3');
+                    this.log.info('onStreamData(): Extron device switched to verbose mode 3');
                     this.isVerboseMode = true;
                     this.timers.timeoutQueryStatus.refresh();
                     return;
                 }
                 if (cmdPart.includes('Vrb3')) {
-                    this.log.debug('onStreamData(): Extron device entered verbose mode 3');
+                    this.log.info('onStreamData(): Extron device entered verbose mode 3');
                     this.isVerboseMode = true;
                     if (!this.initDone) {
                         this.streamSend('Q');       // query Version
@@ -448,189 +444,200 @@ class Extron extends utils.Adapter {
                     }
                     return;
                 }
-
-                const answer = cmdPart.replace(/[\r\n]/gm, ''); // remove [CR] and [LF] from string
-                // Error handling
-                if (answer.match(/^E\d\d/gim)) {    // received an error
-                    throw { 'message': 'Error response from device',
-                        'stack'  : errCodes[answer] };
-                }
-                // lookup the command
-                const matchArray = answer.match(/([A-Z][a-z]+[A-Z]|\w{3})(\d*)\*{0,1},{0,1} {0,1}(.*)/i);
-                if (matchArray) {       // if any match
-                    const command = matchArray[1].toUpperCase();
-                    const ext1 = matchArray[2] ? matchArray[2] : '';
-                    const ext2 = matchArray[3] ? matchArray[3] : '';
-
-                    this.pollCount = 0;     // reset pollcounter as valid data has been received
-                    this.timers.timeoutQueryStatus.refresh();   // refresh poll timer
-
-                    switch (command) {
-                        case 'VER':             // received a Version (answer to status query)
-                            this.log.debug(`onStreamData(): Extron got version: "${ext2}"`);
-                            if (!this.versionSet) {
-                                this.versionSet = true;
-                                this.setState('device.version', ext2, true);
-                            }
-                            break;
-
-                        case 'IPN':             // received a device name
-                            this.log.debug(`onStreamData(): Extron got devicename: "${ext2}"`);
-                            this.setState('device.name', ext2, true);
-                            break;
-
-                        case 'INF':             // received a device model
-                            this.log.debug(`onStreamData(): Extron got device model: "${ext2}"`);
-                            this.setState('device.model', ext2, true);
-                            break;
-
-                        case 'DSM':             // received a mute command
-                        case 'DSG':             // received a gain level
-                            this.log.debug(`onStreamData(): Extron got mute/gain ${command} from OID: "${ext1}" value: ${ext2}`);
-                            this.setGain(command, ext1, ext2);
-                            break;
-
-                        case 'DSD':             //received a set source command
-                            this.log.debug(`onStreamData(): Extron got source ${command} from OID: "${ext1}" value: "${ext2}"`);
-                            this.setSource(ext1, ext2);
-                            break;
-
-                        case 'DSE' :            //received a limiter status change
-                            this.log.debug(`onStreamData(): Extron got a limiter status change from OID : "${ext1}" value: "-${ext2}"`);
-                            this.setLimitStatus(ext1, ext2);
-                            break;
-                        case 'DST' :            //received a limiter threshold change
-                            this.log.debug(`onStreamData(): Extron got a limiter threshold change from OID : "${ext1}" value: "${ext2}"`);
-                            this.setLimitThreshold(ext1, ext2);
-                            break;
-
-                        case 'PLAY':             //received a play mode command
-                            this.log.debug(`onStreamData(): Extron got play mode ${command} for Player: "${ext1}" value: "${ext2}"`);
-                            this.setPlayMode(ext1, ext2);
-                            break;
-
-                        case 'CPLYA':           //received a file association to a player
-                            this.log.debug(`onStreamData(): Extron got filename for Player: "${ext1}" value: "${ext2}"`);
-                            this.setFileName(ext1, ext2);
-                            break;
-
-                        case 'CPLYM':           //received a set repeat mode command
-                            this.log.debug(`onStreamData(): Extron got repeat mode ${command} for Player: "${ext1}" value: "${ext2}"`);
-                            this.setRepeatMode(ext1, ext2);
-                            break;
-
-                        case 'IN1':             // received a tie command from CrossPoint
-                        case 'IN2':
-                        case 'IN3':
-                        case 'IN4':
-                        case 'IN5':
-                        case 'IN6':
-                        case 'IN7':
-                        case 'IN8':
-                            this.log.debug(`onStreamData(): Extron got tie command ${command} for output: ${ext2}`);
-                            this.setTie(command, ext2);
-                            break;
-
-                        case 'LOUT':            // received a tie command for loop out
-                            this.log.debug(`onStreamData(): Extron got tie command input "${ext1}" to loop output`);
-                            this.setState(`connections.3.tie`, Number(ext1), true);
-                            break;
-
-                        case 'VMT':             // received a video mute
-                            this.log.debug(`onStreamData(): Extron got video mute for output "${ext1}" value "${ext2}"`);
-                            if (this.devices[this.config.device].short === 'sme211') this.setState(`connections.1.mute`, Number(ext1), true);
-                            else this.setState(`connections.${ext1}.mute`, Number(ext2), true);
-                            break;
-
-                        case 'PLYRS' :          // received video playing
-                            this.log.debug(`onStreamData(): Extron got video playing for output "${ext1}" value "${ext2}"`);
-                            this.setPlayVideo(`ply.players.${ext1}.common.`, 1);
-                            break;
-                        case'PLYRE' :           // received Video paused
-                            this.log.debug(`onStreamData(): Extron got video paused for output "${ext1}" value "${ext2}"`);
-                            this.setPlayVideo(`ply.players.${ext1}.common.`, 2);
-                            break;
-                        case 'PLYRO' :          // received video stopped
-                            this.log.debug(`onStreamData(): Extron got video stopped for output "${ext1}" value "${ext2}"`);
-                            this.setPlayVideo(`ply.players.${ext1}.common.`, 0);
-                            break;
-                        case 'PLYR1' :          // received loop state
-                            this.log.debug(`onStreamData(): Extron got video loop mode for output "${ext1}" value "${ext2}"`);
-                            this.setLoopVideo(`ply.players.${ext1}.common.`,ext2);
-                            break;
-                        case 'PLYRU' :          // received video filepath
-                            this.log.debug(`onStreamData(): Extron got video video filepath for output "${ext1}" value "${ext2}"`);
-                            this.setVideoFile(`ply.players.${ext1}.common.`,ext2);
-                            break;
-                        case 'PLYRY' :
-                            this.log.debug(`onStreamData(): Extron got video playmmode "${ext1}" value "${ext2}"`);
-                            this.setPlayVideo(`ply.players.1.common.`,Number(ext1));
-                            break;
-
-                        case 'STRM' :
-                            this.log.debug(`onStreamData(): Extron got streammode "${ext1}" value "${ext2}"`);
-                            this.setStreamMode(`ply.players.1.common.`,Number(ext1));
-                            break;
-
-                        case 'UPL' :
-                            this.fileSend = false;   // reset file transmission flag
-                            this.log.debug(`onStreamData(): Extron got upload file confirmation command size: "${ext1}" name: "${ext2}"`);
-                            break;
-                        case 'WDF' :
-                            this.log.debug(`onStreamData(): Extron got list directory command`);
-                            this.requestDir = true;     // set directory transmission flag
-                            break;
-                        case 'W+UF' :
-                            this.log.debug(`onStreamData(): Extron got upload file command: ${ext1} ${ext2}`);
-                            this.fileSend = true;   // set file transmission flag
-                            break;
-
-                        case 'GRPMZ' :      // delete Group command
-                            this.log.debug(`onStreamData(): Extron got delete group #"${ext1}`);
-                            this.groupTypes[Number(ext1)] = undefined;
-                            this.groupMembers[Number(ext1)] = [];
-                            this.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.members`,'',true);
-                            this.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.deleted`,true,true);
-                            break;
-                        case 'GRPMD' :      // set Group fader value
-                            this.log.debug(`onStreamData(): Extron got Group #'${ext1}" fader value:"${ext2}"`);
-                            this.setGroupLevel(Number(ext1),Number(ext2));
-                            break;
-                        case 'GRPMP' :      // set Group type
-                            this.log.debug(`onStreamData(): Extron got set group #"${ext1}" type: "${ext2}"`);
-                            this.setGroupType(Number(ext1), Number(ext2));
-                            break;
-                        case 'GRPMO' :      // add group member
-                            members = ext2.split('*');
-                            if (members.length >1) {
-                                this.log.debug(`onStreamData(): Extron got group #"${ext1}" add OID's: "${members}"`);
-                            } else {
-                                this.log.debug(`onStreamData(): Extron got group #"${ext1}" add OID: "${members}"`);
-                            }
-                            this.setGroupMembers(Number(ext1),members);
-                            break;
-                        case 'GRPML' :      // set group limits
-                            this.log.debug(`onStreamData(): Extron got set group #"${ext1}" limits upper: "${ext2.split('*')[0]}" lower: "${ext2.split('*')[1]}""`);
-                            this.setGroupLimits(Number(ext1),Number(ext2.split('*')[0]),Number(ext2.split('*')[1]));
-                            break;
-                        case 'GRPMN' :      // group name
-                            this.log.debug(`onStreamData(): Extron got group #"${ext1}" name: "${ext2}"`);
-                            this.setGroupName(Number(ext1), ext2);
-                            break;
-
-                        case 'NMI' :   // I/O Name
-                        case 'NML' :
-                        case 'NEI' :
-                        case 'NMO' :
-                        case 'NEX' :
-                        case 'EXPDA' :
-                            this.log.debug(`onStreamData(): Extron got I/O Name "${ext2}" for I/O: "${this.oid2id(`${command}${ext1}`)}"`);
-                            this.setIOName(`${command}${ext1}`, ext2);
-                            break;
-                    }
+                if (this.requestDir && cmdPart.match(/\.\w{3} /)) {
+                    this.log.info(`onStreamData(): detected file ${cmdPart}`);
+                    userFileList.push(cmdPart);
+                } else if (this.requestDir && cmdPart.includes('Bytes Left')) {
+                    this.log.info(`onStreamData(): detected freespace ${cmdPart}`);
+                    userFileList.push(cmdPart);
+                    this.requestDir = false;        // directory list has been received, clear flag
+                    this.fileList.freeSpace = '';   // clear free space to be filled with new value from list
+                    this.setUserFilesAsync(userFileList);        // call subroutine to set database values
                 } else {
-                    if ((answer != 'Q') && (answer != '') && (this.fileSend === false) && !(answer.match(/\d\*\d\w+/)) && !(answer.match(/\d\w/))) {
-                        this.log.debug('onStreamData(): Extron received data which cannot be handled "' + cmdPart + '"');
+                    const answer = cmdPart.replace(/[\r\n]/gm, ''); // remove [CR] and [LF] from string
+                    // Error handling
+                    if (answer.match(/^E\d\d/gim)) {    // received an error
+                        throw { 'message': 'Error response from device',
+                            'stack'  : errCodes[answer] };
+                    }
+                    // lookup the command
+                    const matchArray = answer.match(/([A-Z][a-z]+[A-Z]|\w{3})(\d*)\*{0,1},{0,1} {0,1}(.*)/i);
+                    if (matchArray) {       // if any match
+                        const command = matchArray[1].toUpperCase();
+                        const ext1 = matchArray[2] ? matchArray[2] : '';
+                        const ext2 = matchArray[3] ? matchArray[3] : '';
+
+                        this.pollCount = 0;     // reset pollcounter as valid data has been received
+                        this.timers.timeoutQueryStatus.refresh();   // refresh poll timer
+
+                        switch (command) {
+                            case 'VER':             // received a Version (answer to status query)
+                                this.log.debug(`onStreamData(): Extron got version: "${ext2}"`);
+                                if (!this.versionSet) {
+                                    this.versionSet = true;
+                                    this.setState('device.version', ext2, true);
+                                    this.log.info(`onStreamData(): Extron got version: "${ext2}"`);
+                                }
+                                break;
+
+                            case 'IPN':             // received a device name
+                                this.log.info(`onStreamData(): Extron got devicename: "${ext2}"`);
+                                this.setState('device.name', ext2, true);
+                                break;
+
+                            case 'INF':             // received a device model
+                                this.log.info(`onStreamData(): Extron got device model: "${ext2}"`);
+                                this.setState('device.model', ext2, true);
+                                break;
+
+                            case 'DSM':             // received a mute command
+                            case 'DSG':             // received a gain level
+                                this.log.info(`onStreamData(): Extron got mute/gain ${command} from OID: "${ext1}" value: ${ext2}`);
+                                this.setGain(command, ext1, ext2);
+                                break;
+
+                            case 'DSD':             //received a set source command
+                                this.log.info(`onStreamData(): Extron got source ${command} from OID: "${ext1}" value: "${ext2}"`);
+                                this.setSource(ext1, ext2);
+                                break;
+
+                            case 'DSE' :            //received a limiter status change
+                                this.log.info(`onStreamData(): Extron got a limiter status change from OID : "${ext1}" value: "-${ext2}"`);
+                                this.setLimitStatus(ext1, ext2);
+                                break;
+                            case 'DST' :            //received a limiter threshold change
+                                this.log.info(`onStreamData(): Extron got a limiter threshold change from OID : "${ext1}" value: "${ext2}"`);
+                                this.setLimitThreshold(ext1, ext2);
+                                break;
+
+                            case 'PLAY':             //received a play mode command
+                                this.log.info(`onStreamData(): Extron got play mode ${command} for Player: "${ext1}" value: "${ext2}"`);
+                                this.setPlayMode(ext1, ext2);
+                                break;
+
+                            case 'CPLYA':           //received a file association to a player
+                                this.log.info(`onStreamData(): Extron got filename for Player: "${ext1}" value: "${ext2}"`);
+                                this.setFileName(ext1, ext2);
+                                break;
+
+                            case 'CPLYM':           //received a set repeat mode command
+                                this.log.info(`onStreamData(): Extron got repeat mode ${command} for Player: "${ext1}" value: "${ext2}"`);
+                                this.setRepeatMode(ext1, ext2);
+                                break;
+
+                            case 'IN1':             // received a tie command from CrossPoint
+                            case 'IN2':
+                            case 'IN3':
+                            case 'IN4':
+                            case 'IN5':
+                            case 'IN6':
+                            case 'IN7':
+                            case 'IN8':
+                                this.log.info(`onStreamData(): Extron got tie command ${command} for output: ${ext2}`);
+                                this.setTie(command, ext2);
+                                break;
+
+                            case 'LOUT':            // received a tie command for loop out
+                                this.log.info(`onStreamData(): Extron got tie command input "${ext1}" to loop output`);
+                                this.setState(`connections.3.tie`, Number(ext1), true);
+                                break;
+
+                            case 'VMT':             // received a video mute
+                                this.log.info(`onStreamData(): Extron got video mute for output "${ext1}" value "${ext2}"`);
+                                if (this.devices[this.config.device].short === 'sme211') this.setState(`connections.1.mute`, Number(ext1), true);
+                                else this.setState(`connections.${ext1}.mute`, Number(ext2), true);
+                                break;
+
+                            case 'PLYRS' :          // received video playing
+                                this.log.info(`onStreamData(): Extron got video playing for output "${ext1}" value "${ext2}"`);
+                                this.setPlayVideo(`ply.players.${ext1}.common.`, 1);
+                                break;
+                            case'PLYRE' :           // received Video paused
+                                this.log.info(`onStreamData(): Extron got video paused for output "${ext1}" value "${ext2}"`);
+                                this.setPlayVideo(`ply.players.${ext1}.common.`, 2);
+                                break;
+                            case 'PLYRO' :          // received video stopped
+                                this.log.info(`onStreamData(): Extron got video stopped for output "${ext1}" value "${ext2}"`);
+                                this.setPlayVideo(`ply.players.${ext1}.common.`, 0);
+                                break;
+                            case 'PLYR1' :          // received loop state
+                                this.log.info(`onStreamData(): Extron got video loop mode for output "${ext1}" value "${ext2}"`);
+                                this.setLoopVideo(`ply.players.${ext1}.common.`,ext2);
+                                break;
+                            case 'PLYRU' :          // received video filepath
+                                this.log.info(`onStreamData(): Extron got video video filepath for output "${ext1}" value "${ext2}"`);
+                                this.setVideoFile(`ply.players.${ext1}.common.`,ext2);
+                                break;
+                            case 'PLYRY' :
+                                this.log.info(`onStreamData(): Extron got video playmmode "${ext1}" value "${ext2}"`);
+                                this.setPlayVideo(`ply.players.1.common.`,Number(ext1));
+                                break;
+
+                            case 'STRM' :
+                                this.log.info(`onStreamData(): Extron got streammode "${ext1}" value "${ext2}"`);
+                                this.setStreamMode(`ply.players.1.common.`,Number(ext1));
+                                break;
+
+                            case 'UPL' :
+                                this.fileSend = false;   // reset file transmission flag
+                                this.log.info(`onStreamData(): Extron got upload file confirmation command size: "${ext1}" name: "${ext2}"`);
+                                break;
+                            case 'WDF' :
+                                this.log.info(`onStreamData(): Extron got list directory command`);
+                                this.requestDir = true;     // set directory transmission flag
+                                break;
+                            case 'W+UF' :
+                                this.log.info(`onStreamData(): Extron got upload file command: ${ext1} ${ext2}`);
+                                this.fileSend = true;   // set file transmission flag
+                                break;
+
+                            case 'GRPMZ' :      // delete Group command
+                                this.log.info(`onStreamData(): Extron got delete group #"${ext1}`);
+                                this.groupTypes[Number(ext1)] = undefined;
+                                this.groupMembers[Number(ext1)] = [];
+                                this.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.members`,'',true);
+                                this.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.deleted`,true,true);
+                                break;
+                            case 'GRPMD' :      // set Group fader value
+                                this.log.info(`onStreamData(): Extron got Group #'${ext1}" fader value:"${ext2}"`);
+                                this.setGroupLevel(Number(ext1),Number(ext2));
+                                break;
+                            case 'GRPMP' :      // set Group type
+                                this.log.info(`onStreamData(): Extron got set group #"${ext1}" type: "${ext2}"`);
+                                this.setGroupType(Number(ext1), Number(ext2));
+                                break;
+                            case 'GRPMO' :      // add group member
+                                members = ext2.split('*');
+                                if (members.length >1) {
+                                    this.log.info(`onStreamData(): Extron got group #"${ext1}" add OID's: "${members}"`);
+                                } else {
+                                    this.log.info(`onStreamData(): Extron got group #"${ext1}" add OID: "${members}"`);
+                                }
+                                this.setGroupMembers(Number(ext1),members);
+                                break;
+                            case 'GRPML' :      // set group limits
+                                this.log.info(`onStreamData(): Extron got set group #"${ext1}" limits upper: "${ext2.split('*')[0]}" lower: "${ext2.split('*')[1]}""`);
+                                this.setGroupLimits(Number(ext1),Number(ext2.split('*')[0]),Number(ext2.split('*')[1]));
+                                break;
+                            case 'GRPMN' :      // group name
+                                this.log.info(`onStreamData(): Extron got group #"${ext1}" name: "${ext2}"`);
+                                this.setGroupName(Number(ext1), ext2);
+                                break;
+
+                            case 'NMI' :   // I/O Name
+                            case 'NML' :
+                            case 'NEI' :
+                            case 'NMO' :
+                            case 'NEX' :
+                            case 'EXPDA' :
+                                this.log.info(`onStreamData(): Extron got I/O Name "${ext2}" for I/O: "${this.oid2id(`${command}${ext1}`)}"`);
+                                this.setIOName(`${command}${ext1}`, ext2);
+                                break;
+                        }
+                    } else {
+                        if ((answer != 'Q') && (answer != '') && (this.fileSend === false) && !(answer.match(/\d\*\d\w+/)) && !(answer.match(/\d\w/))) {
+                            this.log.warn('onStreamData(): Extron received data which cannot be handled "' + cmdPart + '"');
+                        }
                     }
                 }
             }
@@ -689,7 +696,7 @@ class Extron extends utils.Adapter {
      */
     async onStreamContinue() {
         try {
-            this.log.silly('onStreamContinue(): Extron stream can continue');
+            this.log.debug('onStreamContinue(): Extron stream can continue');
             this.streamAvailable = true;
             this.streamSend(this.sendBuffer.pop());
         } catch (err) {
@@ -703,7 +710,7 @@ class Extron extends utils.Adapter {
      */
     onStreamError(err) {
         this.errorHandler(err, 'onStreamError');
-        this.log.info('onSteamError(): Extron is calling clientReConnect');
+        this.log.warn('onSteamError(): Extron is calling clientReConnect');
         this.clientReConnect();
     }
 
@@ -716,11 +723,11 @@ class Extron extends utils.Adapter {
         try {
             switch (this.config.type) {
                 case 'ssh' :
-                    this.log.info('onStreamClose(): Extron stream closed calling client.end()');
+                    this.log.info('onStreamClose(): Extron stream closed, now calling client.end()');
                     this.client.end();
                     break;
                 case 'telnet' :
-                    this.log.info('onStreamClose(): Extron stream closed calling net.destroy()');
+                    this.log.info('onStreamClose(): Extron stream closed, now calling net.destroy()');
                     this.net.destroy();
                     break;
             }
@@ -751,7 +758,7 @@ class Extron extends utils.Adapter {
                 this.pollCount = 0;
                 this.clientReConnect();
             } else {
-                this.timers.timeoutQueryStatus.refresh();
+                if (typeof this.timers.timeoutQueryStatus !== undefined) this.timers.timeoutQueryStatus.refresh();
                 if (!this.fileSend) {
                     this.streamSend('Q');
                     this.pollCount += 1;
@@ -1930,11 +1937,11 @@ class Extron extends utils.Adapter {
     }
 
     /** called to set current files from device user flash memory in database
-     * @param {string | Uint8Array} data
+     * @param {Array} userFileList
      */
-    async setUserFilesAsync(data) {
-        let userFileList = [''];
+    async setUserFilesAsync(userFileList) {
         try {
+            /**
             switch (this.config.type) {
                 case 'ssh' :
                     userFileList = data.toString().split('\r\r\n');               // split the list into separate lines
@@ -1943,6 +1950,7 @@ class Extron extends utils.Adapter {
                     userFileList = data.toString().split('\r\n');               // split the list into separate lines
                     break;
             }
+            */
             //const actFiles = userFileList.length;
             let i;
             for (i=1; i<= this.fileList.files.length; i++) {
@@ -2029,7 +2037,7 @@ class Extron extends utils.Adapter {
             } else curMembers = members;    // replace list of members
             this.groupMembers[group] = `${curMembers}`; // store stringified array
             try {
-                this.setState(`groups.${('00' + group.toString()).slice(-2)}.members`, this.groupMembers[group].join(','), true);
+                this.setState(`groups.${('00' + group.toString()).slice(-2)}.members`, this.groupMembers[group].length == 0?'':this.groupMembers[group].join(','), true);
                 this.setState(`groups.${('00' + group.toString()).slice(-2)}.deleted`, this.groupMembers[group].length == 0?true:false, true);
                 this.log.debug(`setGroupMembers(): group ${group} now has members ${this.groupMembers[group]}`);
             } catch (err) {
@@ -2492,7 +2500,7 @@ class Extron extends utils.Adapter {
             else {
                 const whatstr = oid.slice(0,1);
                 const what = Number(whatstr);
-                const where = Number(oid.slice(1,2));
+                const where = Number(oid.slice(1,3));
                 const val = Number(oid.slice(3,7));
                 if (whatstr === 'N') {
                     switch (oid.slice(1,3)) {
@@ -2514,7 +2522,7 @@ class Extron extends utils.Adapter {
                             retId = `out.expansionOutputs.${('00' + (val).toString()).slice(-2)}.name`;
                             break;
                     }
-                } else if (`${oid.slice(0,4)}` === 'EXPDA') retId = `in.expansionInputs.${('00' + oid.slice(5)).slice(-2)}.name`;
+                } else if (`${oid.slice(0,5)}` === 'EXPDA') retId = `in.expansionInputs.${('00' + oid.slice(5)).slice(-2)}.name`;
                 else
                     switch (what) {
                         case 2:                         // mixpoints
@@ -2695,7 +2703,7 @@ class Extron extends utils.Adapter {
                 if (idBlock != 'mixPoints') {     // inputs / outputs
                     switch (idType) {
                         case 'videoInputs':
-                            retOid = `300${('00' + (idNumber - 1).toString()).slice(-2)}`;
+                            retOid = `300${('00' + (idNumber - 1).toString()).slice(-2)}`;          // video line inputs on CP82
                             break;
 
                         case 'inputs':

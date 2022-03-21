@@ -10,7 +10,7 @@
             "request": "launch",
             "program": "${workspaceRoot}/main.js",
             "cwd": "${workspaceRoot}",
-            "runtimeExecutable": "F:/TechApps/iobroker/Devel/nodejs/node.exe",
+            "runtimeExecutable": "node",
             "args": [
                 "--force"
             ],
