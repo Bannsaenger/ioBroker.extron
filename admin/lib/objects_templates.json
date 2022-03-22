@@ -1839,6 +1839,95 @@
                 },
                 "native": {}
             }
+        ],
+        "groups": [
+            {
+                "_id": "name",
+                "type": "state",
+                "common": {
+                    "role": "text",
+                    "name": "group name",
+                    "type": "string",
+                    "read": true,
+                    "write": true,
+                    "def":""
+                },
+                "native": {}
+            },
+            {
+                "_id": "type",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group type",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "states": {"6":"Gain","12":"Mute"},
+                    "def": 6
+                },
+                "native": {}
+            },
+            {
+                "_id": "level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1000,
+                    "min": 0,
+                    "def": 764
+                },
+                "native": {}
+            },
+            {
+                "_id": "level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level in 0.1 dB steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 12.0,
+                    "min": -100.0,
+                    "def": 0.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "upperLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level upper limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 32767,
+                    "min": -32767,
+                    "def": 32767
+                },
+                "native": {}
+            },
+            {
+                "_id": "lowerLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level lower limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 32767,
+                    "min": -32767,
+                    "def": -32767
+                },
+                "native": {}
+            }
         ]
     },
     "smd202" :{
