@@ -1840,22 +1840,26 @@
                 "native": {}
             }
         ],
+        "group": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "predefined audio group controls"
+            },
+            "native": {}
+        },
         "groups": [
             {
-                "_id": "name",
-                "type": "state",
+                "_id": "groups.01",
+                "type": "channel",
                 "common": {
-                    "role": "text",
-                    "name": "group name",
-                    "type": "string",
-                    "read": true,
-                    "write": true,
-                    "def":""
+                    "role": " audio.control",
+                    "name": "mic volume group"
                 },
                 "native": {}
             },
             {
-                "_id": "type",
+                "_id": "groups.01.type",
                 "type": "state",
                 "common": {
                     "role": "value",
@@ -1869,7 +1873,7 @@
                 "native": {}
             },
             {
-                "_id": "level",
+                "_id": "groups.01.level",
                 "type": "state",
                 "common": {
                     "role": "level.volume.group",
@@ -1884,7 +1888,7 @@
                 "native": {}
             },
             {
-                "_id": "level_db",
+                "_id": "groups.01.level_db",
                 "type": "state",
                 "common": {
                     "role": "level.volume.group",
@@ -1899,7 +1903,7 @@
                 "native": {}
             },
             {
-                "_id": "upperLimit",
+                "_id": "groups.01.upperLimit",
                 "type": "state",
                 "common": {
                     "role": "value",
@@ -1907,14 +1911,14 @@
                     "type":"number",
                     "read": true,
                     "write": true,
-                    "max": 32767,
-                    "min": -32767,
-                    "def": 32767
+                    "max": 120,
+                    "min": -1000,
+                    "def": 120
                 },
                 "native": {}
             },
             {
-                "_id": "lowerLimit",
+                "_id": "groups.01.lowerLimit",
                 "type": "state",
                 "common": {
                     "role": "value",
@@ -1922,9 +1926,632 @@
                     "type":"number",
                     "read": true,
                     "write": true,
-                    "max": 32767,
-                    "min": -32767,
-                    "def": -32767
+                    "max": 120,
+                    "min": -1000,
+                    "def": -1000
+                },
+                "native": {}
+            },{
+                "_id": "groups.02",
+                "type": "channel",
+                "common": {
+                    "role": " audio.control",
+                    "name": "mic mute group"
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.02.type",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group type",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "states": {"6":"Gain","12":"Mute"},
+                    "def": 12
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.02.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1,
+                    "min": 0,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.02.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level in 0.1 dB steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1,
+                    "min": 0,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.03",
+                "type": "channel",
+                "common": {
+                    "role": " audio.control",
+                    "name": "program volume group"
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.03.type",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group type",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "states": {"6":"Gain","12":"Mute"},
+                    "def": 6
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.03.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1000,
+                    "min": 0,
+                    "def": 764
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.03.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level in 0.1 dB steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 12.0,
+                    "min": -100.0,
+                    "def": 0.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.03.upperLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level upper limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 120,
+                    "min": -1000,
+                    "def": 120
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.03.lowerLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level lower limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 120,
+                    "min": -1000,
+                    "def": -1000
+                },
+                "native": {}
+            },{
+                "_id": "groups.04",
+                "type": "channel",
+                "common": {
+                    "role": " audio.control",
+                    "name": "program mute group"
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.04.type",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group type",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "states": {"6":"Gain","12":"Mute"},
+                    "def": 12
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.04.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1000,
+                    "min": 0,
+                    "def": 764
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.04.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level in 0.1 dB steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 12.0,
+                    "min": -100.0,
+                    "def": 0.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.05",
+                "type": "channel",
+                "common": {
+                    "role": " audio.control",
+                    "name": "line volume group"
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.05.type",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group type",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "states": {"6":"Gain","12":"Mute"},
+                    "def": 6
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.05.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1000,
+                    "min": 0,
+                    "def": 764
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.05.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level in 0.1 dB steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 12.0,
+                    "min": -100.0,
+                    "def": 0.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.05.upperLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level upper limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 120,
+                    "min": -1000,
+                    "def": 120
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.05.lowerLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level lower limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 120,
+                    "min": -1000,
+                    "def": -1000
+                },
+                "native": {}
+            },{
+                "_id": "groups.06",
+                "type": "channel",
+                "common": {
+                    "role": " audio.control",
+                    "name": "Line mute group"
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.06.type",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group type",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "states": {"6":"Gain","12":"Mute"},
+                    "def": 12
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.06.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1,
+                    "min": 0,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.06.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level in 0.1 dB steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1.0,
+                    "min": 0.0,
+                    "def": 0.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.07",
+                "type": "channel",
+                "common": {
+                    "role": " audio.control",
+                    "name": "bass eq group"
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.07.type",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group type",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "states": {"6":"Gain","12":"Mute"},
+                    "def": 6
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.07.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1000,
+                    "min": 0,
+                    "def": 500
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.07.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level in 0.1 dB steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "def": 0.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.07.upperLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level upper limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 240,
+                    "min": -240,
+                    "def": 240
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.07.lowerLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level lower limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 240,
+                    "min": -240,
+                    "def": -240
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.08",
+                "type": "channel",
+                "common": {
+                    "role": " audio.control",
+                    "name": "treble eq group"
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.08.type",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group type",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "states": {"6":"Gain","12":"Mute"},
+                    "def": 6
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.08.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1000,
+                    "min": 0,
+                    "def": 500
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.08.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level in 0.1 dB steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 24.0,
+                    "min": -24.0,
+                    "def": 0.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.08.upperLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level upper limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 240,
+                    "min": -240,
+                    "def": 240
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.08.lowerLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level lower limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 240,
+                    "min": -240,
+                    "def": -240
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.09",
+                "type": "channel",
+                "common": {
+                    "role": " audio.control",
+                    "name": "output volume group"
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.09.type",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group type",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "states": {"6":"Gain","12":"Mute"},
+                    "def": 6
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.09.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1000,
+                    "min": 0,
+                    "def": 1000
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.09.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level in 0.1 dB steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 0.0,
+                    "min": -100.0,
+                    "def": 0.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.09.upperLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level upper limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 0,
+                    "min": -1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.09.lowerLimit",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group level lower limit",
+                    "type":"number",
+                    "read": true,
+                    "write": true,
+                    "max": 0,
+                    "min": -1000,
+                    "def": -1000
+                },
+                "native": {}
+            },{
+                "_id": "groups.10",
+                "type": "channel",
+                "common": {
+                    "role": " audio.control",
+                    "name": "output mute group"
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.10.type",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "group type",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "states": {"6":"Gain","12":"Mute"},
+                    "def": 12
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.10.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1,
+                    "min": 0,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "groups.10.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume.group",
+                    "name": "group master level in 0.1 dB steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "max": 1.0,
+                    "min": 0.0,
+                    "def": 0.0
                 },
                 "native": {}
             }

@@ -981,6 +981,12 @@ class Extron extends utils.Adapter {
                     }
                 }
             }
+            // if cp82 : create groupss
+            if (this.devices[this.config.device].short === 'cp82') {
+                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].groups) {
+                    await this.setObjectNotExistsAsync(element._id, element);
+                }
+            }
             // if we have groups on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].grp) {
                 await this.setObjectNotExistsAsync('groups', {
