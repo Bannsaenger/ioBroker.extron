@@ -45,6 +45,13 @@
                 "short" : "O",
                 "amount" : 8
             }
+        },
+        "grp" : {
+            "groups" : {
+                "name" : "Group",
+                "short" : "GRP",
+                "amount" : 10
+            }
         }
     },
     "SMD202" : {
