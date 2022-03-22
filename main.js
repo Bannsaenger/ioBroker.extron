@@ -213,6 +213,8 @@ class Extron extends utils.Adapter {
      * reconnect Client after error
      */
     clientReConnect() {
+        // clear poll timer
+        clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
         // Status variables to be reset
         switch (this.config.type) {
             case 'ssh' :
@@ -1037,6 +1039,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'source' :
+                                if (this.devices[this.config.device].short === 'cp82' && !id.match(/videoInputs\.1[3456]\./)) break; // on CP82 only video line inputs 12..15 have a source attribute indicating signal presence
                                 this.getSource(id);
                                 break;
 
@@ -2574,7 +2577,7 @@ class Extron extends utils.Adapter {
 
                         case 3:                         // VideoLine inputs on CP82
                             if (where === 0) {          // Input Gain Control
-                                return `in.VideoInputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
+                                return `in.videoInputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
                             }
                             break;
 
