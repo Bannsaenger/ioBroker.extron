@@ -578,8 +578,8 @@ class Extron extends utils.Adapter {
                                 this.setPlayVideo(`ply.players.1.common.`,Number(ext1));
                                 break;
 
-                            case 'STRM' :
-                                this.log.info(`onStreamData(): Extron got streammode "${ext1}" value "${ext2}"`);
+                            case 'STRMY' :
+                                this.log.info(`onStreamData(): Extron got streammode "${ext1}"`);
                                 this.setStreamMode(`ply.players.1.common.`,Number(ext1));
                                 break;
 
@@ -2481,7 +2481,7 @@ class Extron extends utils.Adapter {
      */
     setStreamMode(id, mode) {
         try {
-            this.setState(`${id}streammode`, mode);
+            this.setState(`${id}streammode`, mode, true);
         } catch (err) {
             this.errorHandler(err, 'setStreamMode');
         }
