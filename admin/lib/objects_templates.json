@@ -2745,19 +2745,6 @@
                     "def" : 0
                 },
                 "native" : {}
-            },
-            {
-                "_id" : "common.filepath",
-                "type" : "state",
-                "common" : {
-                    "role" : "value",
-                    "name" : "filepath of currently loaded player file",
-                    "type" : "string",
-                    "read" : true,
-                    "write" : true,
-                    "def" : " "
-                },
-                "native" :{}
             }
         ]
     },

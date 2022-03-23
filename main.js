@@ -1072,6 +1072,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'filepath' :
+                                if (this.devices[this.config.device].short === 'sme211') break; // not supported on SME211
                                 this.getVideoFile();
                                 break;
 
