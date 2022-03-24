@@ -553,31 +553,33 @@ class Extron extends utils.Adapter {
                                 else this.setState(`connections.${ext1}.mute`, Number(ext2), true);
                                 break;
 
+                            // Begin SMD202 specific commands
                             case 'PLYRS' :          // received video playing
-                                this.log.info(`onStreamData(): Extron got video playmode for player "${ext1}" value "${ext2}"`);
-                                this.setPlayVideo(`ply.players.${ext1}.common.`, 2-ext2);
+                                this.log.info(`onStreamData(): Extron got video playmode for channel "${ext1}" value "${ext2}"`);
+                                this.setPlayVideo(`player.`,ext1, 2-ext2);
                                 break;
                             case'PLYRE' :           // received Video paused
-                                this.log.info(`onStreamData(): Extron got video paused for player "${ext1}" value "${ext2}"`);
-                                this.setPlayVideo(`ply.players.${ext1}.common.`, 2);
+                                this.log.info(`onStreamData(): Extron got video paused for channel "${ext1}" value "${ext2}"`);
+                                this.setPlayVideo(`player.`, ext1, 2);
                                 break;
                             case 'PLYRO' :          // received video stopped
-                                this.log.info(`onStreamData(): Extron got video stopped for player "${ext1}" value "${ext2}"`);
-                                this.setPlayVideo(`ply.players.${ext1}.common.`, 0);
+                                this.log.info(`onStreamData(): Extron got video stopped for channel "${ext1}" value "${ext2}"`);
+                                this.setPlayVideo(`player.`, ext1, 0);
                                 break;
                             case 'PLYRR' :          // received loop state
-                                this.log.info(`onStreamData(): Extron got video loop mode for player "${ext1}" value "${ext2}"`);
-                                this.setLoopVideo(`ply.players.${ext1}.common.`,ext2);
+                                this.log.info(`onStreamData(): Extron got video loop mode for channel "${ext1}" value "${ext2}"`);
+                                this.setLoopVideo(`player.`,ext1, ext2);
                                 break;
                             case 'PLYRU' :          // received video filepath
-                                this.log.info(`onStreamData(): Extron got video video filepath for player "${ext1}" value "${ext2}"`);
-                                this.setVideoFile(`ply.players.${ext1}.common.`,ext2);
+                                this.log.info(`onStreamData(): Extron got video video filepath for channel "${ext1}" value "${ext2}"`);
+                                this.setVideoFile(`player.`,ext1, ext2);
                                 break;
                             case 'PLYRY' :
-                                this.log.info(`onStreamData(): Extron got video playmode for player "${ext1}" value "${ext2}"`);
-                                this.setPlayVideo(`ply.players.${ext1}.common.`,Number(ext2));
+                                this.log.info(`onStreamData(): Extron got video playmode for channel "${ext1}" value "${ext2}"`);
+                                this.setPlayVideo(`player.`,ext1, Number(ext2));
                                 break;
 
+                            // End SMD202 specific commands
                             case 'STRMY' :
                                 this.log.info(`onStreamData(): Extron got streammode "${ext1}"`);
                                 this.setStreamMode(`ply.players.1.common.`,Number(ext1));
@@ -789,6 +791,12 @@ class Extron extends utils.Adapter {
             // if cp82 or sme211 : create video inputs and outputs
             if ((this.devices[this.config.device].short === 'cp82') || (this.devices[this.config.device].short === 'sme211')) {
                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].connections) {
+                    await this.setObjectNotExistsAsync(element._id, element);
+                }
+            }
+            // if smde202 : create video player
+            if (this.devices[this.config.device].short === 'smd202') {
+                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].players) {
                     await this.setObjectNotExistsAsync(element._id, element);
                 }
             }
@@ -2377,11 +2385,13 @@ class Extron extends utils.Adapter {
 
     /** set playback state in database
      * @param {string} id
+     * @param {string | number} channel
      * @param {number} mode
      */
-    setPlayVideo(id, mode) {
+    setPlayVideo(id, channel, mode) {
         try {
             this.setState(`${id}playmode`, mode, true);
+            this.setState(`${id}channel`, Number(channel), true);
         } catch (err) {
             this.errorHandler(err, 'setPlayVideo');
         }
@@ -2413,11 +2423,13 @@ class Extron extends utils.Adapter {
 
     /** set loop payback mode
      * @param {string} id
+     * @param {string | number} channel
      * @param {boolean | string} mode
      */
-    setLoopVideo(id, mode) {
+    setLoopVideo(id, channel, mode) {
         try {
             this.setState(`${id}loopmode`, Number(mode)?true:false, true);
+            this.setState(`${id}channel`, Number(channel), true);
         } catch (err) {
             this.errorHandler(err, 'setLoopVideo');
         }
@@ -2450,11 +2462,13 @@ class Extron extends utils.Adapter {
     /**
      * Set the Player filename in the database
      * @param {string} id
+     * @param {string | number} channel
      * @param {string} path
      */
-    setVideoFile(id, path) {
+    setVideoFile(id, channel, path) {
         try {
             this.setState(`${id}filepath`, path, true);
+            this.setState(`${id}channel`, Number(channel), true);
             this.playerLoaded[0] = (path != '' ? true : false);
         } catch (err) {
             this.errorHandler(err, 'setVideoFile');

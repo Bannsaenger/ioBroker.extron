@@ -2565,19 +2565,10 @@
                 "name": "Player"
             },
             "native": {}
-        },   
+        },
         "players": [
             {
-                "_id": "common",
-                "type": "channel",
-                "common": {
-                    "role": "player.channel",
-                    "name": "Common player parameters"
-                },
-                "native": {}
-            },
-            {
-                "_id": "common.playmode",
+                "_id": "player.playmode",
                 "type": "state",
                 "common": {
                     "role" : "value",
@@ -2591,7 +2582,7 @@
                 "native" : {}
             },
             {
-                "_id": "common.loopmode",
+                "_id": "player.loopmode",
                 "type": "state",
                 "common": {
                     "role" : "switch",
@@ -2604,7 +2595,7 @@
                 "native" : {}
             },
             {
-                "_id" : "common.filepath",
+                "_id" : "player.filepath",
                 "type" : "state",
                 "common" : {
                     "role" : "value",
@@ -2612,7 +2603,20 @@
                     "type" : "string",
                     "read" : true,
                     "write" : true,
-                    "def" : " "
+                    "def" : ""
+                },
+                "native" :{}
+            },
+            {
+                "_id" : "player.channel",
+                "type" : "state",
+                "common" : {
+                    "role" : "value",
+                    "name" : "channel currently playing",
+                    "type" : "number",
+                    "read" : true,
+                    "write" : true,
+                    "def" : "1"
                 },
                 "native" :{}
             }

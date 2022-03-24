@@ -53,14 +53,7 @@
         "objects" : [
             "common",
             "smd202"
-        ],
-        "ply" : {
-            "players": {
-                "name" : "Video Player",
-                "short" : "P",
-                "amount" : 1
-            }
-        }
+        ]
     },
     "SME211" : {
         "name" : "SME 211",
