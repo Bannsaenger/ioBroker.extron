@@ -554,28 +554,28 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'PLYRS' :          // received video playing
-                                this.log.info(`onStreamData(): Extron got video playing for output "${ext1}" value "${ext2}"`);
-                                this.setPlayVideo(`ply.players.${ext1}.common.`, 1);
+                                this.log.info(`onStreamData(): Extron got video playmode for player "${ext1}" value "${ext2}"`);
+                                this.setPlayVideo(`ply.players.${ext1}.common.`, 2-ext2);
                                 break;
                             case'PLYRE' :           // received Video paused
-                                this.log.info(`onStreamData(): Extron got video paused for output "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): Extron got video paused for player "${ext1}" value "${ext2}"`);
                                 this.setPlayVideo(`ply.players.${ext1}.common.`, 2);
                                 break;
                             case 'PLYRO' :          // received video stopped
-                                this.log.info(`onStreamData(): Extron got video stopped for output "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): Extron got video stopped for player "${ext1}" value "${ext2}"`);
                                 this.setPlayVideo(`ply.players.${ext1}.common.`, 0);
                                 break;
-                            case 'PLYR1' :          // received loop state
-                                this.log.info(`onStreamData(): Extron got video loop mode for output "${ext1}" value "${ext2}"`);
+                            case 'PLYRR' :          // received loop state
+                                this.log.info(`onStreamData(): Extron got video loop mode for player "${ext1}" value "${ext2}"`);
                                 this.setLoopVideo(`ply.players.${ext1}.common.`,ext2);
                                 break;
                             case 'PLYRU' :          // received video filepath
-                                this.log.info(`onStreamData(): Extron got video video filepath for output "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): Extron got video video filepath for player "${ext1}" value "${ext2}"`);
                                 this.setVideoFile(`ply.players.${ext1}.common.`,ext2);
                                 break;
                             case 'PLYRY' :
-                                this.log.info(`onStreamData(): Extron got video playmmode "${ext1}" value "${ext2}"`);
-                                this.setPlayVideo(`ply.players.1.common.`,Number(ext1));
+                                this.log.info(`onStreamData(): Extron got video playmode for player "${ext1}" value "${ext2}"`);
+                                this.setPlayVideo(`ply.players.${ext1}.common.`,Number(ext2));
                                 break;
 
                             case 'STRMY' :
