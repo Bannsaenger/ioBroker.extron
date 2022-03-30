@@ -555,28 +555,37 @@ class Extron extends utils.Adapter {
 
                             // Begin SMD202 specific commands
                             case 'PLYRS' :          // received video playing
-                                this.log.info(`onStreamData(): Extron got video playmode for channel "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): Extron got video playmode for player "${ext1}" value "${ext2}"`);
                                 this.setPlayVideo(`player.`,ext1, 2-ext2);
                                 break;
-                            case'PLYRE' :           // received Video paused
-                                this.log.info(`onStreamData(): Extron got video paused for channel "${ext1}" value "${ext2}"`);
+                            case 'PLYRE' :           // received Video paused
+                                this.log.info(`onStreamData(): Extron got video paused for player "${ext1}" value "${ext2}"`);
                                 this.setPlayVideo(`player.`, ext1, 2);
                                 break;
                             case 'PLYRO' :          // received video stopped
-                                this.log.info(`onStreamData(): Extron got video stopped for channel "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): Extron got video stopped for player "${ext1}" value "${ext2}"`);
                                 this.setPlayVideo(`player.`, ext1, 0);
                                 break;
                             case 'PLYRR' :          // received loop state
-                                this.log.info(`onStreamData(): Extron got video loop mode for channel "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): Extron got video loop mode for player "${ext1}" value "${ext2}"`);
                                 this.setLoopVideo(`player.`,ext1, ext2);
                                 break;
                             case 'PLYRU' :          // received video filepath
-                                this.log.info(`onStreamData(): Extron got video video filepath for channel "${ext1}" value "${ext2}"`);
-                                this.setVideoFile(`player.`,ext1, ext2);
+                                this.log.info(`onStreamData(): Extron got video video filepath for player "${ext1}" value "${ext2}"`);
+                                this.setVideoFile(`player.`,ext2);
+                                this.getChannel();
                                 break;
                             case 'PLYRY' :
-                                this.log.info(`onStreamData(): Extron got video playmode for channel "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): Extron got video playmode for player "${ext1}" value "${ext2}"`);
                                 this.setPlayVideo(`player.`,ext1, Number(ext2));
+                                break;
+                            case 'PLYRL' :
+                                this.log.info(`onStreamData(): Extron got current playlist for player "${ext1}" value "${ext2}", requesting filepath`);
+                                this.getVideoFile();
+                                break;
+                            case 'TVPRT' :
+                                this.log.info(`onStreamData(): Extron got current channel for player "${ext1}" value "${ext2}"`);
+                                this.setChannel(`player.`, ext2);
                                 break;
 
                             // End SMD202 specific commands
@@ -1121,6 +1130,10 @@ class Extron extends utils.Adapter {
 
                             case 'members' :
                                 this.getGroupMembers(grpId);
+                                break;
+
+                            case 'channel' :
+                                this.getChannel();
                                 break;
                         }
                     }
@@ -2339,6 +2352,29 @@ class Extron extends utils.Adapter {
     /** END CP82 Video control */
 
     /** BEGIN SMD202 Video Player control */
+    /** get playback state
+     * cmd = Y1PLYR
+     */
+    getPlayVideo() {
+        try {
+            this.streamSend('WY1PLYR\r');
+        } catch (err) {
+            this.errorHandler(err, 'getPlayVideo');
+        }
+    }
+
+    /** set playback state in database
+     * @param {string} id
+     * @param {string | number} channel
+     * @param {number} mode
+     */
+    setPlayVideo(id, channel, mode) {
+        try {
+            this.setState(`${id}playmode`, mode, true);
+        } catch (err) {
+            this.errorHandler(err, 'setPlayVideo');
+        }
+    }
     /** send start payback command
      * cmd = WS1*1PLYR
      */
@@ -2372,44 +2408,6 @@ class Extron extends utils.Adapter {
         }
     }
 
-    /** get playback state
-     * cmd = Y1PLYR
-     */
-    getPlayVideo() {
-        try {
-            this.streamSend('WY1PLYR\r');
-        } catch (err) {
-            this.errorHandler(err, 'getPlayVideo');
-        }
-    }
-
-    /** set playback state in database
-     * @param {string} id
-     * @param {string | number} channel
-     * @param {number} mode
-     */
-    setPlayVideo(id, channel, mode) {
-        try {
-            this.setState(`${id}playmode`, mode, true);
-            this.setState(`${id}channel`, Number(channel), true);
-        } catch (err) {
-            this.errorHandler(err, 'setPlayVideo');
-        }
-    }
-
-    /** send loop payback command
-     * @param {string} id
-     * @param {boolean} mode
-     * cmd = R1*[mode]PLYR
-     */
-    sendLoopVideo(id, mode) {
-        try {
-            this.streamSend(`WR${this.id2oid(id)}*${mode?1:0}PLYR\r`);
-        } catch (err) {
-            this.errorHandler(err, 'sendLoopVideo');
-        }
-    }
-
     /** get loop payback mode
      * cmd = R1*[mode]PLYR
      */
@@ -2429,9 +2427,20 @@ class Extron extends utils.Adapter {
     setLoopVideo(id, channel, mode) {
         try {
             this.setState(`${id}loopmode`, Number(mode)?true:false, true);
-            this.setState(`${id}channel`, Number(channel), true);
         } catch (err) {
             this.errorHandler(err, 'setLoopVideo');
+        }
+    }
+    /** send loop payback command
+     * @param {string} id
+     * @param {boolean} mode
+     * cmd = R1*[mode]PLYR
+     */
+    sendLoopVideo(id, mode) {
+        try {
+            this.streamSend(`WR${this.id2oid(id)}*${mode?1:0}PLYR\r`);
+        } catch (err) {
+            this.errorHandler(err, 'sendLoopVideo');
         }
     }
 
@@ -2459,19 +2468,50 @@ class Extron extends utils.Adapter {
         }
     }
 
-    /**
-     * Set the Player filename in the database
+    /** Set the Player filename in the database
      * @param {string} id
-     * @param {string | number} channel
      * @param {string} path
      */
-    setVideoFile(id, channel, path) {
+    setVideoFile(id, path) {
         try {
             this.setState(`${id}filepath`, path, true);
-            this.setState(`${id}channel`, Number(channel), true);
             this.playerLoaded[0] = (path != '' ? true : false);
         } catch (err) {
             this.errorHandler(err, 'setVideoFile');
+        }
+    }
+
+    /** get current preset channel
+     * cmd = WT1TVPR
+     */
+    getChannel() {
+        try {
+            this.streamSend(' WT1TVPR\r');
+        } catch (err) {
+            this.errorHandler(err, 'getChannel');
+        }
+    }
+
+    /** set current channel in database
+     * @param {string} id
+     * @param {string | number} channel
+     */
+    setChannel(id, channel) {
+        try {
+            this.setState(`${id}channel`, Number(channel), true);
+        } catch (err) {
+            this.errorHandler(err, 'setChannel');
+        }
+    }
+
+    /** send channel change to device
+     * @param {string|number} channel
+     */
+    sendChannel(channel){
+        try {
+            this.streamSend(`WT1*${channel}TVPR\r`);
+        } catch (err) {
+            this.errorHandler(err, 'sendChannel');
         }
     }
     /** END SMD 2020 Video Player Control */
@@ -3103,6 +3143,10 @@ class Extron extends utils.Adapter {
                                 break;
                             case 'deleted' :
                                 this.sendDeleteGroup(idGrp);
+                                break;
+
+                            case 'channel' :
+                                this.sendChannel(Number(state.val));
                                 break;
                         }
                     }
