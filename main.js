@@ -556,7 +556,7 @@ class Extron extends utils.Adapter {
                             // Begin SMD202 specific commands
                             case 'PLYRS' :          // received video playing
                                 this.log.info(`onStreamData(): Extron got video playmode for player "${ext1}" value "${ext2}"`);
-                                this.setPlayVideo(`player.`,ext1, 2-ext2);
+                                this.setPlayVideo(`player.`,ext1, 2-Number(ext2));
                                 break;
                             case 'PLYRE' :           // received Video paused
                                 this.log.info(`onStreamData(): Extron got video paused for player "${ext1}" value "${ext2}"`);
@@ -586,6 +586,14 @@ class Extron extends utils.Adapter {
                             case 'TVPRT' :
                                 this.log.info(`onStreamData(): Extron got current channel for player "${ext1}" value "${ext2}"`);
                                 this.setChannel(`player.`, ext2);
+                                break;
+                            case 'AMT'  :
+                                this.log.info(`onStreamData(): Extron got Audio Output mute status value "${ext1}"`);
+                                this.setMute('output.attenuation.', Number(ext1));
+                                break;
+                            case 'VOL' :
+                                this.log.info(`onStreamData(): Extron got Audio Output attenuation level value "${Number(`${ext1}${ext2}`)}"`);
+                                this.setVol('output.attenuation.', this.calculateFaderValue(Number(`${ext1}${ext2}`),'logAtt'));
                                 break;
 
                             // End SMD202 specific commands
@@ -806,6 +814,9 @@ class Extron extends utils.Adapter {
             // if smde202 : create video player
             if (this.devices[this.config.device].short === 'smd202') {
                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].players) {
+                    await this.setObjectNotExistsAsync(element._id, element);
+                }
+                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].outputs) {
                     await this.setObjectNotExistsAsync(element._id, element);
                 }
             }
@@ -1057,7 +1068,8 @@ class Extron extends utils.Adapter {
                         // @ts-ignore
                         switch (stateName) {
                             case 'mute' :
-                                if (idType === 'connections') this.getVideoMute(id);
+                                if (this.devices[this.config.device].short === 'smd202') this.getMute();
+                                else if (idType === 'connections') this.getVideoMute(id);
                                 else this.getMuteStatus(id);
                                 break;
 
@@ -1067,17 +1079,14 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'level' :
-                                if (idType ==='groups') {
-                                    this.getGroupLevel(grpId);
-                                } else {
-                                    this.getGainLevel(id);
-                                }
+                                if (this.devices[this.config.device].short === 'smd202') this.getVol();
+                                else if (idType ==='groups') this.getGroupLevel(grpId);
+                                else this.getGainLevel(id);
                                 break;
 
                             case 'playmode' :
-                                if (this.devices[this.config.device].short === 'smd202') {
-                                    this.getPlayVideo();
-                                } else this.getPlayMode(id);
+                                if (this.devices[this.config.device].short === 'smd202') this.getPlayVideo();
+                                else this.getPlayMode(id);
                                 break;
 
                             case 'repeatmode' :
@@ -2486,7 +2495,7 @@ class Extron extends utils.Adapter {
      */
     getChannel() {
         try {
-            this.streamSend(' WT1TVPR\r');
+            this.streamSend('WT1TVPR\r');
         } catch (err) {
             this.errorHandler(err, 'getChannel');
         }
@@ -2512,6 +2521,71 @@ class Extron extends utils.Adapter {
             this.streamSend(`WT1*${channel}TVPR\r`);
         } catch (err) {
             this.errorHandler(err, 'sendChannel');
+        }
+    }
+    /** get output mute status
+     * cmd = Z
+     */
+    getMute() {
+        try {
+            this.streamSend('Z');
+        } catch (err) {
+            this.errorHandler(err, 'getMute');
+        }
+    }
+
+    /** set output mute status in database
+     * @param {string} id
+     * @param {number | boolean} mute
+     */
+    setMute(id, mute) {
+        try {
+            this.setState(`${id}mute`, mute?true:false, true);
+        } catch (err) {
+            this.errorHandler(err, 'setMute');
+        }
+    }
+
+    /** send mute to device
+     * @param {boolean | number} mute
+     */
+    sendMute(mute){
+        try {
+            this.streamSend(`${mute?1:0}Z`);
+        } catch (err) {
+            this.errorHandler(err, 'sendMute');
+        }
+    }
+    /** get output volume level
+     * cmd = V
+    */
+    getVol(){
+        try {
+            this.streamSend('V');
+        } catch (err) {
+            this.errorHandler(err, 'getVol');
+        }
+    }
+    /** set output volume level in datase
+     * @param {string} id
+     * @param {string | any} volume
+     */
+    setVol(id, volume){
+        try {
+            this.setState(`${id}level_db`, Number(Number(volume.logValue).toFixed(0)), true);
+            this.setState(`${id}level`, Number(volume.linValue), true);
+        } catch (err) {
+            this.errorHandler(err, 'setVol');
+        }
+    }
+    /** set output volume on device
+     * @param {string | any} volume
+     */
+    sendVol(volume){
+        try {
+            this.streamSend(`${Number(volume.logValue).toFixed(0)}V`);
+        } catch (err) {
+            this.errorHandler(err, 'sendVol');
         }
     }
     /** END SMD 2020 Video Player Control */
@@ -2989,9 +3063,15 @@ class Extron extends utils.Adapter {
                     if (typeof(baseId) !== 'undefined' && baseId !== null) {
                         switch (stateName) {
                             case 'mute' :
+                                if (this.devices[this.config.device].short === 'smd202') {
+                                    this.sendMute(Number(state.val));
+                                    break;
+                                }
                                 if (idArray[2] === 'connections') {
                                     this.sendVideoMute(id, state.val);
-                                } else this.sendMuteStatus(id, state.val);
+                                    break;
+                                }
+                                this.sendMuteStatus(id, state.val);
                                 break;
                             case 'source' :
                                 this.sendSource(id, `${state.val}`);
@@ -3026,7 +3106,9 @@ class Extron extends utils.Adapter {
                                             break;
                                     }
                                     stateTime.timestamp = timeStamp;    // update stored timestamp
-                                    if (idArray[2] === 'groups') {
+                                    if (this.devices[this.config.device].short === 'smd202') {
+                                        this.sendVol(this.calculateFaderValue(`${state.val}`,'linAtt'));
+                                    } else if (idArray[2] === 'groups') {
                                         this.sendGroupLevel(idGrp, Number(state.val));
                                     } else this.sendGainLevel(id,this.calculateFaderValue(`${state.val}`,calcMode));
                                 }
@@ -3051,8 +3133,9 @@ class Extron extends utils.Adapter {
                                     case 'attenuation' :
                                         calcMode = 'logAtt';
                                         break;
-                                }
-                                if (idArray[2] === 'groups') {
+                                } if (this.devices[this.config.device].short === 'smd202') {
+                                    this.sendVol(this.calculateFaderValue(`${state.val}`,'logAtt'));
+                                } else if (idArray[2] === 'groups') {
                                     this.sendGroupLevel(idGrp, Number(state.val));
                                 } else this.sendGainLevel(id,this.calculateFaderValue(`${state.val}`,calcMode));
                                 break;

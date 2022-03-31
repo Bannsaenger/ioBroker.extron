@@ -602,7 +602,7 @@
                 "type": "state",
                 "common": {
                     "role": "text",
-                    "name": "input name",
+                    "name": "output name",
                     "type": "string",
                     "read": true,
                     "write": true
@@ -2619,6 +2619,68 @@
                     "def" : "1"
                 },
                 "native" :{}
+            }
+        ],
+        "output": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "Output"
+            },
+            "native": {}
+        },
+        "outputs": [
+            {
+                "_id": "output.attenuation",
+                "type": "channel",
+                "common": {
+                    "role": "output.channel",
+                    "name": "Common output parameters"
+                },
+                "native": {}
+            },       
+            {
+                "_id": "output.attenuation.mute",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "If true the output is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "output.attenuation.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Output attenuation linear from 0 to 1000",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 700
+                },
+                "native": {}
+            },
+            {
+                "_id": "output.attenuation.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Output attenuation logarithmic from -100 to 0 in 1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100,
+                    "max": 0,
+                    "def": -30
+                },
+                "native": {}
             }
         ]
     },
