@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.1.11",
+    "version": "0.1.12",
     "news": {
+      "0.1.12":{
+        "en": "added support for playback channel preset selection in SMD202",
+        "de": "Unterstützung für die Auswahl des Wiedergabe-Kanal-Preset im SMD202 hinzugefügt"
+      },
       "0.1.11": {
         "en": "fixed support for groups in DSP DMP128",
         "de": "Unterstützung für Gruppen in DSP DMP128 gefixed",
@@ -198,7 +202,7 @@
     },
     "authors": [
       "Bannsaenger <bannsaenger@gmx.de>",
-      "mschlg <mschlgl@gmail.com>"
+      "mschlgl <mschlgl@gmail.com>"
     ],
     "keywords": [
       "extron"

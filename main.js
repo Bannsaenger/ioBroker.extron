@@ -2,7 +2,7 @@
  *
  *      iobroker extron (SIS) Adapter
  *
- *      Copyright (c) 2020-2021, Bannsaenger <bannsaenger@gmx.de>
+ *      Copyright (c) 2020-2022, Bannsaenger <bannsaenger@gmx.de>
  *
  *      CC-NC-BY 4.0 License
  *
@@ -619,8 +619,8 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron got delete group #"${ext1}`);
                                 this.groupTypes[Number(ext1)] = undefined;
                                 this.groupMembers[Number(ext1)] = [];
-                                this.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.members`,'',true);
-                                this.setState(`groups.${('00' + Number(ext1).toString()).slice(-2)}.deleted`,true,true);
+                                this.setState(`groups.${ext1.padStart(2,'0')}.members`,'',true);
+                                this.setState(`groups.${ext1.padStart(2,'0')}.deleted`,true,true);
                                 break;
                             case 'GRPMD' :      // set Group fader value
                                 this.log.info(`onStreamData(): Extron got Group #'${ext1}" fader value:"${ext2}"`);
@@ -849,7 +849,7 @@ class Extron extends utils.Adapter {
                     });
                     // for each input type create the amount of inputs
                     for (let i = 1; i <= this.devices[this.config.device].in[inputs].amount; i++) {
-                        const actInput = `in.${inputs}.${('00' + i.toString()).slice(-2)}`;
+                        const actInput = `in.${inputs}.${i.toString().padStart(2,'0')}`;
                         // create the input folder
                         await this.setObjectNotExistsAsync(actInput, this.objectsTemplate[this.devices[this.config.device].objects[1]].input);
                         // and the common structure of an input depending on type
@@ -912,7 +912,7 @@ class Extron extends utils.Adapter {
                                         if (i === j && outType === 'virtualSendBus') {
                                             continue;       // these points cannot be set
                                         }
-                                        const actMixPoint = actInput + '.mixPoints.' + this.devices[this.config.device].out[outType].short + ('00' + j.toString()).slice(-2);
+                                        const actMixPoint = actInput + '.mixPoints.' + this.devices[this.config.device].out[outType].short + j.toString().padStart(2,'0');
                                         await this.setObjectNotExistsAsync(actMixPoint, {
                                             'type': 'folder',
                                             'common': {
@@ -983,7 +983,7 @@ class Extron extends utils.Adapter {
                     });
                     // create the amount of outputs
                     for (let i = 1; i <= this.devices[this.config.device].out[outputs].amount; i++) {
-                        const actOutput = `out.${outputs}.${('00' + i.toString()).slice(-2)}`;
+                        const actOutput = `out.${outputs}.${i.toString().padStart(2,'0')}`;
                         // create the output folder
                         await this.setObjectNotExistsAsync(actOutput, this.objectsTemplate[this.devices[this.config.device].objects[1]].output);
                         // and the common structure of a output
@@ -1026,7 +1026,7 @@ class Extron extends utils.Adapter {
                 });
                 // create the amount of groups
                 for (let i = 1; i <= this.devices[this.config.device].grp.groups.amount; i++) {
-                    const actGroup = `groups.${('00' + i.toString()).slice(-2)}`;
+                    const actGroup = `groups.${i.toString().padStart(2,'0')}`;
                     // create the group folder
                     await this.setObjectNotExistsAsync(actGroup, this.objectsTemplate[this.devices[this.config.device].objects[1]].group);
                     // and the common structure of a group
@@ -2082,8 +2082,8 @@ class Extron extends utils.Adapter {
             } else curMembers = members;    // replace list of members
             this.groupMembers[group] = `${curMembers}`; // store stringified array
             try {
-                this.setState(`groups.${('00' + group.toString()).slice(-2)}.members`, this.groupMembers[group].length == 0?'':this.groupMembers[group].join(','), true);
-                this.setState(`groups.${('00' + group.toString()).slice(-2)}.deleted`, this.groupMembers[group].length == 0?true:false, true);
+                this.setState(`groups.${group.toString().padStart(2,'0')}.members`, this.groupMembers[group].length == 0?'':this.groupMembers[group].join(','), true);
+                this.setState(`groups.${group.toString().padStart(2,'0')}.deleted`, this.groupMembers[group].length == 0?true:false, true);
                 this.log.debug(`setGroupMembers(): group ${group} now has members ${this.groupMembers[group]}`);
             } catch (err) {
                 this.errorHandler(err, 'setGroupMembers');
@@ -2146,13 +2146,13 @@ class Extron extends utils.Adapter {
         try {
             switch (this.groupTypes[group]) {
                 case 6 :           // gain group
-                    this.setState(`groups.${('00' + group.toString()).slice(-2)}.level_db`, Number(this.calculateFaderValue(level, 'log').logValue), true);
-                    this.setState(`groups.${('00' + group.toString()).slice(-2)}.level`, Number(this.calculateFaderValue(level, 'log').linValue), true);
+                    this.setState(`groups.${group.toString().padStart(2,'0')}.level_db`, Number(this.calculateFaderValue(level, 'log').logValue), true);
+                    this.setState(`groups.${group.toString().padStart(2,'0')}.level`, Number(this.calculateFaderValue(level, 'log').linValue), true);
                     break;
 
                 case 12 :    // mute group
-                    this.setState(`groups.${('00' + group.toString()).slice(-2)}.level_db`, level?1:0, true);
-                    this.setState(`groups.${('00' + group.toString()).slice(-2)}.level`, level?1:0, true);
+                    this.setState(`groups.${group.toString().padStart(2,'0')}.level_db`, level?1:0, true);
+                    this.setState(`groups.${group.toString().padStart(2,'0')}.level`, level?1:0, true);
                     break;
             }
         } catch (err) {
@@ -2194,7 +2194,7 @@ class Extron extends utils.Adapter {
     setGroupType(group, type) {
         this.groupTypes[Number(group)] = Number(type);
         try {
-            this.setState(`groups.${('00' + group.toString()).slice(-2)}.type`, type, true);
+            this.setState(`groups.${group.toString().padStart(2,'0')}.type`, type, true);
         } catch (err) {
             this.errorHandler(err, 'setGroupType');
         }
@@ -2235,8 +2235,8 @@ class Extron extends utils.Adapter {
      */
     setGroupLimits(group, upper, lower) {
         try {
-            this.setState(`groups.${('00' + group.toString()).slice(-2)}.upperLimit`, upper, true);
-            this.setState(`groups.${('00' + group.toString()).slice(-2)}.lowerLimit`, lower, true);
+            this.setState(`groups.${group.toString().padStart(2,'0')}.upperLimit`, upper, true);
+            this.setState(`groups.${group.toString().padStart(2,'0')}.lowerLimit`, lower, true);
         } catch (err) {
             this.errorHandler(err, 'setGroupLimits');
         }
@@ -2275,7 +2275,7 @@ class Extron extends utils.Adapter {
     */
     setGroupName(group, name) {
         try {
-            this.setState(`groups.${('00' + group.toString()).slice(-2)}.name`, name, true);
+            this.setState(`groups.${group.toString().padStart(2,'0')}.name`, name, true);
         } catch (err) {
             this.errorHandler(err, 'setGroupName');
         }
@@ -2648,62 +2648,62 @@ class Extron extends utils.Adapter {
                 if (whatstr === 'N') {
                     switch (oid.slice(1,3)) {
                         case 'MI' :
-                            if (val < 13) retId = `in.inputs.${('00' + (val).toString()).slice(-2)}.name`;
-                            if (val > 12) retId = `in.auxInputs.${('00' + (val-12).toString()).slice(-2)}.name`;
+                            if (val < 13) retId = `in.inputs.${val.toString().padStart(2,'0')}.name`;
+                            if (val > 12) retId = `in.auxInputs.${(val-12).toString().padStart(2,'0')}.name`;
                             break;
                         case 'ML' :
-                            retId = `in.virtualReturns.${('00' + (val).toString()).slice(-2)}.name`;
+                            retId = `in.virtualReturns.${val.toString().padStart(2,'0')}.name`;
                             break;
                         case 'EI' :
-                            retId = `in.expansionInputs.${('00' + (val).toString()).slice(-2)}.name`;
+                            retId = `in.expansionInputs.${val.toString().padStart(2,'0')}.name`;
                             break;
                         case 'MO' :
-                            if (val < 9) retId = `out.outputs.${('00' + (val).toString()).slice(-2)}.name`;
-                            if (val > 8) retId = `out.auxOutputs.${('00' + (val-8).toString()).slice(-2)}.name`;
+                            if (val < 9) retId = `out.outputs.${val.toString().padStart(2,'0')}.name`;
+                            if (val > 8) retId = `out.auxOutputs.${(val-8).toString().padStart(2,'0')}.name`;
                             break;
                         case 'EX' :
-                            retId = `out.expansionOutputs.${('00' + (val).toString()).slice(-2)}.name`;
+                            retId = `out.expansionOutputs.${val.toString().padStart(2,'0')}.name`;
                             break;
                     }
-                } else if (`${oid.slice(0,5)}` === 'EXPDA') retId = `in.expansionInputs.${('00' + oid.slice(5)).slice(-2)}.name`;
+                } else if (`${oid.slice(0,5)}` === 'EXPDA') retId = `in.expansionInputs.${oid.slice(5).padStart(2,'0')}.name`;
                 else
                     switch (what) {
                         case 2:                         // mixpoints
                             if (this.devices[this.config.device].short === 'cp82') {    // mixpoints on CP82
                                 if ( where < 2) {
-                                    retId = `in.programInputs.${('00' + (where +1).toString()).slice(-2)}.mixPoints.`;
+                                    retId = `in.programInputs.${(where +1).toString().padStart(2,'0')}.mixPoints.`;
                                 } else if (where < 4) {
-                                    retId = `in.inputs.${('00' + (where -1).toString()).slice(-2)}.mixPoints.`;
+                                    retId = `in.inputs.${(where -1).toString().padStart(2,'0')}.mixPoints.`;
                                 } else if (where < 6) {
-                                    retId = `in.lineInputs.${('00' + (where -3).toString()).slice(-2)}.mixPoints.`;
+                                    retId = `in.lineInputs.${(where -3).toString().padStart(2,'0')}.mixPoints.`;
                                 } else if (where < 8) {
-                                    retId = `in.playerInputs.${('00' + (where -5).toString()).slice(-2)}.mixPoints.`;
+                                    retId = `in.playerInputs.${(where -5).toString().padStart(2,'0')}.mixPoints.`;
                                 }
                             } else                      // mixpoints on dmp128
                             if (where <= 11) {          // from input 1 - 12
-                                retId = `in.inputs.${('00' + (where + 1).toString()).slice(-2)}.mixPoints.`;
+                                retId = `in.inputs.${(where + 1).toString().padStart(2,'0')}.mixPoints.`;
                             } else if (where <= 19) {   // aux input 1 - 8
-                                retId = `in.auxInputs.${('00' + (where - 11).toString()).slice(-2)}.mixPoints.`;
+                                retId = `in.auxInputs.${(where - 11).toString().padStart(2,'0')}.mixPoints.`;
                             } else if (where <= 35) {   // virtual return 1 - 16 (A-P)
-                                retId = `in.virtualReturns.${('00' + (where - 19).toString()).slice(-2)}.mixPoints.`;
+                                retId = `in.virtualReturns.${(where - 19).toString().padStart(2,'0')}.mixPoints.`;
                             } else if (where <= 83) {   // AT input 1 - 48
-                                retId = `in.expansionInputs.${('00' + (where - 35).toString()).slice(-2)}.mixPoints.`;
+                                retId = `in.expansionInputs.${(where - 35).toString().padStart(2,'0')}.mixPoints.`;
                             } else {
                                 throw { 'message': 'no known mixpoint input',
                                     'stack'  : `oid: ${oid}` };
                             }
                             // now determine the output
                             if (this.devices[this.config.device].short === 'cp82') {    // mixpoints on CP82
-                                retId += `O${('00' + (val -1).toString()).slice(-2)}.`; // on CP82 mixpooint output OID count starts at 2
+                                retId += `O${(val -1).toString().padStart(2,'0')}.`; // on CP82 mixpooint output OID count starts at 2
                             } else                      // mixpoints on dmp128
                             if (val <= 7) {             // output 1 -8
-                                retId += `O${('00' + (val + 1).toString()).slice(-2)}.`;
+                                retId += `O${(val + 1).toString().padStart(2,'0')}.`;
                             } else if (val <= 15) {     // aux output 1 - 8
-                                retId += `A${('00' + (val - 7).toString()).slice(-2)}.`;
+                                retId += `A${(val - 7).toString().padStart(2,'0')}.`;
                             } else if (val <= 31) {     // virtual send bus 1 - 16
-                                retId += `V${('00' + (val - 15).toString()).slice(-2)}.`;
+                                retId += `V${(val - 15).toString().padStart(2,'0')}.`;
                             } else if (val <= 47) {     // expansion output 1 - 16
-                                retId += `E${('00' + (val - 31).toString()).slice(-2)}.`;
+                                retId += `E${(val - 31).toString().padStart(2,'0')}.`;
                             } else {
                                 throw { 'message': 'no known mixpoint output',
                                     'stack'  : `oid: ${oid}` };
@@ -2712,7 +2712,7 @@ class Extron extends utils.Adapter {
 
                         case 3:                         // VideoLine inputs on CP82
                             if (where === 0) {          // Input Gain Control
-                                return `in.videoInputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
+                                return `in.videoInputs.${(val + 1).toString().padStart(2,'0')}.premix.`;
                             }
                             break;
 
@@ -2720,31 +2720,31 @@ class Extron extends utils.Adapter {
                             if (where === 0) {          // Input gain block
                                 if (this.devices[this.config.device].short === 'cp82'){ // Inputs on CP82
                                     if ( val < 2) {
-                                        return `in.inputs.${('00' + (val +1).toString()).slice(-2)}.gain.`;
+                                        return `in.inputs.${(val +1).toString().padStart(2,'0')}.gain.`;
                                     } else if (val < 4) {
-                                        return `in.lineInputs.${('00' + (val -1).toString()).slice(-2)}.gain.`;
+                                        return `in.lineInputs.${(val -1).toString().padStart(2,'0')}.gain.`;
                                     } else if (val < 6) {
-                                        return `in.playerInputs.${('00' + (val -3).toString()).slice(-2)}.gain.`;
+                                        return `in.playerInputs.${(val -3).toString().padStart(2,'0')}.gain.`;
                                     }
                                 } else if (val <= 11) {        // input 1 - 12
-                                    return `in.inputs.${('00' + (val + 1).toString()).slice(-2)}.gain.`;
+                                    return `in.inputs.${(val + 1).toString().padStart(2,'0')}.gain.`;
                                 }
                                 if (val <= 19) {        // aux input 1 - 8
-                                    return `in.auxInputs.${('00' + (val - 11).toString()).slice(-2)}.gain.`;
+                                    return `in.auxInputs.${(val - 11).toString().padStart(2,'0')}.gain.`;
                                 }
                             } else if (where === 1) {   // premix gain block
                                 if (this.devices[this.config.device].short === 'cp82'){ // Inputs on CP82
                                     if ( val < 2) {
-                                        return `in.inputs.${('00' + (val +1).toString()).slice(-2)}.premix.`;
+                                        return `in.inputs.${(val +1).toString().padStart(2,'0')}.premix.`;
                                     } else if (val < 4) {
-                                        return `in.lineInputs.${('00' + (val -1).toString()).slice(-2)}.premix.`;
+                                        return `in.lineInputs.${(val -1).toString().padStart(2,'0')}.premix.`;
                                     } else if (val < 6) {
-                                        return `in.playerInputs.${('00' + (val -3).toString()).slice(-2)}.premix.`;
+                                        return `in.playerInputs.${(val -3).toString().padStart(2,'0')}.premix.`;
                                     }
                                 } else if (val <= 11) {        // input 1 - 12
-                                    return `in.inputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
+                                    return `in.inputs.${(val + 1).toString().padStart(2,'0')}.premix.`;
                                 } else if (val <= 19) {        // aux input 1 - 8
-                                    return `in.auxInputs.${('00' + (val - 11).toString()).slice(-2)}.premix.`;
+                                    return `in.auxInputs.${(val - 11).toString().padStart(2,'0')}.premix.`;
                                 }
                             }
                             throw { 'message': 'no known input',
@@ -2752,16 +2752,16 @@ class Extron extends utils.Adapter {
 
                         case 5:                         // virtual return or ext input or program
                             if (where === 0) {           // program inputs on CP82
-                                return `in.programInputs.${('00' + (val +1).toString()).slice(-2)}.premix.`;
+                                return `in.programInputs.${(val +1).toString().padStart(2,'0')}.premix.`;
                             }
                             if (where === 1) {          // virtual returns
                                 if (val <= 15) {        // virtual return 1 - 16 (A-P)
-                                    return `in.virtualReturns.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
+                                    return `in.virtualReturns.${(val + 1).toString().padStart(2,'0')}.premix.`;
                                 }
                             }
                             if (where === 2) {          // expansion bus (AT inputs)
                                 if (val <= 47) {        // AT input 1 - 48
-                                    return `in.expansionInputs.${('00' + (val + 1).toString()).slice(-2)}.premix.`;
+                                    return `in.expansionInputs.${(val + 1).toString().padStart(2,'0')}.premix.`;
                                 }
                             }
                             throw { 'message': 'no known input',
@@ -2770,38 +2770,38 @@ class Extron extends utils.Adapter {
                         case 6:                         // Output section
                             if (where === 0) {          // Output attenuation block
                                 if (this.devices[this.config.device].short === 'cp82') {    // outputs on CP82
-                                    return `out.outputs.${('00' + (val -1).toString()).slice(-2)}.attenuation.`; // ouput OID starts at 2 on CP82
+                                    return `out.outputs.${(val -1).toString().padStart(2,'0')}.attenuation.`; // ouput OID starts at 2 on CP82
                                 }
                                 if (val <= 7) {         // output 1 - 8
-                                    return `out.outputs.${('00' + (val + 1).toString()).slice(-2)}.attenuation.`;
+                                    return `out.outputs.${(val + 1).toString().padStart(2,'0')}.attenuation.`;
                                 }
                                 if (val <= 15) {        // aux output 1 - 8
-                                    return `out.auxOutputs.${('00' + (val - 7).toString()).slice(-2)}.attenuation.`;
+                                    return `out.auxOutputs.${(val - 7).toString().padStart(2,'0')}.attenuation.`;
                                 }
                                 if (val <= 31) {        // expansion output 1-16
-                                    return `out.expansionOutputs.${('00' + (val - 15).toString()).slice(-2)}.attenuation.`;
+                                    return `out.expansionOutputs.${(val - 15).toString().padStart(2,'0')}.attenuation.`;
                                 }
                             }
                             if (where === 1) {          // postmix trim block
                                 if (val <= 7) {         // output 1 - 8
-                                    return `out.outputs.${('00' + (val + 1).toString()).slice(-2)}.postmix.`;
+                                    return `out.outputs.${(val + 1).toString().padStart(2,'0')}.postmix.`;
                                 }
                                 if (val <= 15) {        // aux output 1 - 8
-                                    return `out.auxOutputs.${('00' + (val - 7).toString()).slice(-2)}.postmix.`;
+                                    return `out.auxOutputs.${(val - 7).toString().padStart(2,'0')}.postmix.`;
                                 }
                                 if (val <= 31) {        // expansion output 1-16
-                                    return `out.expansionOutputs.${('00' + (val - 15).toString()).slice(-2)}.postmix.`;
+                                    return `out.expansionOutputs.${(val - 15).toString().padStart(2,'0')}.postmix.`;
                                 }
                             }
                             if (where === 40) {          // limiter block
                                 if (val <= 7) {         // output 1 - 8
-                                    return `out.outputs.${('00' + (val + 1).toString()).slice(-2)}.limiter.`;
+                                    return `out.outputs.${(val + 1).toString().padStart(2,'0')}.limiter.`;
                                 }
                                 if (val <= 15) {        // aux output 1 - 8
-                                    return `out.auxOutputs.${('00' + (val - 7).toString()).slice(-2)}.limiter.`;
+                                    return `out.auxOutputs.${(val - 7).toString().padStart(2,'0')}.limiter.`;
                                 }
                                 if (val <= 31) {        // expansion output 1-16
-                                    return `out.expansionOutputs.${('00' + (val - 15).toString()).slice(-2)}.limiter.`;
+                                    return `out.expansionOutputs.${(val - 15).toString().padStart(2,'0')}.limiter.`;
                                 }
                             }
                             throw { 'message': 'no known output', 'stack'  : `oid: ${oid}` };
@@ -2846,90 +2846,90 @@ class Extron extends utils.Adapter {
                 if (idBlock != 'mixPoints') {     // inputs / outputs
                     switch (idType) {
                         case 'videoInputs':
-                            retOid = `300${('00' + (idNumber - 1).toString()).slice(-2)}`;          // video line inputs on CP82
+                            retOid = `300${(idNumber - 1).toString().padStart(2,'0')}`;          // video line inputs on CP82
                             break;
 
                         case 'inputs':
                             if (idBlock === 'gain') {
-                                retOid = `400${('00' + (idNumber - 1).toString()).slice(-2)}`;
+                                retOid = `400${(idNumber - 1).toString().padStart(2,'0')}`;
                             } else {
-                                retOid = `401${('00' + (idNumber - 1).toString()).slice(-2)}`;
+                                retOid = `401${(idNumber - 1).toString().padStart(2,'0')}`;
                             }
                             break;
 
                         case 'programInputs' :
-                            retOid = `500${('00' + (idNumber - 1).toString()).slice(-2)}`;             // program inputs on CP82
+                            retOid = `500${(idNumber - 1).toString().padStart(2,'0')}`;             // program inputs on CP82
                             break;
 
                         case 'lineInputs' :
                             if (idBlock === 'gain') {
-                                retOid = `400${('00' + (idNumber +1).toString()).slice(-2)}`;         // Line Inputs on CP82
+                                retOid = `400${(idNumber +1).toString().padStart(2,'0')}`;         // Line Inputs on CP82
                             } else {
-                                retOid = `401${('00' + (idNumber +1).toString()).slice(-2)}`;
+                                retOid = `401${(idNumber +1).toString().padStart(2,'0')}`;
                             }
                             break;
 
                         case 'playerInputs' :
                             if (idBlock === 'gain') {
-                                retOid = `400${('00' + (idNumber +3).toString()).slice(-2)}`;         // player inputs on CP82
+                                retOid = `400${(idNumber +3).toString().padStart(2,'0')}`;         // player inputs on CP82
                             } else {
-                                retOid = `401${('00' + (idNumber +3).toString()).slice(-2)}`;
+                                retOid = `401${(idNumber +3).toString().padStart(2,'0')}`;
                             }
                             break;
 
                         case 'auxInputs':
                             if (idBlock === 'gain') {
-                                retOid = `400${('00' + (idNumber + 11).toString()).slice(-2)}`;
+                                retOid = `400${(idNumber + 11).toString().padStart(2,'0')}`;
                             } else {
-                                retOid = `401${('00' + (idNumber + 11).toString()).slice(-2)}`;
+                                retOid = `401${(idNumber + 11).toString().padStart(2,'0')}`;
                             }
                             break;
 
                         case 'virtualReturns':
-                            retOid = `501${('00' + (idNumber - 1).toString()).slice(-2)}`;
+                            retOid = `501${(idNumber - 1).toString().padStart(2,'0')}`;
                             break;
 
                         case 'expansionInputs':
-                            retOid = `502${('00' + (idNumber - 1).toString()).slice(-2)}`;
+                            retOid = `502${(idNumber - 1).toString().padStart(2,'0')}`;
                             break;
 
                         case 'outputs' :
                             switch (idBlock) {
                                 case 'attenuation' :
-                                    retOid = `600${('00' + (idNumber - 1).toString()).slice(-2)}`;
-                                    if (this.devices[this.config.device].short === 'cp82') retOid = `600${('00' + (idNumber +1).toString()).slice(-2)}`; // output OID count starts at 2 on CP82
+                                    retOid = `600${(idNumber - 1).toString().padStart(2,'0')}`;
+                                    if (this.devices[this.config.device].short === 'cp82') retOid = `600${(idNumber +1).toString().padStart(2,'0')}`; // output OID count starts at 2 on CP82
                                     break;
                                 case 'limiter' :
-                                    retOid = `640${('00' + (idNumber - 1).toString()).slice(-2)}`;
+                                    retOid = `640${(idNumber - 1).toString().padStart(2,'0')}`;
                                     break;
                                 default:
-                                    retOid = `601${('00' + (idNumber - 1).toString()).slice(-2)}`;
+                                    retOid = `601${(idNumber - 1).toString().padStart(2,'0')}`;
                             }
                             break;
 
                         case 'auxOutputs' :
                             switch (idBlock) {
                                 case 'attenuation' :
-                                    retOid = `600${('00' + (idNumber + 7).toString()).slice(-2)}`;
+                                    retOid = `600${(idNumber + 7).toString().padStart(2,'0')}`;
                                     break;
                                 case 'limiter' :
-                                    retOid = `640${('00' + (idNumber + 7).toString()).slice(-2)}`;
+                                    retOid = `640${(idNumber + 7).toString().padStart(2,'0')}`;
                                     break;
                                 default :
-                                    retOid = `601${('00' + (idNumber + 7).toString()).slice(-2)}`;
+                                    retOid = `601${(idNumber + 7).toString().padStart(2,'0')}`;
                             }
                             break;
 
                         case 'expansionOutputs' :
                             switch (idBlock) {
                                 case 'attenuation' :
-                                    retOid = `600${('00' + (idNumber + 15).toString()).slice(-2)}`;
+                                    retOid = `600${(idNumber + 15).toString().padStart(2,'0')}`;
                                     break;
                                 case 'limiter' :
-                                    retOid = `640${('00' + (idNumber + 15).toString()).slice(-2)}`;
+                                    retOid = `640${(idNumber + 15).toString().padStart(2,'0')}`;
                                     break;
                                 default:
-                                    retOid = `601${('00' + (idNumber + 15).toString()).slice(-2)}`;
+                                    retOid = `601${(idNumber + 15).toString().padStart(2,'0')}`;
                             }
                             break;
 
@@ -2941,32 +2941,32 @@ class Extron extends utils.Adapter {
                 {                      // mixpoints
                     switch (idType) {
                         case 'inputs':
-                            retOid = `2${('00' + (idNumber -1).toString()).slice(-2)}`;
-                            if (this.devices[this.config.device].short === 'cp82') retOid = `2${('00' + (idNumber +1).toString()).slice(-2)}`; // Mic Inputs on CP82
+                            retOid = `2${(idNumber -1).toString().padStart(2,'0')}`;
+                            if (this.devices[this.config.device].short === 'cp82') retOid = `2${(idNumber +1).toString().padStart(2,'0')}`; // Mic Inputs on CP82
                             break;
 
                         case 'programInputs' :
-                            retOid = `2${('00' + (idNumber -1).toString()).slice(-2)}`;         // program inputs on CP82
+                            retOid = `2${(idNumber -1).toString().padStart(2,'0')}`;         // program inputs on CP82
                             break;
 
                         case 'playerInputs' :
-                            retOid = `2${('00' + (idNumber +5).toString()).slice(-2)}`;         // FilePlayer Inouts on CP82
+                            retOid = `2${(idNumber +5).toString().padStart(2,'0')}`;         // FilePlayer Inouts on CP82
                             break;
 
                         case 'lineInputs' :
-                            retOid = `2${('00' + (idNumber +3).toString()).slice(-2)}`;         // Line Inputs on CP82
+                            retOid = `2${(idNumber +3).toString().padStart(2,'0')}`;         // Line Inputs on CP82
                             break;
 
                         case 'auxInputs':
-                            retOid = `2${('00' + (idNumber + 11).toString()).slice(-2)}`;
+                            retOid = `2${(idNumber + 11).toString().padStart(2,'0')}`;
                             break;
 
                         case 'virtualReturns':
-                            retOid = `2${('00' + (idNumber + 19).toString()).slice(-2)}`;
+                            retOid = `2${(idNumber + 19).toString().padStart(2,'0')}`;
                             break;
 
                         case 'expansionInputs':
-                            retOid = `2${('00' + (idNumber + 35).toString()).slice(-2)}`;
+                            retOid = `2${(idNumber + 35).toString().padStart(2,'0')}`;
                             break;
 
                         default:
@@ -2975,22 +2975,22 @@ class Extron extends utils.Adapter {
                     switch (outputType) {
                         case 'O':
                             if (this.devices[this.config.device].short === 'cp82') {
-                                retOid += ('00' + (outputNumber +1).toString()).slice(-2);  // output OID count starts at 2 on CP82
+                                retOid += (outputNumber +1).toString().padStart(2,'0');  // output OID count starts at 2 on CP82
                             } else {
-                                retOid += ('00' + (outputNumber - 1).toString()).slice(-2);
+                                retOid += (outputNumber - 1).toString().padStart(2,'0');
                             }
                             break;
 
                         case 'A':
-                            retOid += ('00' + (outputNumber + 7).toString()).slice(-2);
+                            retOid += (outputNumber + 7).toString().padStart(2,'0');
                             break;
 
                         case 'V':
-                            retOid += ('00' + (outputNumber + 15).toString()).slice(-2);
+                            retOid += (outputNumber + 15).toString().padStart(2,'0');
                             break;
 
                         case 'E':
-                            retOid += ('00' + (outputNumber + 31).toString()).slice(-2);
+                            retOid += (outputNumber + 31).toString().padStart(2,'0');
                             break;
                         case 's':
                             break;
