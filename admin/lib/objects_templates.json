@@ -2616,7 +2616,7 @@
                     "type" : "number",
                     "read" : true,
                     "write" : true,
-                    "def" : "1"
+                    "def" : 1
                 },
                 "native" :{}
             }
