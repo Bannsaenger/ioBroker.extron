@@ -443,7 +443,7 @@ class Extron extends utils.Adapter {
                             await this.setDeviceStatusAsync();
                         } else {
                             await this.getDeviceStatusAsync();
-                            //this.log.info('Extron get device status diabled');
+                            //this.log.info('Extron get device status diabled ');
                         }
                     }
                     return;
