@@ -2091,7 +2091,7 @@ class Extron extends utils.Adapter {
                     }
                 } else curMembers = members;    // replace list of members
                 this.groupMembers[group] = curMembers; // store stringified array
-                this.setState(`groups.${group.toString().padStart(2,'0')}.members`, this.groupMembers[group].length == 0?[]:this.groupMembers[group], true);
+                this.setState(`groups.${group.toString().padStart(2,'0')}.members`, this.groupMembers[group].length == 0?'':this.groupMembers[group], true);
                 this.setState(`groups.${group.toString().padStart(2,'0')}.deleted`, this.groupMembers[group].length == 0?true:false, true);
                 this.log.debug(`setGroupMembers(): group ${group} now has members ${this.groupMembers[group]}`);
             }
