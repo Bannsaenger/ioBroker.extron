@@ -443,7 +443,7 @@ class Extron extends utils.Adapter {
                             await this.setDeviceStatusAsync();
                         } else {
                             await this.getDeviceStatusAsync();
-                            //this.log.info('Extron get device status diabled');
+                            //this.log.info('Extron get device status diabled ');
                         }
                     }
                     return;
@@ -1283,9 +1283,18 @@ class Extron extends utils.Adapter {
                     } else if (value > 764) {
                         locObj.logValue = (((value - 764) / 236) * 12).toFixed(1);
                         locObj.devValue = (((value - 764) / 236) * 120).toFixed(0);
-                    } else {        // 0 .. 764
-                        locObj.logValue = (((764 - value) / 764) * -100).toFixed(1);
-                        locObj.devValue = (((764 - value) / 764) * -1000).toFixed(0);
+                    } else if (value >= 650) {
+                        locObj.logValue = (((value - 764) / 114) * 5).toFixed(1);
+                        locObj.devValue = (((value - 764) / 114) * 50).toFixed(0);
+                    } else if (value >= 250) {
+                        locObj.logValue = ((((value - 650) / 400) * 25)-5).toFixed(1);
+                        locObj.devValue = ((((value - 650) / 400) * 250)-50).toFixed(0);
+                    } else if (value >= 10) {
+                        locObj.logValue = ((((value - 250) / 250) * 40)-30).toFixed(1);
+                        locObj.devValue = ((((value -250) / 250) * 40)-300).toFixed(0);
+                    } else {
+                        locObj.logValue = '-100.0';
+                        locObj.devValue = '-1000';
                     }
                     break;
 
@@ -2067,27 +2076,27 @@ class Extron extends utils.Adapter {
      * @param {array} members
      */
     setGroupMembers(group, members) {
-        if ((members === undefined) || (members.length === 0)) {
-            this.log.debug(`setGroupMembers(): no member for group ${group}`);
-        } else {
-            let curMembers = this.groupMembers[group];
-            this.log.debug(`setGroupMembers(): group ${group} curMembers: "${curMembers}"`);
-            if (members.length == 1) { // add single member to grop
-                if(curMembers.includes(members[0])) {
-                    this.log.debug(`setGroupMembers(): OID ${members[0]} already included with group ${group}`);
-                } else {
-                    curMembers.push(members[0]);
-                    this.log.debug(`setGroupMembers(): added OID "${members[0]}" to group ${group} now holding "${curMembers}"`);
-                }
-            } else curMembers = members;    // replace list of members
-            this.groupMembers[group] = `${curMembers}`; // store stringified array
-            try {
-                this.setState(`groups.${group.toString().padStart(2,'0')}.members`, this.groupMembers[group].length == 0?'':this.groupMembers[group].join(','), true);
+        try {
+            if ((members === undefined) || (members.length === 0)) {
+                this.log.debug(`setGroupMembers(): no member for group ${group}`);
+            } else {
+                let curMembers = this.groupMembers[group];
+                this.log.debug(`setGroupMembers(): group ${group} curMembers: "${curMembers}"`);
+                if (members.length == 1) { // add single member to grop
+                    if(curMembers.includes(members[0])) {
+                        this.log.debug(`setGroupMembers(): OID ${members[0]} already included with group ${group}`);
+                    } else {
+                        curMembers.push(members[0]);
+                        this.log.debug(`setGroupMembers(): added OID "${members[0]}" to group ${group} now holding "${curMembers}"`);
+                    }
+                } else curMembers = members;    // replace list of members
+                this.groupMembers[group] = curMembers; // store stringified array
+                this.setState(`groups.${group.toString().padStart(2,'0')}.members`, this.groupMembers[group].length == 0?'':this.groupMembers[group], true);
                 this.setState(`groups.${group.toString().padStart(2,'0')}.deleted`, this.groupMembers[group].length == 0?true:false, true);
                 this.log.debug(`setGroupMembers(): group ${group} now has members ${this.groupMembers[group]}`);
-            } catch (err) {
-                this.errorHandler(err, 'setGroupMembers');
             }
+        } catch (err) {
+            this.errorHandler(err, 'setGroupMembers');
         }
     }
 

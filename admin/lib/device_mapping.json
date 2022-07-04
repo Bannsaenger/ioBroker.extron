@@ -24,7 +24,7 @@
             },
             "programInputs" :{
                 "name" : "Program Inputs",
-                "short" : "F",
+                "short" : "P",
                 "amount" : 2
             },
             "videoInputs" :{

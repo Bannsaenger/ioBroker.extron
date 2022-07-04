@@ -1139,7 +1139,7 @@
                 "common": {
                     "role": "list",
                     "name": "group members [OID]",
-                    "type": "string",
+                    "type": "array",
                     "read": true,
                     "write": true,
                     "def":""
