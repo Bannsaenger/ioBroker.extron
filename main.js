@@ -153,7 +153,7 @@ class Extron extends utils.Adapter {
                 case 'ssh' :
                     this.client.on('keyboard-interactive', this.onClientKeyboard.bind(this));
                     this.client.on('ready', this.onClientReady.bind(this));
-                    this.client.on('banner', this.onClientBanner.bind(this));
+                    //this.client.on('banner', this.onClientBanner.bind(this));
                     this.client.on('close', this.onClientClose.bind(this));
                     this.client.on('error', this.onClientError.bind(this));
                     this.client.on('end', this.onClientEnd.bind(this));
@@ -300,9 +300,10 @@ class Extron extends utils.Adapter {
      * @param {string} message
      * @param {string} language
      */
+    /*
     onClientBanner(message, language) {
         this.log.info(`onClientBanner(): Extron sent back banner: "${message}" in language: "${language}"`);
-    }
+    }*/
 
     /**
      * called if client is closed
