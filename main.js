@@ -154,7 +154,7 @@ class Extron extends utils.Adapter {
                 case 'ssh' :
                     this.client.on('keyboard-interactive', this.onClientKeyboard.bind(this));
                     this.client.on('ready', this.onClientReady.bind(this));
-                    this.client.on('banner', this.onClientBanner.bind(this));
+                    //this.client.on('banner', this.onClientBanner.bind(this));
                     this.client.on('close', this.onClientClose.bind(this));
                     this.client.on('error', this.onClientError.bind(this));
                     this.client.on('end', this.onClientEnd.bind(this));
@@ -301,9 +301,10 @@ class Extron extends utils.Adapter {
      * @param {string} message
      * @param {string} language
      */
+    /*
     onClientBanner(message, language) {
         this.log.info(`onClientBanner(): Extron sent back banner: "${message}" in language: "${language}"`);
-    }
+    }*/
 
     /**
      * called if client is closed
@@ -444,7 +445,7 @@ class Extron extends utils.Adapter {
                             await this.setDeviceStatusAsync();
                         } else {
                             await this.getDeviceStatusAsync();
-                            //this.log.info('Extron get device status diabled');
+                            //this.log.info('Extron get device status diabled ');
                         }
                     }
                     return;
@@ -1287,9 +1288,18 @@ class Extron extends utils.Adapter {
                     } else if (value > 764) {
                         locObj.logValue = (((value - 764) / 236) * 12).toFixed(1);
                         locObj.devValue = (((value - 764) / 236) * 120).toFixed(0);
-                    } else {        // 0 .. 764
-                        locObj.logValue = (((764 - value) / 764) * -100).toFixed(1);
-                        locObj.devValue = (((764 - value) / 764) * -1000).toFixed(0);
+                    } else if (value >= 650) {
+                        locObj.logValue = (((value - 764) / 114) * 5).toFixed(1);
+                        locObj.devValue = (((value - 764) / 114) * 50).toFixed(0);
+                    } else if (value >= 250) {
+                        locObj.logValue = ((((value - 650) / 400) * 25)-5).toFixed(1);
+                        locObj.devValue = ((((value - 650) / 400) * 250)-50).toFixed(0);
+                    } else if (value >= 10) {
+                        locObj.logValue = ((((value - 250) / 250) * 40)-30).toFixed(1);
+                        locObj.devValue = ((((value -250) / 250) * 400)-300).toFixed(0);
+                    } else {
+                        locObj.logValue = '-100.0';
+                        locObj.devValue = '-1000';
                     }
                     break;
 
@@ -2074,27 +2084,27 @@ class Extron extends utils.Adapter {
      * @param {array} members
      */
     setGroupMembers(group, members) {
-        if ((members === undefined) || (members.length === 0)) {
-            this.log.debug(`setGroupMembers(): no member for group ${group}`);
-        } else {
-            let curMembers = this.groupMembers[group];
-            this.log.debug(`setGroupMembers(): group ${group} curMembers: "${curMembers}"`);
-            if (members.length == 1) { // add single member to grop
-                if(curMembers.includes(members[0])) {
-                    this.log.debug(`setGroupMembers(): OID ${members[0]} already included with group ${group}`);
-                } else {
-                    curMembers.push(members[0]);
-                    this.log.debug(`setGroupMembers(): added OID "${members[0]}" to group ${group} now holding "${curMembers}"`);
-                }
-            } else curMembers = members;    // replace list of members
-            this.groupMembers[group] = `${curMembers}`; // store stringified array
-            try {
-                this.setState(`groups.${group.toString().padStart(2,'0')}.members`, this.groupMembers[group].length == 0?'':this.groupMembers[group].join(','), true);
+        try {
+            if ((members === undefined) || (members.length === 0)) {
+                this.log.debug(`setGroupMembers(): no member for group ${group}`);
+            } else {
+                let curMembers = this.groupMembers[group];
+                this.log.debug(`setGroupMembers(): group ${group} curMembers: "${curMembers}"`);
+                if (members.length == 1) { // add single member to grop
+                    if(curMembers.includes(members[0])) {
+                        this.log.debug(`setGroupMembers(): OID ${members[0]} already included with group ${group}`);
+                    } else {
+                        curMembers.push(members[0]);
+                        this.log.debug(`setGroupMembers(): added OID "${members[0]}" to group ${group} now holding "${curMembers}"`);
+                    }
+                } else curMembers = members;    // replace list of members
+                this.groupMembers[group] = curMembers; // store stringified array
+                this.setState(`groups.${group.toString().padStart(2,'0')}.members`, this.groupMembers[group].length == 0?'':`${this.groupMembers[group]}`, true);
                 this.setState(`groups.${group.toString().padStart(2,'0')}.deleted`, this.groupMembers[group].length == 0?true:false, true);
                 this.log.debug(`setGroupMembers(): group ${group} now has members ${this.groupMembers[group]}`);
-            } catch (err) {
-                this.errorHandler(err, 'setGroupMembers');
             }
+        } catch (err) {
+            this.errorHandler(err, 'setGroupMembers');
         }
     }
 
@@ -2153,8 +2163,8 @@ class Extron extends utils.Adapter {
         try {
             switch (this.groupTypes[group]) {
                 case 6 :           // gain group
-                    this.setState(`groups.${group.toString().padStart(2,'0')}.level_db`, Number(this.calculateFaderValue(level, 'log').logValue), true);
-                    this.setState(`groups.${group.toString().padStart(2,'0')}.level`, Number(this.calculateFaderValue(level, 'log').linValue), true);
+                    this.setState(`groups.${group.toString().padStart(2,'0')}.level_db`, Number(this.calculateFaderValue(level, 'dev').logValue), true);
+                    this.setState(`groups.${group.toString().padStart(2,'0')}.level`, Number(this.calculateFaderValue(level, 'dev').linValue), true);
                     break;
 
                 case 12 :    // mute group
@@ -3092,8 +3102,8 @@ class Extron extends utils.Adapter {
                                     stateTime = this.stateBuf.find(stateTime => stateTime.id === id); // now it should be found
                                 }
                                 elapsed = timeStamp - stateTime.timestamp;  // calcualte elapsed milliseconds since last change
-                                if ( elapsed > this.config.stateDelay) {    // if configured stateDelay has been exceeded, process the change event
-                                    switch (idBlock) {
+                                if ( elapsed > this.config.stateDelay || state.val <= 10) {    	// if configured stateDelay has been exceeded, process the change event
+                                    switch (idBlock) {						// or if value is near 0
                                         case 'gain' :
                                             calcMode = 'linGain';
                                             if (idType === 'auxInputs') calcMode = 'linAux';

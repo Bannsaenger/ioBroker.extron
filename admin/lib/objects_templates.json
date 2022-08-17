@@ -744,7 +744,7 @@
                 "type": "state",
                 "common": {
                     "role": "text",
-                    "name": "input name",
+                    "name": "output name",
                     "type": "string",
                     "read": true,
                     "write": true
@@ -901,7 +901,7 @@
                 "type": "state",
                 "common": {
                     "role": "text",
-                    "name": "input name",
+                    "name": "output name",
                     "type": "string",
                     "read": true,
                     "write": true
@@ -1139,7 +1139,7 @@
                 "common": {
                     "role": "list",
                     "name": "group members [OID]",
-                    "type": "string",
+                    "type": "array",
                     "read": true,
                     "write": true,
                     "def":""
