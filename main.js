@@ -70,7 +70,7 @@ class Extron extends utils.Adapter {
         this.isVerboseMode = false;         // will be true if verbose mode 3 is active
         this.initDone = false;              // will be true if all init is done
         this.versionSet = false;            // will be true if the version is once set in the db
-        this.device = {};                   // will be filled according to device responses
+        this.device = {'model':'','name':'','version':''}; // will be filled according to device responses
         this.statusRequested = false;       // will be true once device status has been requested after init
         this.statusSended = false;          // will be true once database settings have been sended to device
         this.clientReady = false;           // will be true if device connection is ready
