@@ -70,6 +70,7 @@ class Extron extends utils.Adapter {
         this.isVerboseMode = false;         // will be true if verbose mode 3 is active
         this.initDone = false;              // will be true if all init is done
         this.versionSet = false;            // will be true if the version is once set in the db
+        this.device = {};                   // will be filled according to device responses
         this.statusRequested = false;       // will be true once device status has been requested after init
         this.statusSended = false;          // will be true once database settings have been sended to device
         this.clientReady = false;           // will be true if device connection is ready
@@ -480,18 +481,21 @@ class Extron extends utils.Adapter {
                                 this.log.debug(`onStreamData(): Extron got version: "${ext2}"`);
                                 if (!this.versionSet) {
                                     this.versionSet = true;
+                                    this.device.version = `${ext2}`;
                                     this.setState('device.version', ext2, true);
-                                    this.log.info(`onStreamData(): Extron got version: "${ext2}"`);
+                                    this.log.info(`onStreamData(): Extron set version: "${ext2}"`);
                                 }
                                 break;
 
                             case 'IPN':             // received a device name
                                 this.log.info(`onStreamData(): Extron got devicename: "${ext2}"`);
+                                this.device.name = `${ext2}`;
                                 this.setState('device.name', ext2, true);
                                 break;
 
                             case 'INF':             // received a device model
                                 this.log.info(`onStreamData(): Extron got device model: "${ext2}"`);
+                                this.device.model = `${ext2}`;
                                 this.setState('device.model', ext2, true);
                                 break;
 
@@ -1585,7 +1589,9 @@ class Extron extends utils.Adapter {
                     this.streamSend(`W${ioNumber}NL\r`);
                     break;
                 case 'expansionInputs':
-                    this.streamSend(`WA${ioNumber}EXPD\r`);
+                    if (this.device.model.includes('DMP 128') && Number(this.device.version) < 1.08) 
+                        {this.streamSend(`WA${ioNumber}EXPD\r`);}
+                    else { this.streamSend(`W${ioNumber}NE\r`);}
                     break;
                 case 'outputs' :
                     this.streamSend(`W${ioNumber}NO\r`);
@@ -1622,7 +1628,8 @@ class Extron extends utils.Adapter {
                     this.streamSend(`W${ioNumber},${name}NL\r`);
                     break;
                 case 'expansionInputs':
-                    this.streamSend(`WA${ioNumber}*${name}EXPD\r`);
+                    //this.streamSend(`WA${ioNumber}*${name}EXPD\r`);
+                    this.streamSend(`W${ioNumber},${name}NE\r`);
                     break;
                 case 'outputs' :
                     this.streamSend(`W${ioNumber},${name}NO\r`);
