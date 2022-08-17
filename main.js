@@ -1599,9 +1599,8 @@ class Extron extends utils.Adapter {
                     this.streamSend(`W${ioNumber}NL\r`);
                     break;
                 case 'expansionInputs':
-                    if (this.device.model.includes('DMP 128') && Number(this.device.version) < 1.08) 
-                        {this.streamSend(`WA${ioNumber}EXPD\r`);}
-                    else { this.streamSend(`W${ioNumber}NE\r`);}
+                    this.streamSend(`WA${ioNumber}EXPD\r`);
+                    //this.streamSend(`W${ioNumber}NE\r`);
                     break;
                 case 'outputs' :
                     this.streamSend(`W${ioNumber}NO\r`);
@@ -1638,8 +1637,8 @@ class Extron extends utils.Adapter {
                     this.streamSend(`W${ioNumber},${name}NL\r`);
                     break;
                 case 'expansionInputs':
-                    //this.streamSend(`WA${ioNumber}*${name}EXPD\r`);
-                    this.streamSend(`W${ioNumber},${name}NE\r`);
+                    this.streamSend(`WA${ioNumber}*${name}EXPD\r`);
+                    //this.streamSend(`W${ioNumber},${name}NE\r`);
                     break;
                 case 'outputs' :
                     this.streamSend(`W${ioNumber},${name}NO\r`);
