@@ -3,7 +3,10 @@
     "name": "extron",
     "version": "0.1.13",
     "news": {
-      "0.1.13":{
+      "0.1.14":{
+        "en": "fixed grouup command issues",
+        "de": "Probleme in group-Befehlen behoben"
+      },"0.1.13":{
         "en": "fixed sourcecode version issues",
         "de": "Versionskonflikte im Sourcecode behoben"
       },"0.1.12":{

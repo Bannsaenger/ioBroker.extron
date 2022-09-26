@@ -38,9 +38,15 @@ If you are a non commercial organisation or use it for private use you can get a
 - add more commands and their implementation on the database side
 
 ## Changelog
+### 0.1.14
+* (mschlgl) fixed group command issues
+
+### 0.1.13
+* (mschlgl) fixed source code version issues
 
 ### 0.1.12
 * (mschlgl) added support for channel preset selection in SMD202
+
 ### 0.1.11
 * (Bannsaenger) fixed support for groups in DSP DMP128
 
