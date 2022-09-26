@@ -1767,7 +1767,7 @@ class Extron extends utils.Adapter {
     /** END Input and Mix control */
 
     /** BEGIN integrated audio player control */
-    /**
+    /*
      * Set the database values for a player
      * @param {string} oid
      * @param {string | boolean} value
@@ -1776,7 +1776,7 @@ class Extron extends utils.Adapter {
     setPlayMode(oid, value) {
         try {
             const player = this.oid2id(oid);
-            this.setState(`${player}playmode`, value === '1' ? true : false, true);
+            this.setState(`${player}playmode`, value === '1'? true : false, true);
         } catch (err) {
             this.errorHandler(err, 'setPlayMode');
         }
@@ -3241,7 +3241,7 @@ class Extron extends utils.Adapter {
                                 }
                                 break;
                             case 'deleted' :
-                                this.sendDeleteGroup(idGrp);
+                                if (state.val == true) this.sendDeleteGroup(idGrp);
                                 break;
 
                             case 'channel' :
