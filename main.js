@@ -3128,6 +3128,9 @@ class Extron extends utils.Adapter {
                                         this.sendGroupLevel(idGrp, Number(state.val));
                                     } else this.sendGainLevel(id,this.calculateFaderValue(`${state.val}`,calcMode));
                                 }
+                                else{
+                                    this.log.silly(`onStateChange: delay for change of ${Id} not expired`;
+                                }
                                 break;
                             case 'level_db' :
                                 calcMode ='log';

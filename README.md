@@ -38,6 +38,9 @@ If you are a non commercial organisation or use it for private use you can get a
 - add more commands and their implementation on the database side
 
 ## Changelog
+
+### 0.1.15
+* (mschlgl) added statedela log message
 ### 0.1.14
 * (mschlgl) fixed group command issues
 

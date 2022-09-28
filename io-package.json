@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.1.14",
+    "version": "0.1.15",
     "news": {
+      "0.1.15":{
+        "en": "fixed grouup command issues added statedelay log message",
+        "de": "Probleme in group-Befehlen behoben, protokollnachricht hinzugefügt"
+      }
       "0.1.14":{
         "en": "fixed grouup command issues",
         "de": "Probleme in group-Befehlen behoben"
