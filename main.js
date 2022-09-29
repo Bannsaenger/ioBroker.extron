@@ -1294,7 +1294,7 @@ class Extron extends utils.Adapter {
                     } else if (value >= 250) {
                         locObj.logValue = ((((value - 650) / 400) * 25)-5).toFixed(1);
                         locObj.devValue = ((((value - 650) / 400) * 250)-50).toFixed(0);
-                    } else if (value >= 10) {
+                    } else if (value >= 2) {
                         locObj.logValue = ((((value - 250) / 250) * 40)-30).toFixed(1);
                         locObj.devValue = ((((value -250) / 250) * 400)-300).toFixed(0);
                     } else {
@@ -2147,6 +2147,8 @@ class Extron extends utils.Adapter {
                 case 12:    // mute group
                     this.streamSend(`WD${group}*${level}GRPM\r`);
                     break;
+                default:
+                    this.log.debug(`sendGroupLevel() groupType ${this.groupTypes[group]} not supported`);
             }
         }
         catch (err) {
@@ -2170,6 +2172,9 @@ class Extron extends utils.Adapter {
                     this.setState(`groups.${group.toString().padStart(2,'0')}.level_db`, level?1:0, true);
                     this.setState(`groups.${group.toString().padStart(2,'0')}.level`, level?1:0, true);
                     break;
+                default:
+                    this.log.debug(`sendGroupLevel() groupType ${this.groupTypes[group]} not supported`);
+                
             }
         } catch (err) {
             this.errorHandler(err, 'setGroupLevel');
@@ -3129,7 +3134,7 @@ class Extron extends utils.Adapter {
                                     } else this.sendGainLevel(id,this.calculateFaderValue(`${state.val}`,calcMode));
                                 }
                                 else{
-                                    this.log.silly(`onStateChange: delay for change of ${Id} not expired`;
+                                    this.log.debug(`onStateChange(): processing for ${id} = ${state.val} skipped due to statedelay`);
                                 }
                                 break;
                             case 'level_db' :
@@ -3223,6 +3228,7 @@ class Extron extends utils.Adapter {
 
                             case 'type' :
                                 this.sendGroupType(idGrp, Number(state.val));
+                                this.setGroupType(idGrp, Number(state.val));
                                 switch (Number(state.val)) {
                                     case 6:     // gain group
                                         this.sendGroupLimits(idGrp, 120, -1000);
@@ -3230,6 +3236,8 @@ class Extron extends utils.Adapter {
                                     case 12:    // mute group
                                         this.sendGroupLimits(idGrp, 1, 0);
                                         break;
+                                    default:
+                                        this.log.debug(`sendGroupLevel() groupType ${state.val} not supported`);                                    
                                 }
                                 break;
 

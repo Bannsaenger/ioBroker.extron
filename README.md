@@ -39,8 +39,12 @@ If you are a non commercial organisation or use it for private use you can get a
 
 ## Changelog
 
+### 0.1.16
+* (mschlgl) fixed group command issues, added statedelay log message
+
 ### 0.1.15
-* (mschlgl) added statedela log message
+* (mschlgl) added statedelay log message
+
 ### 0.1.14
 * (mschlgl) fixed group command issues
 
