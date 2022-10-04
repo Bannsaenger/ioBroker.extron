@@ -789,7 +789,7 @@ class Extron extends utils.Adapter {
                 this.pollCount = 0;
                 this.clientReConnect();
             } else {
-                if (typeof this.timers.timeoutQueryStatus !== undefined) this.timers.timeoutQueryStatus.refresh();
+                if (typeof this.timers.timeoutQueryStatus !== 'undefined') this.timers.timeoutQueryStatus.refresh();
                 if (!this.fileSend) {
                     this.streamSend('Q');
                     this.pollCount += 1;
@@ -2174,7 +2174,7 @@ class Extron extends utils.Adapter {
                     break;
                 default:
                     this.log.debug(`sendGroupLevel() groupType ${this.groupTypes[group]} not supported`);
-                
+
             }
         } catch (err) {
             this.errorHandler(err, 'setGroupLevel');
@@ -3237,7 +3237,7 @@ class Extron extends utils.Adapter {
                                         this.sendGroupLimits(idGrp, 1, 0);
                                         break;
                                     default:
-                                        this.log.debug(`sendGroupLevel() groupType ${state.val} not supported`);                                    
+                                        this.log.debug(`sendGroupLevel() groupType ${state.val} not supported`);
                                 }
                                 break;
 
