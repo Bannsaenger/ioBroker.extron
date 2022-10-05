@@ -1,8 +1,20 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.1.16",
+    "version": "0.2.0",
     "news": {
+      "0.2.0": {
+        "en": "updated dependencies",
+        "de": "Abhängigkeiten aktualisiert",
+        "ru": "обновленные зависимости",
+        "pt": "dependências atualizadas",
+        "nl": "vertaling:",
+        "fr": "dépendances actualisées",
+        "it": "dipendenze aggiornate",
+        "es": "dependencias actualizadas",
+        "pl": "zależności aktualizacji",
+        "zh-cn": "二. 最新依赖"
+      },
       "0.1.16":{
         "en": "fixed grouup command issues added statedelay log message",
         "de": "Probleme in group-Befehlen behoben, protokollnachricht hinzugefügt"

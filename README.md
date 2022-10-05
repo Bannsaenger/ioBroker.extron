@@ -39,6 +39,9 @@ If you are a non commercial organisation or use it for private use you can get a
 
 ## Changelog
 
+### 0.2.0
+* (Bannsaenger) updated dependencies
+
 ### 0.1.16
 * (mschlgl) fixed group command issues, added statedelay log message
 
