@@ -62,8 +62,9 @@ class Extron extends utils.Adapter {
      */
     initVars() {
         this.log.debug('initVars(): Extron initializing internal variables');
-        // Send buffer (Array of commands to send)
-        this.sendBuffer = [];
+        this.sendBuffer = [];   // Send buffer (Array of commands to send)
+        this.grpCmdBuf = new Array(65);    // buffer for group command while a group deletion is pending
+        this.grpCmdBuf.fill([]);
         // Status variables
         this.isDeviceChecked = false;       // will be true if device sends banner and will be verified
         this.isLoggedIn = false;            // will be true once telnet login completed
@@ -94,7 +95,9 @@ class Extron extends utils.Adapter {
         this.auxOutEnabled = [false, false, false, false, false, false, false,false];   // remember which aux output is enabled
         this.groupTypes = new Array(65);    // prepare array to hold the type of groups
         this.groupMembers = new Array(65);  // prepare array to hold actual group members
-        this.groupMembers.fill('');
+        this.groupMembers.fill([]);
+        this.grpDelPnd = new Array(65); // prepare array to flag group deletions pending
+        this.grpDelPnd.fill(false);
         this.fileSend = false;          // flag to signal a file is currently sended
         this.requestDir = false;        // flag to signal a list user files command has been issued and a directory list is to be received
         this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize':''};         // file object
@@ -621,31 +624,33 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'GRPMZ' :      // delete Group command
-                                this.log.info(`onStreamData(): Extron got delete group #"${ext1}`);
-                                this.groupTypes[Number(ext1)] = undefined;
-                                this.groupMembers[Number(ext1)] = [];
+                                this.log.info(`onStreamData(): Extron got group #"${ext1} deleted`);
+                                this.grpDelPnd[Number(ext1)] = false;   // flag group deletion confirmation
+                                this.setState(`groups.${ext1.padStart(2,'0')}.deleted`,true,true); // confirm group deletion in database
+                                this.sendGrpCmdBuf(Number(ext1)); // process group commands queued during pending deletion
+                                /*
+                                this.groupTypes[Number(ext1)] = undefined;  // reset group type
+                                this.groupMembers[Number(ext1)] = [];       // delete group members
                                 this.setState(`groups.${ext1.padStart(2,'0')}.members`,'',true);
-                                this.setState(`groups.${ext1.padStart(2,'0')}.deleted`,true,true);
+                                */
+                                this.getGroupType(Number(ext1));    // request group type update
+                                this.getGroupMembers(Number(ext1)); // request grop mebers update
                                 break;
                             case 'GRPMD' :      // set Group fader value
                                 this.log.info(`onStreamData(): Extron got Group #'${ext1}" fader value:"${ext2}"`);
                                 this.setGroupLevel(Number(ext1),Number(ext2));
                                 break;
                             case 'GRPMP' :      // set Group type
-                                this.log.info(`onStreamData(): Extron got set group #"${ext1}" type: "${ext2}"`);
+                                this.log.info(`onStreamData(): Extron got group #"${ext1}" type: "${ext2}"`);
                                 this.setGroupType(Number(ext1), Number(ext2));
                                 break;
                             case 'GRPMO' :      // add group member
                                 members = ext2.split('*');
-                                if (members.length >1) {
-                                    this.log.info(`onStreamData(): Extron got group #"${ext1}" add OID's: "${members}"`);
-                                } else {
-                                    this.log.info(`onStreamData(): Extron got group #"${ext1}" add OID: "${members}"`);
-                                }
+                                this.log.info(`onStreamData(): Extron got group #"${ext1}" member(s): "${members}"`);
                                 this.setGroupMembers(Number(ext1),members);
                                 break;
                             case 'GRPML' :      // set group limits
-                                this.log.info(`onStreamData(): Extron got set group #"${ext1}" limits upper: "${ext2.split('*')[0]}" lower: "${ext2.split('*')[1]}""`);
+                                this.log.info(`onStreamData(): Extron got group #"${ext1}" limits upper: "${ext2.split('*')[0]}" lower: "${ext2.split('*')[1]}""`);
                                 this.setGroupLimits(Number(ext1),Number(ext2.split('*')[0]),Number(ext2.split('*')[1]));
                                 break;
                             case 'GRPMN' :      // group name
@@ -1790,8 +1795,9 @@ class Extron extends utils.Adapter {
     sendPlayMode(baseId, value) {
         try {
             const oid = this.id2oid(baseId);
-            if (oid && this.playerLoaded[Number(oid)-1]) {
+            if (oid) {
                 this.streamSend(`W${oid}*${(value?'1':'0')}PLAY\r`);
+                if (!this.playerLoaded[Number(oid)-1]) this.log.warn(`sendPlayMode(): player ${oid} has no file assigned`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendPlayMode');
@@ -1837,8 +1843,9 @@ class Extron extends utils.Adapter {
     sendRepeatMode(baseId, value) {
         try {
             const oid = this.id2oid(baseId);
-            if (oid && this.playerLoaded[Number(oid)-1]) {
+            if (oid) {
                 this.streamSend(`WM${oid}*${(value?'1':'0')}CPLY\r`);
+                if (!this.playerLoaded[Number(oid)-1]) this.log.error(`sendRepeatMode(): player ${oid} has no file assigned`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendRepeatMode');
@@ -2047,17 +2054,46 @@ class Extron extends utils.Adapter {
     /** END user flash memory file management */
 
     /** BEGIN group control */
+
+    /**
+     * queue group commands during deleteion pending
+     * @param {number} group
+     * @param {string} cmd
+     */
+    queueGrpCmd(group, cmd) {
+        this.log.debug(`queueGrpCmd(): pushing "${cmd}" to group #${group} buffer`);
+        this.grpCmdBuf[group].push(cmd); // push command to buffer
+    }
+
+
+    /**
+     * send group command buffer
+     * @param {number} group
+     */
+    sendGrpCmdBuf(group) {
+        this.log.info(`sendGrpCmdBuf: processing ${this.grpCmdBuf[group].length} queued commands on group "${group}"`);
+        while (this.grpCmdBuf[group].length > 0) {
+            this.streamSend(this.grpCmdBuf[group].pop());
+        }
+    }
+
+
     /**
      * get all member OID's of a given group from device
      * @param {number} group
      * cmd = O[group]GRPM
      */
     getGroupMembers(group) {
-        try {
-            this.streamSend(`WO${group}GRPM\r`);
-        }
-        catch (err) {
-            this.errorHandler(err, 'getGroupMembers');
+        const cmd = `WO${group}GRPM\r`;
+        if (this.grpDelPnd[group] == false) {
+            try {
+                this.streamSend(cmd); // send comman
+            }
+            catch (err) {
+                this.errorHandler(err, 'getGroupMembers');
+            }
+        } else {
+            this.queueGrpCmd(group,cmd); // push command to buffer
         }
     }
 
@@ -2068,14 +2104,20 @@ class Extron extends utils.Adapter {
     */
     sendGroupMember(group, baseId) {
         const oid = this.id2oid(baseId);
+        const cmd = `WO${group}*${oid}GRPM\r`;
         if (oid) {
-            try {
-                this.streamSend(`WO${group}*${oid}GRPM\r`);
-            }
-            catch (err) {
-                this.errorHandler(err, 'sendGroupMember');
+            if (this.grpDelPnd[group] == false) {
+                try {
+                    this.streamSend(cmd); // send comman
+                }
+                catch (err) {
+                    this.errorHandler(err, 'sendGroupMember');
+                }
+            } else {
+                this.queueGrpCmd(group,cmd); // push command to buffer
             }
         }
+        
     }
 
     /** store group members in database
@@ -2084,23 +2126,25 @@ class Extron extends utils.Adapter {
      */
     setGroupMembers(group, members) {
         try {
-            if ((members === undefined) || (members.length === 0)) {
+            //if ((members === undefined) || (members.length === 0)) {
+            if (members === undefined) {
                 this.log.debug(`setGroupMembers(): no member for group ${group}`);
             } else {
-                let curMembers = this.groupMembers[group];
-                this.log.debug(`setGroupMembers(): group ${group} curMembers: "${curMembers}"`);
-                if (members.length == 1) { // add single member to grop
-                    if(curMembers.includes(members[0])) {
-                        this.log.debug(`setGroupMembers(): OID ${members[0]} already included with group ${group}`);
+                this.log.debug(`setGroupMembers(): group #${group} curMembers: "${this.groupMembers[group]}"`);
+                if (members.length == 1) { // add single member to group
+                    if(this.groupMembers[group].includes(members[0])) {
+                        this.log.debug(`setGroupMembers(): OID "${members[0]}" already included with group ${group}`);
                     } else {
-                        curMembers.push(members[0]);
-                        this.log.debug(`setGroupMembers(): added OID "${members[0]}" to group ${group} now holding "${curMembers}"`);
+                        this.groupMembers[group].push(members[0]);
+                        this.log.debug(`setGroupMembers(): added OID "${members[0]}" to group ${group} now holding "${this.groupMembers[group]}"`);
                     }
-                } else curMembers = members;    // replace list of members
-                this.groupMembers[group] = curMembers; // store stringified array
+                } else {    // replace list of members
+                    this.groupMembers[group] = [];
+                    for (let member of members) this.groupMembers[group].push(member);
+                }
                 this.setState(`groups.${group.toString().padStart(2,'0')}.members`, this.groupMembers[group].length == 0?'':`${this.groupMembers[group]}`, true);
                 this.setState(`groups.${group.toString().padStart(2,'0')}.deleted`, this.groupMembers[group].length == 0?true:false, true);
-                this.log.debug(`setGroupMembers(): group ${group} now has members ${this.groupMembers[group]}`);
+                this.log.info(`setGroupMembers(): group ${group} now has members ${this.groupMembers[group]}`);
             }
         } catch (err) {
             this.errorHandler(err, 'setGroupMembers');
@@ -2112,8 +2156,13 @@ class Extron extends utils.Adapter {
      * cmd = Z[group]GRPM
      */
     sendDeleteGroup(group) {
+        const cmd = `WZ${group}GRPM\r`;
         try {
-            this.streamSend(`WZ${group}GRPM\r`);
+            if (this.grpDelPnd[group] == false) {
+                this.streamSend(cmd);
+                this.grpDelPnd[group] = true;   // flag group deletion command has been sent
+                this.grpCmdBuf[group] = []; // clear command buffer for the group
+            } else this.grpCmdBuf[group].push(cmd);
         }
         catch (err) {
             this.errorHandler(err, 'deleteGroup');
@@ -2125,11 +2174,16 @@ class Extron extends utils.Adapter {
      * cmd = D[group]GRPM
      */
     getGroupLevel(group) {
-        try {
-            this.streamSend(`WD${group}GRPM\r`);
-        }
-        catch (err) {
-            this.errorHandler(err, 'getGroupLevel');
+        const cmd = `WD${group}GRPM\r`;
+        if (this.grpDelPnd[group] == false) {
+            try {
+                this.streamSend(cmd); // send command
+            }
+            catch (err) {
+                this.errorHandler(err, 'getGroupLevel');
+            }
+        } else {
+            this.queueGrpCmd(group,cmd); // push command to buffer
         }
     }
 
@@ -2139,20 +2193,26 @@ class Extron extends utils.Adapter {
      * cmd = D[group]*[level]GRPM
      */
     sendGroupLevel(group, level) {
-        try {
-            switch (this.groupTypes[group]) {
-                case 6: // gain group
-                    this.streamSend(`WD${group}*${this.calculateFaderValue(level, 'lin').devValue}GRPM\r`);
-                    break;
-                case 12:    // mute group
-                    this.streamSend(`WD${group}*${level}GRPM\r`);
-                    break;
-                default:
-                    this.log.debug(`sendGroupLevel() groupType ${this.groupTypes[group]} not supported`);
-            }
+        var cmd = '';
+        switch (this.groupTypes[group]) {
+            case 6: // gain group
+                cmd = `WD${group}*${this.calculateFaderValue(level, 'lin').devValue}GRPM\r`;
+                break;
+            case 12:    // mute group
+                cmd = `WD${group}*${level}GRPM\r`;
+                break;
+            default:
+                this.log.error(`sendGroupLevel() groupType "${this.groupTypes[group]}" for group "${group}" not supported`);
         }
-        catch (err) {
-            this.errorHandler(err, 'sendGroupLevel');
+        if (this.grpDelPnd[group] == false) {
+            try {
+                this.streamSend(cmd); // send command
+            }
+            catch (err) {
+                this.errorHandler(err, 'sendGroupLevel');
+            }
+        } else {
+            this.queueGrpCmd(group,cmd); // push command to buffer
         }
     }
 
@@ -2173,7 +2233,7 @@ class Extron extends utils.Adapter {
                     this.setState(`groups.${group.toString().padStart(2,'0')}.level`, level?1:0, true);
                     break;
                 default:
-                    this.log.debug(`sendGroupLevel() groupType ${this.groupTypes[group]} not supported`);
+                    this.log.error(`setGroupLevel() groupType ${this.groupTypes[group]} on group "${group}"not supported`);
 
             }
         } catch (err) {
@@ -2186,11 +2246,16 @@ class Extron extends utils.Adapter {
      * cmd = P[group]GRPM
      */
     getGroupType(group) {
-        try {
-            this.streamSend(`WP${group}GRPM\r`);
-        }
-        catch (err) {
-            this.errorHandler(err, 'getGroupType');
+        const cmd = `WP${group}GRPM\r`;
+        if (this.grpDelPnd[group] == false) {
+            try {
+                this.streamSend(cmd); // send command
+            }
+            catch (err) {
+                this.errorHandler(err, 'sendGroupLevel');
+            }
+        } else {
+            this.queueGrpCmd(group,cmd); // push command to buffer
         }
     }
 
@@ -2200,11 +2265,16 @@ class Extron extends utils.Adapter {
      * cmd = P[group]*[type]GRPM
      */
     sendGroupType(group, type) {
-        try {
-            this.streamSend(`WP${group}*${type}GRPM\r`);
-        }
-        catch (err) {
-            this.errorHandler(err, 'sendGroupType');
+        const cmd = `WP${group}*${type}GRPM\r`;
+        if (this.grpDelPnd[group] == false) {
+            try {
+                this.streamSend(cmd); // send command
+            }
+            catch (err) {
+                this.errorHandler(err, 'sendGroupType');
+            }
+        } else {
+            this.queueGrpCmd(group,cmd); // push command to buffer
         }
     }
 
@@ -2226,11 +2296,16 @@ class Extron extends utils.Adapter {
      * cmd = L[group]GRPM
      */
     getGroupLimits(group) {
-        try {
-            this.streamSend(`WL${group}GRPM\r`);
-        }
-        catch (err) {
-            this.errorHandler(err, 'getGroupLimits');
+        const cmd = `WL${group}GRPM\r`;
+        if (this.grpDelPnd[group] == false) {
+            try {
+                this.streamSend(cmd); // send command
+            }
+            catch (err) {
+                this.errorHandler(err, 'getGroupLimits');
+            }
+        } else {
+            this.queueGrpCmd(group,cmd); // push command to buffer
         }
     }
 
@@ -2241,11 +2316,16 @@ class Extron extends utils.Adapter {
      * cmd = L[group]*[upper]*[lower]GRPM
     */
     sendGroupLimits(group, upper, lower) {
-        try {
-            this.streamSend(`WL${group}*${upper}*${lower}GRPM\r`);
-        }
-        catch (err) {
-            this.errorHandler(err, 'sendGroupLimits');
+        const cmd = `WL${group}*${upper}*${lower}GRPM\r`;
+        if (this.grpDelPnd[group] == false) {
+            try {
+                this.streamSend(cmd); // send command
+            }
+            catch (err) {
+                this.errorHandler(err, 'sendGroupLimits');
+            }
+        } else {
+            this.queueGrpCmd(group,cmd); // push command to buffer
         }
     }
 
@@ -2268,11 +2348,16 @@ class Extron extends utils.Adapter {
      * cmd = N[group]GRPM
      */
     getGroupName(group) {
-        try {
-            this.streamSend(`WN${group}GRPM\r`);
-        }
-        catch (err) {
-            this.errorHandler(err, 'getGroupName');
+        const cmd = `WN${group}GRPM\r`;
+        if (this.grpDelPnd[group] == false) {
+            try {
+                this.streamSend(cmd); // send command
+            }
+            catch (err) {
+                this.errorHandler(err, 'getGroupName');
+            }
+        } else {
+            this.queueGrpCmd(group,cmd); // push command to buffer
         }
     }
 
@@ -2282,11 +2367,16 @@ class Extron extends utils.Adapter {
      * cmd = N[group]*[name]GRPM
      */
     sendGroupName(group, name) {
-        try {
-            this.streamSend(`WN${group}*${name}GRPM\r`);
-        }
-        catch (err) {
-            this.errorHandler(err, 'sendGroupName');
+        const cmd = `WN${group}*${name}GRPM\r`;
+        if (this.grpDelPnd[group] == false) {
+            try {
+                this.streamSend(cmd); // send command
+            }
+            catch (err) {
+                this.errorHandler(err, 'sendGroupName');
+            }
+        } else {
+            this.queueGrpCmd(group,cmd); // push command to buffer
         }
     }
 
@@ -3069,7 +3159,7 @@ class Extron extends utils.Adapter {
                 // this.log.debug(`state ${id} changed: ${state.val} (ack = ${state.ack})`);
                 if (!state.ack) {       // only react on not acknowledged state changes
                     if ((state.val === undefined) || (state.val === null)) state.val = '';
-                    this.log.debug(`onStateChange(): Extron state ${id} changed: ${state.val} (ack = ${state.ack})`);
+                    this.log.info(`onStateChange(): Extron state ${id} changed: ${state.val} (ack = ${state.ack})`);
                     const baseId = id.slice(0, id.lastIndexOf('.'));
                     const idArray = id.split('.');
                     const idType = idArray[3];
@@ -3188,7 +3278,7 @@ class Extron extends utils.Adapter {
 
                             case 'filename' :
                                 if (this.checkName(`${state.val}`)) this.sendFileName(id, `${state.val}`);
-                                else this.log.error('filename includes invalid characters');
+                                else this.log.error('onStateChange(): filename includes invalid characters');
                                 break;
 
                             case 'tie' :
@@ -3223,21 +3313,23 @@ class Extron extends utils.Adapter {
                                             this.sendIOName(id,`${state.val}`);
                                             break;
                                     }
-                                } else this.log.error('state name includes invalid characters');
+                                } else this.log.error('onStateChange(): state name includes invalid characters');
                                 break;
 
                             case 'type' :
-                                this.sendGroupType(idGrp, Number(state.val));
-                                this.setGroupType(idGrp, Number(state.val));
                                 switch (Number(state.val)) {
                                     case 6:     // gain group
+                                        this.sendGroupType(idGrp, Number(state.val));
+                                        this.setGroupType(idGrp, Number(state.val));
                                         this.sendGroupLimits(idGrp, 120, -1000);
                                         break;
                                     case 12:    // mute group
+                                        this.sendGroupType(idGrp, Number(state.val));
+                                        this.setGroupType(idGrp, Number(state.val));
                                         this.sendGroupLimits(idGrp, 1, 0);
                                         break;
                                     default:
-                                        this.log.debug(`sendGroupLevel() groupType ${state.val} not supported`);
+                                        this.log.error(`onStateChange(): groupType ${state.val} not supported`);
                                 }
                                 break;
 
@@ -3263,7 +3355,7 @@ class Extron extends utils.Adapter {
                 }
             } else {
                 // The state was deleted
-                this.log.info(`Extron state ${id} deleted`);
+                this.log.info(`onStateChange(): Extron state ${id} deleted`);
             }
         } catch (err) {
             this.errorHandler(err, 'onStateChange');
