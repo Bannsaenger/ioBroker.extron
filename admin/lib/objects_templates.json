@@ -1138,7 +1138,7 @@
                 "type": "state",
                 "common": {
                     "role": "list",
-                    "name": "group members [OID]",
+                    "name": "group members",
                     "type": "array",
                     "read": true,
                     "write": true,

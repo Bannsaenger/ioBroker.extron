@@ -38,7 +38,7 @@ const errCodes = {
     'E31' : 'Attempt to break port passthrough when not set'
 };
 const maxPollCount = 10;
-
+const invalidChars = ['+','~',',','@','=',"'",'[',']','{','}','<','>','`','"',':',';','|','\\','?'];
 
 class Extron extends utils.Adapter {
 
@@ -102,8 +102,7 @@ class Extron extends utils.Adapter {
         this.requestDir = false;        // flag to signal a list user files command has been issued and a directory list is to be received
         this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize':''};         // file object
         this.fileList = {'freeSpace' : '', 'files' : [this.file]};              // array to hold current file list
-        this.stateBuf = [{'id': '', 'timestamp' : 0}];
-        this.invalidChars = ['+','~',',','@','=',"'",'[',']','{','}','<','>','`','"',':',';','|','\\','?'];
+        this.stateBuf = [{'id': '', 'timestamp' : 0}];  // array to hold state changes with timestamp
     }
 
     /**
@@ -136,7 +135,7 @@ class Extron extends utils.Adapter {
 
             // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
             // this.subscribeStates('testVariable');
-            this.subscribeStates('*');
+            this.subscribeStates('*');  // subscribe to all states
 
             /*
                 setState examples
@@ -626,18 +625,19 @@ class Extron extends utils.Adapter {
                             case 'GRPMZ' :      // delete Group command
                                 this.log.info(`onStreamData(): Extron got group #"${ext1} deleted`);
                                 this.grpDelPnd[Number(ext1)] = false;   // flag group deletion confirmation
-                                this.setState(`groups.${ext1.padStart(2,'0')}.deleted`,true,true); // confirm group deletion in database
+                                //this.setState(`groups.${ext1.padStart(2,'0')}.deleted`,true,true); // confirm group deletion in database
+                                //this.setState(`groups.${ext1.padStart(2,'0')}.members`,'',true);
+                                //this.groupMembers[Number(ext1)] = [];       // delete group members
+                                this.setGroupMembers(Number(ext1),[]);
                                 this.sendGrpCmdBuf(Number(ext1)); // process group commands queued during pending deletion
                                 /*
                                 this.groupTypes[Number(ext1)] = undefined;  // reset group type
-                                this.groupMembers[Number(ext1)] = [];       // delete group members
-                                this.setState(`groups.${ext1.padStart(2,'0')}.members`,'',true);
-                                */
                                 this.getGroupType(Number(ext1));    // request group type update
-                                this.getGroupMembers(Number(ext1)); // request grop mebers update
+                                this.getGroupMembers(Number(ext1)); // request group mebers update
+                                */
                                 break;
                             case 'GRPMD' :      // set Group fader value
-                                this.log.info(`onStreamData(): Extron got Group #'${ext1}" fader value:"${ext2}"`);
+                                this.log.info(`onStreamData(): Extron got group #'${ext1}" fader value:"${ext2}"`);
                                 this.setGroupLevel(Number(ext1),Number(ext2));
                                 break;
                             case 'GRPMP' :      // set Group type
@@ -1254,7 +1254,7 @@ class Extron extends utils.Adapter {
      * @returns {boolean}
      */
     checkName(name) {
-        for (const char of this.invalidChars) {
+        for (const char of invalidChars) {
             if (name.includes(char)) return false;
         }
         return true;
@@ -2061,7 +2061,7 @@ class Extron extends utils.Adapter {
      * @param {string} cmd
      */
     queueGrpCmd(group, cmd) {
-        this.log.debug(`queueGrpCmd(): pushing "${cmd}" to group #${group} buffer`);
+        this.log.info(`queueGrpCmd(): pushing "${cmd}" to group #${group} buffer`);
         this.grpCmdBuf[group].push(cmd); // push command to buffer
     }
 
@@ -2073,7 +2073,7 @@ class Extron extends utils.Adapter {
     sendGrpCmdBuf(group) {
         this.log.info(`sendGrpCmdBuf: processing ${this.grpCmdBuf[group].length} queued commands on group "${group}"`);
         while (this.grpCmdBuf[group].length > 0) {
-            this.streamSend(this.grpCmdBuf[group].pop());
+            this.streamSend(this.grpCmdBuf[group].shift());
         }
     }
 
@@ -2125,6 +2125,7 @@ class Extron extends utils.Adapter {
      * @param {array} members
      */
     setGroupMembers(group, members) {
+        var stateMembers = [];
         try {
             //if ((members === undefined) || (members.length === 0)) {
             if (members === undefined) {
@@ -2135,16 +2136,22 @@ class Extron extends utils.Adapter {
                     if(this.groupMembers[group].includes(members[0])) {
                         this.log.debug(`setGroupMembers(): OID "${members[0]}" already included with group ${group}`);
                     } else {
-                        this.groupMembers[group].push(members[0]);
-                        this.log.debug(`setGroupMembers(): added OID "${members[0]}" to group ${group} now holding "${this.groupMembers[group]}"`);
+                        if (members[0] != '') {
+                            this.groupMembers[group].push(members[0]);
+                            this.log.info(`setGroupMembers(): added OID "${members[0]}" to group ${group} now holding "${this.groupMembers[group]}"`);
+                        } else {
+                            this.groupMembers[group] = [];
+                            this.log.info(`setGroupMembers(): deleted members of group "${group}"`);        
+                        }
                     }
                 } else {    // replace list of members
                     this.groupMembers[group] = [];
                     for (let member of members) this.groupMembers[group].push(member);
                 }
-                this.setState(`groups.${group.toString().padStart(2,'0')}.members`, this.groupMembers[group].length == 0?'':`${this.groupMembers[group]}`, true);
+                for (let member of this.groupMembers[group]) stateMembers.push(this.oid2id(member));
+                this.setState(`groups.${group.toString().padStart(2,'0')}.members`, this.groupMembers[group].length == 0?'':`${stateMembers}`, true);
                 this.setState(`groups.${group.toString().padStart(2,'0')}.deleted`, this.groupMembers[group].length == 0?true:false, true);
-                this.log.info(`setGroupMembers(): group ${group} now has members ${this.groupMembers[group]}`);
+                this.log.info(`setGroupMembers(): group ${group} now has members:"${this.groupMembers[group]}"`);
             }
         } catch (err) {
             this.errorHandler(err, 'setGroupMembers');

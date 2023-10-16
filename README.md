@@ -36,9 +36,12 @@ If you are a non commercial organisation or use it for private use you can get a
 - The device type is checked on begin of the conversation. This fails sometimes. Must be changed to a more reliable mechanism. 
 - Make a more granular selection of used in- and outputs to reduce database size at DSP devices
 - add more commands and their implementation on the database side
+- improve network reconnect machanism
 
 ## Changelog
 
+### 0.2.1
+* (mschlgl) updated log messages, improved group control
 ### 0.2.0
 * (Bannsaenger) updated dependencies
 
