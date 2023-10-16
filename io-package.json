@@ -1,7 +1,7 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "news": {
       "0.2.1": {
         "en": "fixed log messages, improved group control timing issues",
