@@ -39,9 +39,17 @@ If you are a non commercial organisation or use it for private use you can get a
 - improve network reconnect machanism
 
 ## Changelog
+<!--
+    Placeholder for the next version (at the beginning of the line):
+    ### **WORK IN PROGRESS**
+-->
+### **WORK IN PROGRESS**
+* (Bannsaenger) updated to adapter-dev and release script
+* (Bannsaenger) introducing admin 5 UI (jsonConfig)
 
 ### 0.2.1
 * (mschlgl) updated log messages, improved group control
+
 ### 0.2.0
 * (Bannsaenger) updated dependencies
 
@@ -105,7 +113,7 @@ If you are a non commercial organisation or use it for private use you can get a
 ## License
 Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
 
-Copyright (c) 2021 Bannsaenger, https://github.com/bannsaenger <bannsaenger@gmx.de>
+Copyright (c) 2021-2023 Bannsaenger, https://github.com/bannsaenger <bannsaenger@gmx.de>
 
 ![CC BY-NC License](https://i.creativecommons.org/l/by-nc/4.0/88x31.png)
 

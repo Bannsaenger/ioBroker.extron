@@ -15,3 +15,7 @@ admin/i18n/*/flat.txt
 test_regex.txt
 dump.txt
 main.js.alt
+
+
+# ioBroker dev-server
+.dev-server/

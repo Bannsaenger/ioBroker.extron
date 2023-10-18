@@ -20,12 +20,12 @@
         "zh-cn": "二. 最新依赖"
       },
       "0.1.16":{
-        "en": "fixed grouup command issues added statedelay log message",
+        "en": "fixed group command issues added statedelay log message",
         "de": "Probleme in group-Befehlen behoben, protokollnachricht hinzugefügt"
       },
       "0.1.15":{
-        "en": "fixed grouup command issues added statedelay log message",
-        "de": "Probleme in group-Befehlen behoben, protokollnachricht hinzugefügt"
+        "en": "added statedelay log message",
+        "de": "Protokollnachricht fuer statedelay hinzugefügt"
       },
       "0.1.14":{
         "en": "fixed grouup command issues",
