@@ -42,10 +42,11 @@ If you are a non commercial organisation or use it for private use you can get a
 <!--
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
+    * (Bannsaenger) introducing admin 5 UI (jsonConfig)
 -->
 ### **WORK IN PROGRESS**
 * (Bannsaenger) updated to adapter-dev and release script
-* (Bannsaenger) introducing admin 5 UI (jsonConfig)
+* (Bannsaenger) updated dependencies
 
 ### 0.2.1
 * (mschlgl) updated log messages, improved group control
