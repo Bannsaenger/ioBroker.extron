@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter
+ *      iobroker extron (SIS) Adapter V0.2.1
  *
  *      Copyright (c) 2020-2022, Bannsaenger <bannsaenger@gmx.de>
  *
