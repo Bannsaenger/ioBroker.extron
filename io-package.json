@@ -20,12 +20,12 @@
         "zh-cn": "二. 最新依赖"
       },
       "0.1.16":{
-        "en": "fixed grouup command issues added statedelay log message",
+        "en": "fixed group command issues added statedelay log message",
         "de": "Probleme in group-Befehlen behoben, protokollnachricht hinzugefügt"
       },
       "0.1.15":{
-        "en": "fixed grouup command issues added statedelay log message",
-        "de": "Probleme in group-Befehlen behoben, protokollnachricht hinzugefügt"
+        "en": "added statedelay log message",
+        "de": "Protokollnachricht fuer statedelay hinzugefügt"
       },
       "0.1.14":{
         "en": "fixed grouup command issues",
@@ -167,42 +167,6 @@
         "es": "extender la estructura del dispositivo/base de datos para cubrir todos los elementos controlables",
         "pl": "rozszerzyć strukturę urządzenia/bazy danych o wszystkie elementy, którymi można sterować",
         "zh-cn": "扩展设备/数据库结构以覆盖所有可控元素"
-      },
-      "0.0.3": {
-        "en": "fix dependencies for integration test",
-        "de": "Abhängigkeiten für den Integrationstest korrigieren",
-        "ru": "исправить зависимости для интеграционного теста",
-        "pt": "corrigir dependências para teste de integração",
-        "nl": "afhankelijkheden repareren voor integratietest",
-        "fr": "corriger les dépendances pour le test d'intégration",
-        "it": "correggere le dipendenze per il test di integrazione",
-        "es": "arreglar dependencias para la prueba de integración",
-        "pl": "napraw zależności dla testu integracji",
-        "zh-cn": "修复依赖关系以进行集成测试"
-      },
-      "0.0.2": {
-        "en": "minor changes for the publication of the first release",
-        "de": "geringfügige Änderungen für die Veröffentlichung der ersten Version",
-        "ru": "мелкие изменения для публикации первого релиза",
-        "pt": "pequenas alterações para a publicação do primeiro lançamento",
-        "nl": "kleine wijzigingen voor de publicatie van de eerste release",
-        "fr": "changements mineurs pour la publication de la première version",
-        "it": "modifiche minori per la pubblicazione della prima release",
-        "es": "cambios menores para la publicación del primer lanzamiento",
-        "pl": "drobne zmiany dotyczące publikacji pierwszego wydania",
-        "zh-cn": "对第一个发行版的微小更改"
-      },
-      "0.0.1": {
-        "en": "initial release",
-        "de": "Erstveröffentlichung",
-        "ru": "Начальная версия",
-        "pt": "lançamento inicial",
-        "nl": "Eerste uitgave",
-        "fr": "Première version",
-        "it": "Versione iniziale",
-        "es": "Versión inicial",
-        "pl": "Pierwsze wydanie",
-        "zh-cn": "首次出版"
       }
     },
     "title": "Extron SIS",
