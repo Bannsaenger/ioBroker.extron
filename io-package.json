@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "news": {
+      "0.2.2": {
+        "en": "fixed SMD202 loopmode command",
+        "de": "Fehler im Befehl loopmode für den SMD202 behoben"
+      },
       "0.2.1": {
         "en": "fixed log messages, improved group control timing issues",
         "de": "Protokollnachrichten verbessert, Zeitprobleme bei Gruppenkonfiguration behoben"

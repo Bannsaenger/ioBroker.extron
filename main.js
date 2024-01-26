@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.1
+ *      iobroker extron (SIS) Adapter V0.2.2
  *
  *      Copyright (c) 2020-2023, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -2565,7 +2565,7 @@ class Extron extends utils.Adapter {
      */
     sendLoopVideo(id, mode) {
         try {
-            this.streamSend(`WR${this.id2oid(id)}*${mode?1:0}PLYR\r`);
+            this.streamSend(`WR1*${mode?1:0}PLYR\r`);
         } catch (err) {
             this.errorHandler(err, 'sendLoopVideo');
         }
