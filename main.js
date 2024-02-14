@@ -25,9 +25,9 @@ const errCodes = {
     'E10' : 'Unrecognized command',
     'E11' : 'Invalid preset number (out of range)',
     'E12' : 'Invalid port/output number (out of range)',
-    'E13' : 'Invalid parameter',
+    'E13' : 'Invalid parameter (number is out of range)',
     'E14' : 'Not valid for this configuration',
-    'E17' : 'Invalid command for signal type',
+    'E17' : 'Invalid command for signal type / system timed out',
     'E18' : 'System/command timed out',
     'E22' : 'Busy',
     'E24' : 'Privilege violation',
@@ -35,6 +35,7 @@ const errCodes = {
     'E26' : 'Maximum number of connections exceeded',
     'E27' : 'Invalid event number',
     'E28' : 'Bad filename or file not found',
+    'E30' : 'Hardware failure',
     'E31' : 'Attempt to break port passthrough when not set'
 };
 const maxPollCount = 10;
@@ -625,7 +626,7 @@ class Extron extends utils.Adapter {
                             case 'GRPMZ' :      // delete Group command
                                 this.log.info(`onStreamData(): Extron got group #"${ext1} deleted`);
                                 this.grpDelPnd[Number(ext1)] = false;   // flag group deletion confirmation
-                                //this.setState(`groups.${ext1.padStart(2,'0')}.deleted`,true,true); // confirm group deletion in database
+                                this.setState(`groups.${ext1.padStart(2,'0')}.deleted`,true,true); // confirm group deletion in database
                                 //this.setState(`groups.${ext1.padStart(2,'0')}.members`,'',true);
                                 //this.groupMembers[Number(ext1)] = [];       // delete group members
                                 this.setGroupMembers(Number(ext1),[]);
@@ -836,6 +837,7 @@ class Extron extends utils.Adapter {
                 await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.directory._id, this.objectsTemplate.userflash.directory);
                 await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.upload._id, this.objectsTemplate.userflash.upload);
                 await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.freespace._id, this.objectsTemplate.userflash.freespace);
+                await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.filecount._id, this.objectsTemplate.userflash.filecount);
                 await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
             }
             // if we have inputs on the device
@@ -1791,6 +1793,7 @@ class Extron extends utils.Adapter {
      * control playback on the device.player
      * @param {string} baseId
      * @param {string | any} value
+     * cmd = [ply]*[1|0]PLAY
      */
     sendPlayMode(baseId, value) {
         try {
@@ -1807,7 +1810,7 @@ class Extron extends utils.Adapter {
     /**
      * request playback mode from the device.player
      * @param {string}  baseId
-     * cmd = PLAY
+     * cmd = [ply]PLAY
      */
     getPlayMode(baseId) {
         try {
@@ -1839,6 +1842,7 @@ class Extron extends utils.Adapter {
      * control repeatmode on the device.player
      * @param {string} baseId
      * @param {string | any} value
+     * cmd=M[ply]*[0|1]CPLY
      */
     sendRepeatMode(baseId, value) {
         try {
@@ -1855,7 +1859,7 @@ class Extron extends utils.Adapter {
     /**
      * request repeatmode on the device.player
      * @param {string} baseId
-     * cmd = CPLY
+     * cmd = M[ply]CPLY
      */
     getRepeatMode(baseId) {
         try {
@@ -1872,6 +1876,7 @@ class Extron extends utils.Adapter {
      * Send the Player filename to device
      * @param {string} baseId
      * @param {string} value
+     * cmd = A[ply]*[filename]CPLY
      */
     sendFileName(baseId, value) {
         try {
@@ -1888,7 +1893,7 @@ class Extron extends utils.Adapter {
     /**
      * Send clear Player filename to device
      * @param {string} baseId
-     * cmd = CPLY
+     * cmd = A[ply]* CPLY
      */
     clearFileName(baseId) {
         try {
@@ -1920,7 +1925,7 @@ class Extron extends utils.Adapter {
     /**
      * request current filename from player
      * @param {string} baseId
-     * cmd = CPLY
+     * cmd = A[ply]CPLY
      */
     getFileName(baseId) {
         try {
@@ -2042,10 +2047,13 @@ class Extron extends utils.Adapter {
                     await this.setObjectNotExistsAsync(`fs.files.${i}`, this.objectsTemplate.userflash.files[0]);
                     await this.setObjectNotExistsAsync(`fs.files.${i}.filename`, this.objectsTemplate.userflash.files[1]);
                     this.setState(`fs.files.${i}.filename`, this.file.fileName, true);
+                    //this.setState(`fs.filecount`, i, true);
                     i++;
                 }
             }
+            this.setState(`fs.filecount`, this.fileList.files.length, true);
             this.setState('fs.freespace',this.fileList.freeSpace,true);
+            this.setState('fs.dir',false,true);
         } catch (err) {
             this.requestDir = false;
             this.errorHandler(err, 'setUserFiles');

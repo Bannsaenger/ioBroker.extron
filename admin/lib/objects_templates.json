@@ -2866,6 +2866,19 @@
                 },
             "native": {}
         },
+        "filecount" : {
+            "_id": "fs.filecount",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "number of files in user flash",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "def": 0
+                },
+            "native": {}
+        },
         "file" : {
             "_id": "fs.files",
             "type": "folder",
