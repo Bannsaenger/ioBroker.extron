@@ -2,7 +2,7 @@
  *
  *      iobroker extron (SIS) Adapter V0.2.2
  *
- *      Copyright (c) 2020-2023, Bannsaenger <bannsaenger@gmx.de>
+ *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
  *      CC-NC-BY 4.0 License
  *
@@ -357,6 +357,7 @@ class Extron extends utils.Adapter {
         try {
             if (this.streamAvailable) {
                 this.log.debug(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.fileSend?'file data':this.decodeBufferToLog(data)}"`);
+                this.setState('info.connection', true, true);
                 switch (this.config.type) {
                     case 'ssh' :
                         this.streamAvailable = this.stream.write(data);
@@ -2047,11 +2048,11 @@ class Extron extends utils.Adapter {
                     await this.setObjectNotExistsAsync(`fs.files.${i}`, this.objectsTemplate.userflash.files[0]);
                     await this.setObjectNotExistsAsync(`fs.files.${i}.filename`, this.objectsTemplate.userflash.files[1]);
                     this.setState(`fs.files.${i}.filename`, this.file.fileName, true);
-                    //this.setState(`fs.filecount`, i, true);
+                    this.setState(`fs.filecount`, i, true);
                     i++;
                 }
             }
-            this.setState(`fs.filecount`, this.fileList.files.length, true);
+            //this.setState(`fs.filecount`, this.fileList.files.length, true);
             this.setState('fs.freespace',this.fileList.freeSpace,true);
             this.setState('fs.dir',false,true);
         } catch (err) {
