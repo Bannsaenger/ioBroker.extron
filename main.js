@@ -2027,10 +2027,14 @@ class Extron extends utils.Adapter {
             */
             //const actFiles = userFileList.length;
             let i;
+            /**
             for (i=1; i<= this.fileList.files.length; i++) {
                 await this.delObjectAsync(`fs.files.${i}.filename`);                  // delete filename state from database
                 await this.delObjectAsync(`fs.files.${i}`);                         // delete file object from database
             }
+            **/
+            //await this.delObjectAsync(`fs.files`,{recursive: true});                         // delete files object from database
+            //await this.setObjectAsync(`fs.files`, this.objectsTemplate.userflash.file); // recreate files object
             i = 1;
             for (const userFile of userFileList) {                              // check each line
                 if (this.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
@@ -2045,8 +2049,8 @@ class Extron extends utils.Adapter {
                 this.file.fileSize = userFile.match(/(\d+)$/g)?`${userFile.match(/(\d+)$/g)[0]}`:''; // extract filesize
                 if (this.file.fileName.match(/.raw$/)) {        // check if AudioFile
                     this.fileList.files[i] = this.file;                             // add to filelist array
-                    await this.setObjectNotExistsAsync(`fs.files.${i}`, this.objectsTemplate.userflash.files[0]);
-                    await this.setObjectNotExistsAsync(`fs.files.${i}.filename`, this.objectsTemplate.userflash.files[1]);
+                    await this.setObjectAsync(`fs.files.${i}`, this.objectsTemplate.userflash.files[0]);
+                    await this.setObjectAsync(`fs.files.${i}.filename`, this.objectsTemplate.userflash.files[1]);
                     this.setState(`fs.files.${i}.filename`, this.file.fileName, true);
                     this.setState(`fs.filecount`, i, true);
                     i++;
