@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.2
+ *      iobroker extron (SIS) Adapter V0.2.3
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -2015,32 +2015,16 @@ class Extron extends utils.Adapter {
      */
     async setUserFilesAsync(userFileList) {
         try {
-            /**
-            switch (this.config.type) {
-                case 'ssh' :
-                    userFileList = data.toString().split('\r\r\n');               // split the list into separate lines
-                    break;
-                case 'telnet' :
-                    userFileList = data.toString().split('\r\n');               // split the list into separate lines
-                    break;
-            }
-            */
-            //const actFiles = userFileList.length;
-            let i;
-            /**
-            for (i=1; i<= this.fileList.files.length; i++) {
-                await this.delObjectAsync(`fs.files.${i}.filename`);                  // delete filename state from database
-                await this.delObjectAsync(`fs.files.${i}`);                         // delete file object from database
-            }
-            **/
-            //await this.delObjectAsync(`fs.files`,{recursive: true});                         // delete files object from database
-            //await this.setObjectAsync(`fs.files`, this.objectsTemplate.userflash.file); // recreate files object
-            i = 0;
+            let i = 0;
+            userFileList.sort();    // sort list alphabetically to resemble DSP configurator display
+            this.setObjectNotExistsAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
             for (const userFile of userFileList) {                              // check each line
-                if (this.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
+                this.log.debug(`freespace: ${this.fileList.freespace}`)
+                //if (this.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
                 // @ts-ignore
-                else this.fileList.freeSpace = userFile.match(/(\d+\b Bytes Left)/g)?`${userFile.match(/(\d+\b Bytes Left)/g)[0]}`:'';     //check for last line containing remaining free space
-                if (this.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
+                //this.fileList.freeSpace = userFile.match(/(\d+\b Bytes Left)/g)?`${userFile.match(/(\d+\b Bytes Left)/g)[0]}`:'';     //check for last line containing remaining free space
+                if (userFile.match(/(\d+\b Bytes Left)/g)) this.fileList.freeSpace = userFile.match(/(\d+\b Bytes Left)/g)[0];
+                //if (this.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
                 // @ts-ignore
                 this.file.fileName = userFile.match(/^(.+\.\w{3}\b)/g)?`${userFile.match(/^(.+\.\w{3}\b)/g)[0]}`:'';    // extract filename
                 // @ts-ignore
@@ -2050,15 +2034,16 @@ class Extron extends utils.Adapter {
                 if (this.file.fileName.match(/.raw$/)) {        // check if AudioFile
                     i++;
                     this.fileList.files[i] = this.file;                             // add to filelist array
-                    await this.setObjectAsync(`fs.files.${i}`, this.objectsTemplate.userflash.files[0]);
-                    await this.setObjectAsync(`fs.files.${i}.filename`, this.objectsTemplate.userflash.files[1]);
+                    await this.setObjectAsync(`fs.files.${i}`, this.objectsTemplate.userflash.files.channel);
+                    await this.setObjectAsync(`fs.files.${i}.filename`, this.objectsTemplate.userflash.files.filename);
                     this.setState(`fs.files.${i}.filename`, this.file.fileName, true);
-                    //this.setState(`fs.filecount`, i, true);
+                    this.log.debug(`Object "fs.files.${i}.filename ${this.file.fileName}" updated`);
                 }
             }
             this.setState(`fs.filecount`, i, true);
             this.setState('fs.freespace',this.fileList.freeSpace,true);
             this.setState('fs.dir',false,true);
+            this.log.debug(`Extron userFlash filelist updated: ${userFileList.join('; ')}`);
         } catch (err) {
             this.requestDir = false;
             this.errorHandler(err, 'setUserFiles');

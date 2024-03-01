@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "news": {
+      "0.2.3": {
+        "en": "fixed DMP 128 file handling",
+        "de": "Dateiverwaltung für DMP!128 korrigiert"
+      },
       "0.2.2": {
         "en": "fixed SMD202 loopmode command",
         "de": "Fehler im Befehl loopmode für den SMD202 behoben"
