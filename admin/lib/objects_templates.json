@@ -2887,8 +2887,8 @@
             },
             "native": {}
         },
-        "files" : [
-            {
+        "files" : {
+            "channel": {
                 "_id":"0",
                 "type": "channel",
                 "common":{
@@ -2896,7 +2896,7 @@
                     "name":"file"
                 }
             },
-            {
+            "filename": {
                 "_id": "filename",
                 "type": "state",
                 "common": {
@@ -2909,6 +2909,6 @@
                 },
                 "native": {}
             }
-        ]
+        }
     }
 }
