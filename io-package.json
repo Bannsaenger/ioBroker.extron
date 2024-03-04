@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.2.3",
+    "version": "0.2.4",
     "news": {
+      "0.2.4": {
+        "en": "corrected typo in object_templates",
+        "de": "Tippfehler in Datei object_templates korrigiert"
+      },
       "0.2.3": {
         "en": "fixed DMP 128 file handling",
         "de": "Dateiverwaltung für DMP!128 korrigiert"
