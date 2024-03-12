@@ -104,6 +104,7 @@ class Extron extends utils.Adapter {
         this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize':''};         // file object
         this.fileList = {'freeSpace' : '', 'files' : [this.file]};              // array to hold current file list
         this.stateBuf = [{'id': '', 'timestamp' : 0}];  // array to hold state changes with timestamp
+        this.presetList = ""; // list of SMD202 preset channels
     }
 
     /**
@@ -461,9 +462,16 @@ class Extron extends utils.Adapter {
                         'stack'  : errCodes[answer] };
                 }
 
-                if (this.requestDir && answer.match(/\.\w{3} /)) {
-                    this.log.info(`onStreamData(): Extron got file data: "${answer}"`);
-                    userFileList.push(answer);
+                if (this.requestDir) {
+                    if (answer.match(/\.\w{3} /)) {
+                        this.log.info(`onStreamData(): Extron got file data: "${answer}"`);
+                        userFileList.push(answer);
+                    } else if (answer.match(/^\[\{[\s\S]+\]$/)) {
+                        this.log.info(`onStreamData(): Extron got Preset list`);
+                        this.presetList = JSON.parse(answer);
+                        this.requestDir = false;
+                        this.setPresets();
+                    }
                 } else if (this.requestDir && answer.includes('Bytes Left')) {
                     this.log.info(`onStreamData(): Extron got freespace: "${answer}"`);
                     userFileList.push(answer);
@@ -596,6 +604,10 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron got current channel for player "${ext1}" value "${ext2}"`);
                                 this.setChannel(`player.`, ext2);
                                 break;
+                            case 'GTVPR' :
+                                this.log.info(`onStreamData(): Extron got "View all presets" command`);
+                                //this.requestDir = true;
+                                break;
                             case 'AMT'  :
                                 this.log.info(`onStreamData(): Extron got Audio Output mute status value "${ext1}"`);
                                 this.setMute('output.attenuation.', Number(ext1));
@@ -604,8 +616,8 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron got Audio Output attenuation level value "${Number(`${ext1}${ext2}`)}"`);
                                 this.setVol('output.attenuation.', this.calculateFaderValue(Number(`${ext1}${ext2}`),'logAtt'));
                                 break;
-
                             // End SMD202 specific commands
+
                             case 'STRMY' :
                                 this.log.info(`onStreamData(): Extron got streammode "${ext1}"`);
                                 this.setStreamMode(`ply.players.1.common.`,Number(ext1));
@@ -2606,6 +2618,28 @@ class Extron extends utils.Adapter {
         }
     }
 
+    /** get current preset list
+     * cmd = WGTVPR
+     */
+    getPresets() {
+        try {
+            this.streamSend('WGTVPR\r');
+        } catch (err) {
+            this.errorHandler(err, 'getPresets');
+        }
+    }
+
+    /** set preset list in database
+     * 
+     */
+    setPresets() {
+        try {
+            this.setState(`player.presets`, this.presetList, true);
+        } catch (err) {
+            this.errorHandler(err, 'setPresets');
+        }
+    }
+
     /** get current preset channel
      * cmd = WT1TVPR
      */
@@ -3354,6 +3388,10 @@ class Extron extends utils.Adapter {
 
                             case 'channel' :
                                 this.sendChannel(Number(state.val));
+                                break;
+
+                            case 'presets' :
+                                if (state.val == "") this.getPresets();
                                 break;
                         }
                     }

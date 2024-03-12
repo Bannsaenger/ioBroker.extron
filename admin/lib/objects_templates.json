@@ -2623,6 +2623,19 @@
                     "def" : 1
                 },
                 "native" :{}
+            },
+            {
+                "_id" : "player.presets",
+                "type" : "state",
+                "common" : {
+                    "role" : "value",
+                    "name" : "preset list",
+                    "type" : "string",
+                    "read" : true,
+                    "write" : true,
+                    "def" : ""
+                },
+                "native" :{}
             }
         ],
         "output": {
