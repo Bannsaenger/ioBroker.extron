@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.5
+ *      iobroker extron (SIS) Adapter V0.2.4
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -597,9 +597,9 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron got current channel for player "${ext1}" value "${ext2}"`);
                                 this.setChannel(`player.`, ext2);
                                 break;
-                            case 'TVPRG' :
+                            case 'GTVPR' :
                                 this.log.info(`onStreamData(): Extron got Preset list`);
-                                this.setPresets(ext2);
+                                this.setPresets(ext1);
                                 break;
                             case 'AMT'  :
                                 this.log.info(`onStreamData(): Extron got Audio Output mute status value "${ext1}"`);
