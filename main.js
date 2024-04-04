@@ -1162,6 +1162,11 @@ class Extron extends utils.Adapter {
                             case 'channel' :
                                 this.getChannel();
                                 break;
+                            
+                            case 'presets' :
+                                this.getPresets();
+                                break;
+
                         }
                     }
                 }
