@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.6 20240404
+ *      iobroker extron (SIS) Adapter V0.2.7 20240405
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -3390,7 +3390,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'presets' :
-                                if (state.val == "") this.getPresets();
+                                this.getPresets();
                                 break;
                         }
                     }

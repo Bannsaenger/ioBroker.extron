@@ -1,12 +1,17 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.2.5",
+    "version": "0.2.7",
     "news": {
+      "0.2.7": {
+        "en": "SMD202 preset list handling update",
+        "de": "Verarbeitung der SMD202 Preset-Liste überarbeitet"
+      },
       "0.2.6": {
         "en": "added SMD202 preset list handling oin startup",
         "de": "Verarbeitung der SMD202 Preset-Liste beim Adapterstart hinzugefügt"
-      },"0.2.5": {
+      },
+      "0.2.5": {
         "en": "added SMD202 preset list handling",
         "de": "Verarbeitung der SMD202 Preset-Liste hinzugefügt"
       },
