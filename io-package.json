@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.2.8",
+    "version": "0.2.",
     "news": {
+      "0.2.9": {
+        "en": "disable subtitle command at startup added",
+        "de": "Abschaltung Untertitel bei Adapterstart hinzugefügt"
+      },
       "0.2.8": {
         "en": "onStreamData command debug msg added",
         "de": "onSTreamData debug-Meldung für command hinzugefügt"

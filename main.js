@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.8 20240409
+ *      iobroker extron (SIS) Adapter V0.2.9 20240409
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -611,9 +611,10 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron got Audio Output attenuation level value "${Number(`${ext1}${ext2}`)}"`);
                                 this.setVol('output.attenuation.', this.calculateFaderValue(Number(`${ext1}${ext2}`),'logAtt'));
                                 break;
+                            case 'SUBTE':
+                                break;
 
-                                // End SMD202 specific commands
-
+                            // End SMD202 specific commands
                             case 'STRMY' :
                                 this.log.info(`onStreamData(): Extron got streammode "${ext1}"`);
                                 this.setStreamMode(`ply.players.1.common.`,Number(ext1));
@@ -789,6 +790,10 @@ class Extron extends utils.Adapter {
         try {
             this.log.debug('switchMode(): Extron switching to verbose mode 3');
             this.streamSend('W3CV\r');
+            if (this.devices[this.config.device].short === 'smd202') {
+                this.log.debug(`switchMode(): Extron disabling subtitle display`);
+                this.streamSend('WE1*0SUBT\r');
+            }
         } catch (err) {
             this.errorHandler(err, 'switchMode');
         }
@@ -831,7 +836,7 @@ class Extron extends utils.Adapter {
                     await this.setObjectNotExistsAsync(element._id, element);
                 }
             }
-            // if smde202 : create video player
+            // if smd202 : create video player
             if (this.devices[this.config.device].short === 'smd202') {
                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].players) {
                     await this.setObjectNotExistsAsync(element._id, element);
