@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.2.",
+    "version": "0.2.10",
     "news": {
+      "0.2.10": {
+        "en": "dcorrected preset list handling",
+        "de": "verarbeitung der Kanalliste korrigiert"
+      },
       "0.2.9": {
         "en": "disable subtitle command at startup added",
         "de": "Abschaltung Untertitel bei Adapterstart hinzugefügt"

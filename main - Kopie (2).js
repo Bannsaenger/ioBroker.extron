@@ -477,7 +477,7 @@ class Extron extends utils.Adapter {
                     if (answer.match(/"name":".*"\}\]$/)) {
                         this.log.debug(`onStreamData: end of presetList detected`);
                         this.requestPresets = false;
-                        this.presetList = this.presetList.match(/(?!TvprG)(\[\{".*"\}\])/)[0];
+                        this.presetList = this.presetList.match(/(TvprG)(\[\{".*"\}\])/)[1];
                         this.setPresets(this.presetList);
                     }
                 } else

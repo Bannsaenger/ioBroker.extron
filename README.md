@@ -48,6 +48,9 @@ If you are a non commercial organisation or use it for private use you can get a
 * (Bannsaenger) updated to adapter-dev and release script
 * (Bannsaenger) updated dependencies
 
+### 0.2.10
+* (mschlgl) corrected preset list handling
+
 ### 0.2.9
 * (mschlgl) odisable subtitle command on startup added
 
