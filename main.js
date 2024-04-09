@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.7 20240405
+ *      iobroker extron (SIS) Adapter V0.2.8 20240409
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -74,7 +74,7 @@ class Extron extends utils.Adapter {
         this.versionSet = false;            // will be true if the version is once set in the db
         this.device = {'model':'','name':'','version':''}; // will be filled according to device responses
         this.statusRequested = false;       // will be true once device status has been requested after init
-        this.statusSended = false;          // will be true once database settings have been sended to device
+        this.statusSent = false;          // will be true once database settings have been sent to device
         this.clientReady = false;           // will be true if device connection is ready
         // Some timers and intervalls
         this.timers = {};
@@ -104,7 +104,7 @@ class Extron extends utils.Adapter {
         this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize':''};         // file object
         this.fileList = {'freeSpace' : '', 'files' : [this.file]};              // array to hold current file list
         this.stateBuf = [{'id': '', 'timestamp' : 0}];  // array to hold state changes with timestamp
-        this.presetList = ""; // list of SMD202 preset channels
+        this.presetList = ''; // list of SMD202 preset channels
     }
 
     /**
@@ -324,7 +324,7 @@ class Extron extends utils.Adapter {
             this.initDone = false;              // will be true if all init is done
             this.versionSet = false;            // will be true if the version is once set in the db
             this.statusRequested = false;       // will be true if device status has been requested after init
-            this.statusSended = false;          // will be true once database settings have been sended to device
+            this.statusSent = false;          // will be true once database settings have been sent to device
             this.stream = undefined;
         } catch (err) {
             this.errorHandler(err, 'onClientClose');
@@ -479,6 +479,8 @@ class Extron extends utils.Adapter {
                         const ext1 = matchArray[2] ? matchArray[2] : '';
                         const ext2 = matchArray[3] ? matchArray[3] : '';
 
+                        this.log.debug(`onStreamData(): command "${command}", ext1 "${ext1}", ext2 "${ext2}`);
+
                         this.pollCount = 0;     // reset pollcounter as valid data has been received
                         this.timers.timeoutQueryStatus.refresh();   // refresh poll timer
 
@@ -609,7 +611,8 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron got Audio Output attenuation level value "${Number(`${ext1}${ext2}`)}"`);
                                 this.setVol('output.attenuation.', this.calculateFaderValue(Number(`${ext1}${ext2}`),'logAtt'));
                                 break;
-                            // End SMD202 specific commands
+
+                                // End SMD202 specific commands
 
                             case 'STRMY' :
                                 this.log.info(`onStreamData(): Extron got streammode "${ext1}"`);
@@ -1162,7 +1165,7 @@ class Extron extends utils.Adapter {
                             case 'channel' :
                                 this.getChannel();
                                 break;
-                            
+
                             case 'presets' :
                                 this.getPresets();
                                 break;
@@ -1185,7 +1188,7 @@ class Extron extends utils.Adapter {
     async setDeviceStatusAsync() {
         try {
             // if status has not been requested
-            if (!this.statusSended && this.isVerboseMode) {
+            if (!this.statusSent && this.isVerboseMode) {
                 this.log.info('Extron set device status started');
                 // iterate through stateList to send status to device
                 for (let index = 0; index < this.stateList.length; index++) {
@@ -1253,7 +1256,7 @@ class Extron extends utils.Adapter {
                     }
                     */
                 }
-                this.statusSended = true;
+                this.statusSent = true;
                 this.log.info('Extron set device status completed');
             }
         } catch (err) {
@@ -2029,7 +2032,7 @@ class Extron extends utils.Adapter {
             userFileList.sort();    // sort list alphabetically to resemble DSP configurator display
             this.setObjectNotExistsAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
             for (const userFile of userFileList) {                              // check each line
-                this.log.debug(`freespace: ${this.fileList.freespace}`)
+                this.log.debug(`freespace: ${this.fileList.freespace}`);
                 //if (this.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
                 // @ts-ignore
                 //this.fileList.freeSpace = userFile.match(/(\d+\b Bytes Left)/g)?`${userFile.match(/(\d+\b Bytes Left)/g)[0]}`:'';     //check for last line containing remaining free space
@@ -2125,7 +2128,6 @@ class Extron extends utils.Adapter {
                 this.queueGrpCmd(group,cmd); // push command to buffer
             }
         }
-        
     }
 
     /** store group members in database
@@ -2133,7 +2135,7 @@ class Extron extends utils.Adapter {
      * @param {array} members
      */
     setGroupMembers(group, members) {
-        var stateMembers = [];
+        const stateMembers = [];
         try {
             //if ((members === undefined) || (members.length === 0)) {
             if (members === undefined) {
@@ -2149,14 +2151,14 @@ class Extron extends utils.Adapter {
                             this.log.info(`setGroupMembers(): added OID "${members[0]}" to group ${group} now holding "${this.groupMembers[group]}"`);
                         } else {
                             this.groupMembers[group] = [];
-                            this.log.info(`setGroupMembers(): deleted members of group "${group}"`);        
+                            this.log.info(`setGroupMembers(): deleted members of group "${group}"`);
                         }
                     }
                 } else {    // replace list of members
                     this.groupMembers[group] = [];
-                    for (let member of members) this.groupMembers[group].push(member);
+                    for (const member of members) this.groupMembers[group].push(member);
                 }
-                for (let member of this.groupMembers[group]) stateMembers.push(this.oid2id(member));
+                for (const member of this.groupMembers[group]) stateMembers.push(this.oid2id(member));
                 this.setState(`groups.${group.toString().padStart(2,'0')}.members`, this.groupMembers[group].length == 0?'':`${stateMembers}`, true);
                 this.setState(`groups.${group.toString().padStart(2,'0')}.deleted`, this.groupMembers[group].length == 0?true:false, true);
                 this.log.info(`setGroupMembers(): group ${group} now has members:"${this.groupMembers[group]}"`);
@@ -2208,7 +2210,7 @@ class Extron extends utils.Adapter {
      * cmd = D[group]*[level]GRPM
      */
     sendGroupLevel(group, level) {
-        var cmd = '';
+        let cmd = '';
         switch (this.groupTypes[group]) {
             case 6: // gain group
                 cmd = `WD${group}*${this.calculateFaderValue(level, 'lin').devValue}GRPM\r`;
@@ -2633,7 +2635,7 @@ class Extron extends utils.Adapter {
     setPresets(presetList) {
         try {
             this.setState(`player.presets`, presetList, true);
-            this.log.debug(`setPresets(): "${presetList}"`)
+            this.log.debug(`setPresets(): "${presetList}"`);
         } catch (err) {
             this.errorHandler(err, 'setPresets');
         }
@@ -2829,34 +2831,34 @@ class Extron extends utils.Adapter {
                                     retId = `in.playerInputs.${(where -5).toString().padStart(2,'0')}.mixPoints.`;
                                 }
                             } else                      // mixpoints on dmp128
-                            if (where <= 11) {          // from input 1 - 12
-                                retId = `in.inputs.${(where + 1).toString().padStart(2,'0')}.mixPoints.`;
-                            } else if (where <= 19) {   // aux input 1 - 8
-                                retId = `in.auxInputs.${(where - 11).toString().padStart(2,'0')}.mixPoints.`;
-                            } else if (where <= 35) {   // virtual return 1 - 16 (A-P)
-                                retId = `in.virtualReturns.${(where - 19).toString().padStart(2,'0')}.mixPoints.`;
-                            } else if (where <= 83) {   // AT input 1 - 48
-                                retId = `in.expansionInputs.${(where - 35).toString().padStart(2,'0')}.mixPoints.`;
-                            } else {
-                                throw { 'message': 'no known mixpoint input',
-                                    'stack'  : `oid: ${oid}` };
-                            }
+                                if (where <= 11) {          // from input 1 - 12
+                                    retId = `in.inputs.${(where + 1).toString().padStart(2,'0')}.mixPoints.`;
+                                } else if (where <= 19) {   // aux input 1 - 8
+                                    retId = `in.auxInputs.${(where - 11).toString().padStart(2,'0')}.mixPoints.`;
+                                } else if (where <= 35) {   // virtual return 1 - 16 (A-P)
+                                    retId = `in.virtualReturns.${(where - 19).toString().padStart(2,'0')}.mixPoints.`;
+                                } else if (where <= 83) {   // AT input 1 - 48
+                                    retId = `in.expansionInputs.${(where - 35).toString().padStart(2,'0')}.mixPoints.`;
+                                } else {
+                                    throw { 'message': 'no known mixpoint input',
+                                        'stack'  : `oid: ${oid}` };
+                                }
                             // now determine the output
                             if (this.devices[this.config.device].short === 'cp82') {    // mixpoints on CP82
                                 retId += `O${(val -1).toString().padStart(2,'0')}.`; // on CP82 mixpooint output OID count starts at 2
                             } else                      // mixpoints on dmp128
-                            if (val <= 7) {             // output 1 -8
-                                retId += `O${(val + 1).toString().padStart(2,'0')}.`;
-                            } else if (val <= 15) {     // aux output 1 - 8
-                                retId += `A${(val - 7).toString().padStart(2,'0')}.`;
-                            } else if (val <= 31) {     // virtual send bus 1 - 16
-                                retId += `V${(val - 15).toString().padStart(2,'0')}.`;
-                            } else if (val <= 47) {     // expansion output 1 - 16
-                                retId += `E${(val - 31).toString().padStart(2,'0')}.`;
-                            } else {
-                                throw { 'message': 'no known mixpoint output',
-                                    'stack'  : `oid: ${oid}` };
-                            }
+                                if (val <= 7) {             // output 1 -8
+                                    retId += `O${(val + 1).toString().padStart(2,'0')}.`;
+                                } else if (val <= 15) {     // aux output 1 - 8
+                                    retId += `A${(val - 7).toString().padStart(2,'0')}.`;
+                                } else if (val <= 31) {     // virtual send bus 1 - 16
+                                    retId += `V${(val - 15).toString().padStart(2,'0')}.`;
+                                } else if (val <= 47) {     // expansion output 1 - 16
+                                    retId += `E${(val - 31).toString().padStart(2,'0')}.`;
+                                } else {
+                                    throw { 'message': 'no known mixpoint output',
+                                        'stack'  : `oid: ${oid}` };
+                                }
                             break;
 
                         case 3:                         // VideoLine inputs on CP82
@@ -3234,7 +3236,7 @@ class Extron extends utils.Adapter {
                                     stateTime = this.stateBuf.find(stateTime => stateTime.id === id); // now it should be found
                                 }
                                 elapsed = timeStamp - stateTime.timestamp;  // calcualte elapsed milliseconds since last change
-                                if ( elapsed > this.config.stateDelay || state.val <= 10) {    	// if configured stateDelay has been exceeded, process the change event
+                                if ( elapsed > this.config.stateDelay || Number(state.val) <= 10) {    	// if configured stateDelay has been exceeded, process the change event
                                     switch (idBlock) {						// or if value is near 0
                                         case 'gain' :
                                             calcMode = 'linGain';
@@ -3296,7 +3298,7 @@ class Extron extends utils.Adapter {
                                 this.sendLimitStatus(id, state.val);
                                 break;
                             case 'threshold':
-                                this.sendLimitThreshold(id, Math.abs(Number((state.val < -800)?-800:(state.val>0)?0:state.val)));
+                                this.sendLimitThreshold(id, Math.abs(Number(state.val) < -800?-800:(Number(state.val)>0)?0:Number(state.val)));
                                 break;
 
                             case 'playmode' :
