@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.10 20240409
+ *      iobroker extron (SIS) Adapter V0.2.11 20240424
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -840,6 +840,10 @@ class Extron extends utils.Adapter {
             for (const element of this.objectsTemplate.common) {
                 await this.setObjectNotExistsAsync(element._id, element);
             }
+            // add deviceName to database
+            const deviceObj = this.objectsTemplate.common[0];
+            deviceObj.common.name = this.devices[this.config.device].name;
+            await this.setObjectAsync('device', deviceObj);
             // if cp82 or sme211 : create video inputs and outputs
             if ((this.devices[this.config.device].short === 'cp82') || (this.devices[this.config.device].short === 'sme211')) {
                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].connections) {

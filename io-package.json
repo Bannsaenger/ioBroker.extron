@@ -1,15 +1,19 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.2.10",
+    "version": "0.2.11",
     "news": {
+      "0.2.11": {
+        "en": "added instance.device.name set on startup",
+        "de": "setzen von instance.device.name bei Adapterstart hinzugefügt"
+      },
       "0.2.10": {
-        "en": "corrected preset list handling",
-        "de": "verarbeitung der Kanalliste korrigiert"
+        "en": "SMD202: corrected preset list handling",
+        "de": "SMD202: verarbeitung der Kanalliste korrigiert"
       },
       "0.2.9": {
-        "en": "disable subtitle command at startup added",
-        "de": "Abschaltung Untertitel bei Adapterstart hinzugefügt"
+        "en": "SMD202: disable subtitle command at startup added",
+        "de": "SMD202: Abschaltung Untertitel bei Adapterstart hinzugefügt"
       },
       "0.2.8": {
         "en": "onStreamData command debug msg added",
