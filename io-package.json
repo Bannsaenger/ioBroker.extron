@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.2.11",
+    "version": "0.2.12",
     "news": {
+      "0.2.12": {
+        "en": "added instance.common.title/.titleLang set on startup",
+        "de": "setzen von instance.common.title/.titleLang bei Adapterstart hinzugefügt"
+      },
       "0.2.11": {
         "en": "added instance.device.name set on startup",
         "de": "setzen von instance.device.name bei Adapterstart hinzugefügt"

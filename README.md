@@ -48,6 +48,9 @@ If you are a non commercial organisation or use it for private use you can get a
 * (Bannsaenger) updated to adapter-dev and release script
 * (Bannsaenger) updated dependencies
 
+### 0.2.12
+* (mschlgl) added instance.comon.title / .titleLang to be set at startup
+
 ### 0.2.11
 * (mschlgl) added instance.device.name to be set at startup
 
