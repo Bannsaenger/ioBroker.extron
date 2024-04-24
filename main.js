@@ -836,6 +836,17 @@ class Extron extends utils.Adapter {
      */
     async createDatabaseAsync() {
         try {
+            // add instanceName to database
+            const instanceObj = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
+            //this.log.info(`createDatabaseAsync(): ${JSON.stringify(instanceObj)}`);
+
+            instanceObj.common.title = this.devices[this.config.device].name;
+            for (const key of Object.keys(instanceObj.common.titleLang)){
+                instanceObj.common.titleLang[key] = this.devices[this.config.device].name;
+            }
+            //this.log.info(`createDatabaseAsync(): ${JSON.stringify(instanceObj)}`);
+            await this.setForeignObjectAsync(`system.adapter.${this.namespace}`, instanceObj);
+
             // create the common section
             for (const element of this.objectsTemplate.common) {
                 await this.setObjectNotExistsAsync(element._id, element);
