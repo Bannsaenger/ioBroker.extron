@@ -836,6 +836,7 @@ class Extron extends utils.Adapter {
      * called to set up the database dependant on the device type
      */
     async createDatabaseAsync() {
+        this.log.debug(`createDatabaseAsync(): start`);
         try {
             // add instanceName to database
             const instanceObj = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
@@ -1091,6 +1092,7 @@ class Extron extends utils.Adapter {
         } catch (err) {
             this.errorHandler(err, 'createDatabase');
         }
+        this.log.debug(`createDatabaseAsync(): completed`);
     }
 
     /**
