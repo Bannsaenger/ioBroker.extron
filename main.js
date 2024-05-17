@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.12 20240424
+ *      iobroker extron (SIS) Adapter V0.2.13 20240517
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -633,6 +633,7 @@ class Extron extends utils.Adapter {
                             case 'UPL' :
                                 this.fileSend = false;   // reset file transmission flag
                                 this.log.info(`onStreamData(): Extron got upload file confirmation command size: "${ext1}" name: "${ext2}"`);
+                                this.setState('fs.dir',true,false); // request directory update
                                 break;
                             case 'WDF' :
                                 this.log.info(`onStreamData(): Extron got list directory command`);
@@ -878,6 +879,7 @@ class Extron extends utils.Adapter {
                 await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.freespace._id, this.objectsTemplate.userflash.freespace);
                 await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.filecount._id, this.objectsTemplate.userflash.filecount);
                 await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
+                this.setState('fs.dir',false,true); // reset directory request flag
             }
             // if we have inputs on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].in) {
