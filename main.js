@@ -880,7 +880,7 @@ class Extron extends utils.Adapter {
                 await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.freespace._id, this.objectsTemplate.userflash.freespace);
                 await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.filecount._id, this.objectsTemplate.userflash.filecount);
                 await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
-                this.setState('fs.dir',false,true); // reset directory request flag
+                await this.setStateAsync('fs.dir',false,true); // reset directory request flag
             }
             // if we have inputs on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].in) {
