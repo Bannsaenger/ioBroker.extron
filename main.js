@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.13 20240517
+ *      iobroker extron (SIS) Adapter V0.2.13 20240606
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -101,8 +101,8 @@ class Extron extends utils.Adapter {
         this.grpDelPnd.fill(false);
         this.fileSend = false;          // flag to signal a file is currently sended
         this.requestDir = false;        // flag to signal a list user files command has been issued and a directory list is to be received
-        this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize':''};         // file object
-        this.fileList = {'freeSpace' : '', 'files' : [this.file]};              // array to hold current file list
+        this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize': 0};         // file object
+        this.fileList = {'freeSpace' : 0, 'files' : [this.file]};              // array to hold current file list
         this.stateBuf = [{'id': '', 'timestamp' : 0}];  // array to hold state changes with timestamp
         this.presetList = ''; // list of SMD202 preset channels
         this.requestPresets = false;
@@ -118,7 +118,7 @@ class Extron extends utils.Adapter {
             this.initVars();
 
             // Reset the connection indicator during startup
-            this.setState('info.connection', false, true);
+            await this.setStateAsync('info.connection', false, true);
 
             // The adapters config (in the instance object everything under the attribute "native") is accessible via
             // this.config:
@@ -353,7 +353,7 @@ class Extron extends utils.Adapter {
 
     /**
      * called to send data to the stream
-     * @param {string} data
+     * @param {string | Uint8Array} data
      */
     streamSend(data) {
         try {
@@ -467,10 +467,10 @@ class Extron extends utils.Adapter {
                     this.log.info(`onStreamData(): Extron got file data: "${answer}"`);
                     userFileList.push(answer);
                 } else if (this.requestDir && answer.includes('Bytes Left')) {
-                    this.log.info(`onStreamData(): Extron got freespace: "${answer}"`);
+                    this.log.info(`onStreamData(): Extron got freespace: "${answer.match(/\d+/)}"`);
                     userFileList.push(answer);
                     this.requestDir = false;        // directory list has been received, clear flag
-                    this.fileList.freeSpace = '';   // clear free space to be filled with new value from list
+                    this.fileList.freeSpace = 0;   // clear free space to be filled with new value from list
                     this.setUserFilesAsync(userFileList);        // call subroutine to set database values
                 } else if (this.requestPresets) {
                     this.presetList += answer;
@@ -633,6 +633,7 @@ class Extron extends utils.Adapter {
                             case 'UPL' :
                                 this.fileSend = false;   // reset file transmission flag
                                 this.log.info(`onStreamData(): Extron got upload file confirmation command size: "${ext1}" name: "${ext2}"`);
+                                this.setState('fs.upl','', true);   // reset upload file
                                 this.setState('fs.dir',true,false); // request directory update
                                 break;
                             case 'WDF' :
@@ -648,15 +649,8 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron got group #"${ext1} deleted`);
                                 this.grpDelPnd[Number(ext1)] = false;   // flag group deletion confirmation
                                 this.setState(`groups.${ext1.padStart(2,'0')}.deleted`,true,true); // confirm group deletion in database
-                                //this.setState(`groups.${ext1.padStart(2,'0')}.members`,'',true);
-                                //this.groupMembers[Number(ext1)] = [];       // delete group members
                                 this.setGroupMembers(Number(ext1),[]);
                                 this.sendGrpCmdBuf(Number(ext1)); // process group commands queued during pending deletion
-                                /*
-                                this.groupTypes[Number(ext1)] = undefined;  // reset group type
-                                this.getGroupType(Number(ext1));    // request group type update
-                                this.getGroupMembers(Number(ext1)); // request group mebers update
-                                */
                                 break;
                             case 'GRPMD' :      // set Group fader value
                                 this.log.info(`onStreamData(): Extron got group #'${ext1}" fader value:"${ext2}"`);
@@ -700,7 +694,10 @@ class Extron extends utils.Adapter {
         } catch (err) {
             this.errorHandler(err, 'onStreamData');
             // @ts-ignore
-            if (err.message === 'Device mismatch error') this.terminate('Device mismatch error');
+            if (err.message === 'Device mismatch error') {
+                this.log.debug('onStreamData(): device mismatch ... terminating');
+                this.terminate('Device mismatch error');
+            }
         }
     }
 
@@ -833,30 +830,50 @@ class Extron extends utils.Adapter {
     }
 
     /**
-     * called to set up the database dependant on the device type
+     * called to set up the database according device type
      */
     async createDatabaseAsync() {
         this.log.debug(`createDatabaseAsync(): start`);
         try {
-            // add instanceName to database
+            // get current instance object
             const instanceObj = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
             //this.log.info(`createDatabaseAsync(): ${JSON.stringify(instanceObj)}`);
 
-            instanceObj.common.title = this.devices[this.config.device].name;
-            for (const key of Object.keys(instanceObj.common.titleLang)){
-                instanceObj.common.titleLang[key] = this.devices[this.config.device].name;
+            if (typeof instanceObj.common.title != 'undefined') delete instanceObj.common.title; // marked as deprecated so delete if present
+            // add deviceName to instance object common.titleLang
+            switch (typeof instanceObj.common.titleLang) {
+                case 'string' : // shold never occur, js-controller issue filed 20240606
+                    //@ts-ignore
+                    if (!instanceObj.common.titleLang.includes(this.devices[this.config.device].name)) {
+                        //@ts-ignore
+                        instanceObj.common.titleLang = `${this.devices[this.config.device].name}`;
+                        await this.setForeignObjectAsync(`system.adapter.${this.namespace}`, instanceObj);
+                        this.log.debug(`createDatabaseAsync(): set titleLang`);
+                    }
+                    break;
+                case 'object' :
+                    if (!instanceObj.common.titleLang.de.includes(this.devices[this.config.device].name)) {
+                        for (const key of Object.keys(instanceObj.common.titleLang)){
+                            instanceObj.common.titleLang[key] = `${this.devices[this.config.device].name}`;
+                        }
+                        await this.setForeignObjectAsync(`system.adapter.${this.namespace}`, instanceObj);
+                        this.log.debug(`createDatabaseAsync(): set titleLang.xx`);
+                    }
+                    break;
             }
-            //this.log.info(`createDatabaseAsync(): ${JSON.stringify(instanceObj)}`);
-            await this.setForeignObjectAsync(`system.adapter.${this.namespace}`, instanceObj);
 
             // create the common section
             for (const element of this.objectsTemplate.common) {
                 await this.setObjectNotExistsAsync(element._id, element);
             }
+            this.log.debug(`createDatabaseAsync(): create common section`);
+
             // add deviceName to database
             const deviceObj = this.objectsTemplate.common[0];
             deviceObj.common.name = this.devices[this.config.device].name;
             await this.setObjectAsync('device', deviceObj);
+            this.log.debug(`createDatabaseAsync(): set deviceName`);
+
             // if cp82 or sme211 : create video inputs and outputs
             if ((this.devices[this.config.device].short === 'cp82') || (this.devices[this.config.device].short === 'sme211')) {
                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].connections) {
@@ -881,6 +898,7 @@ class Extron extends utils.Adapter {
                 await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.filecount._id, this.objectsTemplate.userflash.filecount);
                 await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
                 await this.setStateAsync('fs.dir',false,true); // reset directory request flag
+                this.log.debug(`createDatabaseAsync(): set user fileSystem`);
             }
             // if we have inputs on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].in) {
@@ -984,6 +1002,7 @@ class Extron extends utils.Adapter {
                         }
                     }
                 }
+                this.log.debug(`createDatabaseAsync(): set inpts`);
             }
             // if we have players on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].ply) {
@@ -1015,6 +1034,7 @@ class Extron extends utils.Adapter {
                         }
                     }
                 }
+                this.log.debug(`createDatabaseAsync(): set players`);
             }
             // if we have outputs on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].out) {
@@ -1062,12 +1082,14 @@ class Extron extends utils.Adapter {
                         }
                     }
                 }
+                this.log.debug(`createDatabaseAsync(): set outputs`);
             }
             // if cp82 : create groupss
             if (this.devices[this.config.device].short === 'cp82') {
                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].groups) {
                     await this.setObjectNotExistsAsync(element._id, element);
                 }
+                this.log.debug(`createDatabaseAsync(): cp82 create groups`);
             }
             // if we have groups on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].grp) {
@@ -1088,6 +1110,7 @@ class Extron extends utils.Adapter {
                         await this.setObjectNotExistsAsync(actGroup + '.' + element._id, element);
                     }
                 }
+                this.log.debug(`createDatabaseAsync(): set groups`);
             }
         } catch (err) {
             this.errorHandler(err, 'createDatabase');
@@ -1693,7 +1716,6 @@ class Extron extends utils.Adapter {
                     break;
                 case 'expansionInputs':
                     this.streamSend(`WA${ioNumber}*${name}EXPD\r`);
-                    //this.streamSend(`W${ioNumber},${name}NE\r`);
                     break;
                 case 'outputs' :
                     this.streamSend(`W${ioNumber},${name}NO\r`);
@@ -1992,14 +2014,12 @@ class Extron extends utils.Adapter {
      * @param {string} filePath
      */
     loadUserFile(filePath) {
-        let chunk ='';
         try {
             fs.accessSync(filePath);                            // check if given path is accessible
             const fileName = path.basename(filePath);           // extract filename
             //const fileExt = path.extname(filePath);
             const fileStats = fs.statSync(filePath);            // load file statistics
-            const fileStream = fs.createReadStream(filePath);   // open a stream
-            fileStream.setEncoding('binary');                   // switch stream to binary mode
+            //fileStream.setEncoding('binary');                   // switch stream to binary mode
             const fileTimeStamp = fileStats.mtime.toJSON();
             const year = fileTimeStamp.slice(0,4);
             const month = fileTimeStamp.slice(5,7);
@@ -2007,37 +2027,31 @@ class Extron extends utils.Adapter {
             const hour = fileTimeStamp.slice(11,13);
             const minute = fileTimeStamp.slice(14,16);
             const second = fileTimeStamp.slice(17,19);
-            const streamData = `W+UF${fileStats.size}*5 ${month} ${day} ${year} ${hour} ${minute} ${second},${fileName}\r`;
-            //const streamData = `W+UF${fileStats.size},${fileName}\r`;
-            this.streamSend(streamData);                        // issue upload command to device
-            fileStream.on('readable', function() {              // start file transmission
-                while ((chunk=fileStream.read()) != null) {
-                    if (!this.fileSend) {
-                        // @ts-ignore
-                        this.log.debug('Extron loadUserFile started');
-                        this.fileSend = true;
-                    }
-                    // @ts-ignore
-                    this.streamSend(chunk);
-                }
-            });
-            fileStream.on('end', function() {                   // on transmission end
+            if (fileStats.size < this.fileList.freespace) {
+                const streamData = `W+UF${fileStats.size}*2 ${month} ${day} ${year} ${hour} ${minute} ${second},${fileName}\r`;
+                //const streamData = `W+UF${fileStats.size},${fileName}\r`;
+                this.log.debug('loadUserFile(): starting file transmission');
+                this.streamSend(streamData);    // issue upload command to device
+                this.fileSend = true;
+                fs.readFile(filePath, (err, data) => {
+                    if (err) throw err;
+                    this.streamSend(data);    // transmit file to device
+                });
                 this.fileSend = false;
-                // @ts-ignore
-                this.log.debug('Extron loadUserFile completed');
-            });
+            } else this.log.warn(`loadUserFile(): filesize "${fileStats.size}" of "${fileName}" exceeds remaining freespace "${this.fileList.freespace}" on device`);
         } catch (err) {
+            this.fileSend = false;
             this.errorHandler(err, 'loadUserFile');
         }
     }
 
     /**
      * delete the user file from device
-     * @param {string} value
+     * @param {string} fileName
      */
-    eraseUserFile(value) {
+    eraseUserFile(fileName) {
         try {
-            const streamData = `W${(value === '' ? ' ' : value)}EF\r`;
+            const streamData = `W${(fileName === '' ? ' ' : fileName)}EF\r`;
             this.streamSend(streamData);
         } catch (err) {
             this.errorHandler(err, 'eraseUserFile');
@@ -2066,18 +2080,16 @@ class Extron extends utils.Adapter {
             userFileList.sort();    // sort list alphabetically to resemble DSP configurator display
             this.setObjectNotExistsAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
             for (const userFile of userFileList) {                              // check each line
-                this.log.debug(`freespace: ${this.fileList.freespace}`);
-                //if (this.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
-                // @ts-ignore
-                //this.fileList.freeSpace = userFile.match(/(\d+\b Bytes Left)/g)?`${userFile.match(/(\d+\b Bytes Left)/g)[0]}`:'';     //check for last line containing remaining free space
-                if (userFile.match(/(\d+\b Bytes Left)/g)) this.fileList.freeSpace = userFile.match(/(\d+\b Bytes Left)/g)[0];
-                //if (this.fileList.freeSpace) continue;                          // skip remaining lines if last entry already found
+                if (userFile.match(/(\d+\b Bytes Left)/g)) {
+                    this.fileList.freeSpace = Number(userFile.match(/\d+/g));
+                    this.log.debug(`freespace: ${this.fileList.freespace}`);
+                }
                 // @ts-ignore
                 this.file.fileName = userFile.match(/^(.+\.\w{3}\b)/g)?`${userFile.match(/^(.+\.\w{3}\b)/g)[0]}`:'';    // extract filename
                 // @ts-ignore
                 this.file.timeStamp = userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)?`${userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)[0]}`:''; //extract timestamp
                 // @ts-ignore
-                this.file.fileSize = userFile.match(/(\d+)$/g)?`${userFile.match(/(\d+)$/g)[0]}`:''; // extract filesize
+                this.file.fileSize = userFile.match(/(\d+)$/g)?Number(userFile.match(/(\d+)$/g)[0]):0; // extract filesize
                 if (this.file.fileName.match(/.raw$/)) {        // check if AudioFile
                     i++;
                     this.fileList.files[i] = this.file;                             // add to filelist array

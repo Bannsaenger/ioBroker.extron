@@ -80,7 +80,7 @@
                 "_id": "gain.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input is muted",
                     "type": "boolean",
                     "read": true,
@@ -148,7 +148,7 @@
                 "_id": "premix.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input at premix gain is muted",
                     "type": "boolean",
                     "read": true,
@@ -221,7 +221,7 @@
                 "_id": "gain.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input is muted",
                     "type": "boolean",
                     "read": true,
@@ -289,7 +289,7 @@
                 "_id": "premix.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input at premix gain is muted",
                     "type": "boolean",
                     "read": true,
@@ -363,7 +363,7 @@
                 "_id": "premix.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input at premix gain is muted",
                     "type": "boolean",
                     "read": true,
@@ -437,7 +437,7 @@
                 "_id": "premix.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input at premix gain is muted",
                     "type": "boolean",
                     "read": true,
@@ -490,7 +490,7 @@
                 "_id": "mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the mixpoint is disabled",
                     "type": "boolean",
                     "read": true,
@@ -698,7 +698,7 @@
                 "_id": "attenuation.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the output at postmix gain is muted",
                     "type": "boolean",
                     "read": true,
@@ -840,7 +840,7 @@
                 "_id": "attenuation.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the output at postmix gain is muted",
                     "type": "boolean",
                     "read": true,
@@ -1027,7 +1027,7 @@
                 "_id": "attenuation.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the output at postmix gain is muted",
                     "type": "boolean",
                     "read": true,
@@ -1305,7 +1305,7 @@
                 "_id": "gain.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input is muted",
                     "type": "boolean",
                     "read": true,
@@ -1357,7 +1357,7 @@
                 "_id": "premix.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input at premix gain is muted",
                     "type": "boolean",
                     "read": true,
@@ -1411,7 +1411,7 @@
                 "_id": "gain.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input is muted",
                     "type": "boolean",
                     "read": true,
@@ -1463,7 +1463,7 @@
                 "_id": "premix.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input at premix gain is muted",
                     "type": "boolean",
                     "read": true,
@@ -1517,7 +1517,7 @@
                 "_id": "gain.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input is muted",
                     "type": "boolean",
                     "read": true,
@@ -1569,7 +1569,7 @@
                 "_id": "premix.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input at premix gain is muted",
                     "type": "boolean",
                     "read": true,
@@ -1623,7 +1623,7 @@
                 "_id": "premix.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input at premix gain is muted",
                     "type": "boolean",
                     "read": true,
@@ -1677,7 +1677,7 @@
                 "_id": "premix.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input at premix gain is muted",
                     "type": "boolean",
                     "read": true,
@@ -1738,7 +1738,7 @@
                 "_id": "mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the mixpoint is disabled",
                     "type": "boolean",
                     "read": true,
@@ -1800,7 +1800,7 @@
                 "_id": "attenuation.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the output at postmix gain is muted",
                     "type": "boolean",
                     "read": true,
@@ -1853,8 +1853,7 @@
                 "_id": "groups.01",
                 "type": "channel",
                 "common": {
-                    "role": " audio.control",
-                    "name": "mic volume group"
+                     "name": "mic volume group"
                 },
                 "native": {}
             },
@@ -1935,7 +1934,6 @@
                 "_id": "groups.02",
                 "type": "channel",
                 "common": {
-                    "role": " audio.control",
                     "name": "mic mute group"
                 },
                 "native": {}
@@ -1988,7 +1986,6 @@
                 "_id": "groups.03",
                 "type": "channel",
                 "common": {
-                    "role": " audio.control",
                     "name": "program volume group"
                 },
                 "native": {}
@@ -2070,7 +2067,6 @@
                 "_id": "groups.04",
                 "type": "channel",
                 "common": {
-                    "role": " audio.control",
                     "name": "program mute group"
                 },
                 "native": {}
@@ -2123,7 +2119,6 @@
                 "_id": "groups.05",
                 "type": "channel",
                 "common": {
-                    "role": " audio.control",
                     "name": "line volume group"
                 },
                 "native": {}
@@ -2205,7 +2200,6 @@
                 "_id": "groups.06",
                 "type": "channel",
                 "common": {
-                    "role": " audio.control",
                     "name": "Line mute group"
                 },
                 "native": {}
@@ -2258,7 +2252,6 @@
                 "_id": "groups.07",
                 "type": "channel",
                 "common": {
-                    "role": " audio.control",
                     "name": "bass eq group"
                 },
                 "native": {}
@@ -2341,7 +2334,6 @@
                 "_id": "groups.08",
                 "type": "channel",
                 "common": {
-                    "role": " audio.control",
                     "name": "treble eq group"
                 },
                 "native": {}
@@ -2424,7 +2416,6 @@
                 "_id": "groups.09",
                 "type": "channel",
                 "common": {
-                    "role": " audio.control",
                     "name": "output volume group"
                 },
                 "native": {}
@@ -2506,7 +2497,6 @@
                 "_id": "groups.10",
                 "type": "channel",
                 "common": {
-                    "role": " audio.control",
                     "name": "output mute group"
                 },
                 "native": {}
@@ -2571,7 +2561,7 @@
                 "_id": "player.playmode",
                 "type": "state",
                 "common": {
-                    "role" : "value",
+                    "role" : "media.state",
                     "name" : "playmode 0=stop, 1=play, 2=pause",
                     "type" : "number",
                     "states" : {"0":"stop", "1":"play", "2":"pause"},
@@ -2587,7 +2577,7 @@
                 "_id": "player.loopmode",
                 "type": "state",
                 "common": {
-                    "role" : "switch",
+                    "role" : "media.mode.repeat",
                     "name" : "if true the player is repeating",
                     "type" : "boolean",
                     "read" : true,
@@ -2600,7 +2590,7 @@
                 "_id" : "player.filepath",
                 "type" : "state",
                 "common" : {
-                    "role" : "value",
+                    "role" : "media.link",
                     "name" : "filepath of currently loaded player file",
                     "type" : "string",
                     "read" : true,
@@ -2613,7 +2603,7 @@
                 "_id" : "player.channel",
                 "type" : "state",
                 "common" : {
-                    "role" : "value",
+                    "role" : "media.playid",
                     "name" : "channel currently playing",
                     "type" : "number",
                     "read" : true,
@@ -2660,7 +2650,7 @@
                 "_id": "output.attenuation.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the output is muted",
                     "type": "boolean",
                     "read": true,
@@ -2757,7 +2747,7 @@
                 "_id": "gain.mute",
                 "type": "state",
                 "common": {
-                    "role": "switch",
+                    "role": "media.mute",
                     "name": "If true the input is muted",
                     "type": "boolean",
                     "read": true,
@@ -2857,7 +2847,7 @@
             "_id": "fs.upl",
             "type": "state",
             "common": {
-                "role": "value",
+                "role": "media.url",
                 "name": "Filepath to be uploaded",
                 "type": "string",
                 "read": true,
@@ -2872,10 +2862,10 @@
             "common": {
                 "role": "value",
                 "name": "remaining space in user flash",
-                "type": "string",
+                "type": "number",
                 "read": true,
                 "write": true,
-                "def": ""
+                "def": 0
                 },
             "native": {}
         },

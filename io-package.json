@@ -1,8 +1,12 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.2.12",
+    "version": "0.2.13",
     "news": {
+      "0.2.13": {
+        "en": "corrected instance.comon.titleLang to be set at startup, updated role definitions, added audiofile transfer functionality for DMPxxx",
+        "de": "setzen von instance.common.titleLang bei Adapterstart korrigiert, definition der zustands-Rollen überarbeitet, Audio-DatiÜbertragung für DMPxxx hinzugefügt"
+      },
       "0.2.12": {
         "en": "added instance.common.title/.titleLang set on startup",
         "de": "setzen von instance.common.title/.titleLang bei Adapterstart hinzugefügt"
@@ -213,7 +217,6 @@
         "zh-cn": "扩展设备/数据库结构以覆盖所有可控元素"
       }
     },
-    "title": "Extron SIS",
     "titleLang": {
       "en": "Extron SIS",
       "de": "Extron SIS",
@@ -263,7 +266,10 @@
       {
         "js-controller": ">=2.0.0"
       }
-    ]
+    ],
+    "adminUI": {
+      "config":"materialize"
+    }
   },
   "native": {
     "host": "127.0.0.1",
