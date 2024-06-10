@@ -48,6 +48,9 @@ If you are a non commercial organisation or use it for private use you can get a
 * (Bannsaenger) updated to adapter-dev and release script
 * (Bannsaenger) updated dependencies
 
+### 0.2.14 (2024-06-10)
+* (mschlgl) changed function createDatabase to use setObj()
+
 ### 0.2.13 (2024-06-06)
 * (mschlgl) corrected instance.comon.titleLang to be set at startup, updated role definitions, added audiofile transfer functionality for DMPxxx
 

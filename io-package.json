@@ -4,9 +4,13 @@
     "version": "0.2.13",
     "blockedVersions" : ["0.2.11", "0.2.12"],
     "news": {
+      "0.2.12": {
+        "en": "changed functon createDatabase() to use setObj()",
+        "de": "Funktion createDatabase() auf Verwendung von setObj() geändert"
+      },
       "0.2.13": {
         "en": "corrected instance.comon.titleLang to be set at startup, updated role definitions, added audiofile transfer functionality for DMPxxx",
-        "de": "setzen von instance.common.titleLang bei Adapterstart korrigiert, definition der zustands-Rollen überarbeitet, Audio-DatiÜbertragung für DMPxxx hinzugefügt"
+        "de": "setzen von instance.common.titleLang bei Adapterstart korrigiert, Definition der zustands-Rollen überarbeitet, Audio-DatiÜbertragung für DMPxxx hinzugefügt"
       },
       "0.2.12": {
         "en": "added instance.common.title/.titleLang set on startup",
