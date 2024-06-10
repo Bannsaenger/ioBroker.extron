@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.13 20240606
+ *      iobroker extron (SIS) Adapter V0.2.14 20240607
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -683,6 +683,17 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron got I/O Name "${ext2}" for I/O: "${this.oid2id(`${command}${ext1}`)}"`);
                                 this.setIOName(`${command}${ext1}`, ext2);
                                 break;
+                            case 'CNFG' :
+                                switch (ext2) {
+                                    case '0' :    // configuration restored
+                                        this.log.info(`onStreamData(): Extron IP configuration ${ext1 == '0'?'restored':'saved'}`);
+                                        break;
+                                    case '2' :    // configuration saved
+                                        this.log.info(`onStreamData(): Extron device configuration ${ext1 == '0'?'restored':'saved'}`);
+                                        break;
+                                }
+                                this.log.info(`onStreamData(): Extron configuration ${ext1}, ${ext2} `);
+                                break;
                         }
                     } else {
                         if ((answer != 'Q') && (answer != '') && (this.fileSend === false) && !(answer.match(/\d\*\d\w+/)) && !(answer.match(/\d\w/))) {
@@ -864,7 +875,7 @@ class Extron extends utils.Adapter {
 
             // create the common section
             for (const element of this.objectsTemplate.common) {
-                await this.setObjectNotExistsAsync(element._id, element);
+                await this.setObjectAsync(element._id, element);
             }
             this.log.debug(`createDatabaseAsync(): create common section`);
 
@@ -877,33 +888,33 @@ class Extron extends utils.Adapter {
             // if cp82 or sme211 : create video inputs and outputs
             if ((this.devices[this.config.device].short === 'cp82') || (this.devices[this.config.device].short === 'sme211')) {
                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].connections) {
-                    await this.setObjectNotExistsAsync(element._id, element);
+                    await this.setObjectAsync(element._id, element);
                 }
             }
             // if smd202 : create video player
             if (this.devices[this.config.device].short === 'smd202') {
                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].players) {
-                    await this.setObjectNotExistsAsync(element._id, element);
+                    await this.setObjectAsync(element._id, element);
                 }
                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].outputs) {
-                    await this.setObjectNotExistsAsync(element._id, element);
+                    await this.setObjectAsync(element._id, element);
                 }
             }
             // if we have a user filesystem on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].fs) {
-                await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.filesystem._id, this.objectsTemplate.userflash.filesystem);
-                await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.directory._id, this.objectsTemplate.userflash.directory);
-                await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.upload._id, this.objectsTemplate.userflash.upload);
-                await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.freespace._id, this.objectsTemplate.userflash.freespace);
-                await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.filecount._id, this.objectsTemplate.userflash.filecount);
-                await this.setObjectNotExistsAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
+                await this.setObjectAsync(this.objectsTemplate.userflash.filesystem._id, this.objectsTemplate.userflash.filesystem);
+                await this.setObjectAsync(this.objectsTemplate.userflash.directory._id, this.objectsTemplate.userflash.directory);
+                await this.setObjectAsync(this.objectsTemplate.userflash.upload._id, this.objectsTemplate.userflash.upload);
+                await this.setObjectAsync(this.objectsTemplate.userflash.freespace._id, this.objectsTemplate.userflash.freespace);
+                await this.setObjectAsync(this.objectsTemplate.userflash.filecount._id, this.objectsTemplate.userflash.filecount);
+                await this.setObjectAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
                 await this.setStateAsync('fs.dir',false,true); // reset directory request flag
                 this.log.debug(`createDatabaseAsync(): set user fileSystem`);
             }
             // if we have inputs on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].in) {
                 // at this point the device has inputs
-                await this.setObjectNotExistsAsync('in', {
+                await this.setObjectAsync('in', {
                     'type': 'folder',
                     'common': {
                         'name': 'All input types'
@@ -912,7 +923,7 @@ class Extron extends utils.Adapter {
                 });
                 for (const inputs of Object.keys(this.devices[this.config.device].in)) {
                     // create input folder, key name is the folder id
-                    await this.setObjectNotExistsAsync(`in.${inputs}`, {
+                    await this.setObjectAsync(`in.${inputs}`, {
                         'type': 'folder',
                         'common': {
                             'name': this.devices[this.config.device].in[inputs].name
@@ -923,55 +934,55 @@ class Extron extends utils.Adapter {
                     for (let i = 1; i <= this.devices[this.config.device].in[inputs].amount; i++) {
                         const actInput = `in.${inputs}.${i.toString().padStart(2,'0')}`;
                         // create the input folder
-                        await this.setObjectNotExistsAsync(actInput, this.objectsTemplate[this.devices[this.config.device].objects[1]].input);
+                        await this.setObjectAsync(actInput, this.objectsTemplate[this.devices[this.config.device].objects[1]].input);
                         // and the common structure of an input depending on type
                         switch (inputs) {
 
                             case 'inputs' :
                                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].inputs) {
-                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                    await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'lineInputs' :
                                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].lineInputs) {
-                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                    await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'playerInputs' :
                                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].playerInputs) {
-                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                    await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'programInputs' :
                                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].programInputs) {
-                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                    await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'videoInputs' :
                                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].videoInputs) {
-                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                    await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'auxInputs' :
                                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].auxInputs) {
-                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                    await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'virtualReturns' :
                                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].virtualReturns) {
-                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                    await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'expansionInputs' :
                                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].expansionInputs) {
-                                    await this.setObjectNotExistsAsync(actInput + '.' + element._id, element);
+                                    await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
@@ -985,7 +996,7 @@ class Extron extends utils.Adapter {
                                             continue;       // these points cannot be set
                                         }
                                         const actMixPoint = actInput + '.mixPoints.' + this.devices[this.config.device].out[outType].short + j.toString().padStart(2,'0');
-                                        await this.setObjectNotExistsAsync(actMixPoint, {
+                                        await this.setObjectAsync(actMixPoint, {
                                             'type': 'folder',
                                             'common': {
                                                 'role': 'mixpoint',
@@ -994,7 +1005,7 @@ class Extron extends utils.Adapter {
                                             'native': {}
                                         });
                                         for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].mixPoints) {
-                                            await this.setObjectNotExistsAsync(actMixPoint + '.' + element._id, element);
+                                            await this.setObjectAsync(actMixPoint + '.' + element._id, element);
                                         }
                                     }
                                 }
@@ -1007,7 +1018,7 @@ class Extron extends utils.Adapter {
             // if we have players on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].ply) {
                 // at this point the device has players
-                await this.setObjectNotExistsAsync('ply', {
+                await this.setObjectAsync('ply', {
                     'type': 'folder',
                     'common': {
                         'name': 'All players'
@@ -1016,7 +1027,7 @@ class Extron extends utils.Adapter {
                 });
                 for (const players of Object.keys(this.devices[this.config.device].ply)) {
                     // create player folder, key name is the folder id
-                    await this.setObjectNotExistsAsync(`ply.${players}`, {
+                    await this.setObjectAsync(`ply.${players}`, {
                         'type': 'folder',
                         'common': {
                             'name': this.devices[this.config.device].ply[players].name
@@ -1027,10 +1038,10 @@ class Extron extends utils.Adapter {
                     for (let i = 1; i <= this.devices[this.config.device].ply[players].amount; i++) {
                         const actPlayer = `ply.${players}.${i}`;
                         // create the player folder
-                        await this.setObjectNotExistsAsync(actPlayer, this.objectsTemplate[this.devices[this.config.device].objects[1]].player);
+                        await this.setObjectAsync(actPlayer, this.objectsTemplate[this.devices[this.config.device].objects[1]].player);
                         // and the common structure of a player
                         for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].players) {
-                            await this.setObjectNotExistsAsync(actPlayer + '.' + element._id, element);
+                            await this.setObjectAsync(actPlayer + '.' + element._id, element);
                         }
                     }
                 }
@@ -1039,7 +1050,7 @@ class Extron extends utils.Adapter {
             // if we have outputs on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].out) {
                 // at this point the device has outputs
-                await this.setObjectNotExistsAsync('out', {
+                await this.setObjectAsync('out', {
                     'type': 'folder',
                     'common': {
                         'name': 'All outputs'
@@ -1048,7 +1059,7 @@ class Extron extends utils.Adapter {
                 });
                 for (const outputs of Object.keys(this.devices[this.config.device].out)) {
                     // create outputs folder, key name is the folder id
-                    await this.setObjectNotExistsAsync(`out.${outputs}`, {
+                    await this.setObjectAsync(`out.${outputs}`, {
                         'type': 'folder',
                         'common': {
                             'name': this.devices[this.config.device].out[outputs].name
@@ -1059,24 +1070,24 @@ class Extron extends utils.Adapter {
                     for (let i = 1; i <= this.devices[this.config.device].out[outputs].amount; i++) {
                         const actOutput = `out.${outputs}.${i.toString().padStart(2,'0')}`;
                         // create the output folder
-                        await this.setObjectNotExistsAsync(actOutput, this.objectsTemplate[this.devices[this.config.device].objects[1]].output);
+                        await this.setObjectAsync(actOutput, this.objectsTemplate[this.devices[this.config.device].objects[1]].output);
                         // and the common structure of a output
                         switch (outputs) {
                             case 'outputs' :
                                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].outputs) {
-                                    await this.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
+                                    await this.setObjectAsync(actOutput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'auxOutputs' :
                                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].auxOutputs) {
-                                    await this.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
+                                    await this.setObjectAsync(actOutput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'expansionOutputs' :
                                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].expansionOutputs) {
-                                    await this.setObjectNotExistsAsync(actOutput + '.' + element._id, element);
+                                    await this.setObjectAsync(actOutput + '.' + element._id, element);
                                 }
                                 break;
                         }
@@ -1087,13 +1098,13 @@ class Extron extends utils.Adapter {
             // if cp82 : create groupss
             if (this.devices[this.config.device].short === 'cp82') {
                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].groups) {
-                    await this.setObjectNotExistsAsync(element._id, element);
+                    await this.setObjectAsync(element._id, element);
                 }
                 this.log.debug(`createDatabaseAsync(): cp82 create groups`);
             }
             // if we have groups on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].grp) {
-                await this.setObjectNotExistsAsync('groups', {
+                await this.setObjectAsync('groups', {
                     'type': 'folder',
                     'common': {
                         'name': 'All Groups'
@@ -1104,10 +1115,10 @@ class Extron extends utils.Adapter {
                 for (let i = 1; i <= this.devices[this.config.device].grp.groups.amount; i++) {
                     const actGroup = `groups.${i.toString().padStart(2,'0')}`;
                     // create the group folder
-                    await this.setObjectNotExistsAsync(actGroup, this.objectsTemplate[this.devices[this.config.device].objects[1]].group);
+                    await this.setObjectAsync(actGroup, this.objectsTemplate[this.devices[this.config.device].objects[1]].group);
                     // and the common structure of a group
                     for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].groups) {
-                        await this.setObjectNotExistsAsync(actGroup + '.' + element._id, element);
+                        await this.setObjectAsync(actGroup + '.' + element._id, element);
                     }
                 }
                 this.log.debug(`createDatabaseAsync(): set groups`);
@@ -1485,6 +1496,33 @@ class Extron extends utils.Adapter {
 
         return locObj;
     }
+
+    /** BEGIN device config control */
+    /**
+     * save device config to local filesystem
+     * cmd = 1*2XF
+     */
+    saveDeviceConfig () {
+        try {
+            this.streamSend(`W1*2XF\r`);
+        } catch (err) {
+            this.errorHandler(err, 'saveDeviceConfig');
+        }
+    }
+
+    /**
+     * restore device config from local filesystem
+     * cmd = 0*2XF
+     */
+    restoreDeviceConfig () {
+        try {
+            this.streamSend(`W0*2XF\r`);
+        } catch (err) {
+            this.errorHandler(err, 'restoreDeviceConfig');
+        }
+    }
+
+    /** END device config control */
 
     /** BEGIN Input and Mix control */
     /**
@@ -2078,7 +2116,7 @@ class Extron extends utils.Adapter {
         try {
             let i = 0;
             userFileList.sort();    // sort list alphabetically to resemble DSP configurator display
-            this.setObjectNotExistsAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
+            this.setObjectAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
             for (const userFile of userFileList) {                              // check each line
                 if (userFile.match(/(\d+\b Bytes Left)/g)) {
                     this.fileList.freeSpace = Number(userFile.match(/\d+/g));
