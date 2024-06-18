@@ -91,7 +91,7 @@ class Extron extends utils.Adapter {
         this.stream = undefined;
         this.streamAvailable = true;    // if false wait for continue event
         this.stateList = [];            // will be filled with all existing states
-        this.pollCount = 0;             // count sent status query
+        this.pollCount = 1;             // count sent status query
         this.playerLoaded = [false, false, false, false, false, false, false,false];    // remember which player has a file assigned
         this.auxOutEnabled = [false, false, false, false, false, false, false,false];   // remember which aux output is enabled
         this.groupTypes = new Array(65);    // prepare array to hold the type of groups
@@ -118,7 +118,7 @@ class Extron extends utils.Adapter {
             this.initVars();
 
             // Reset the connection indicator during startup
-            await this.setStateAsync('info.connection', false, true);
+            this.setState('info.connection', false, true);
 
             // The adapters config (in the instance object everything under the attribute "native") is accessible via
             // this.config:
@@ -347,7 +347,7 @@ class Extron extends utils.Adapter {
      * @param {any} err
      */
     onClientError(err) {
-        this.log.info('onClientError(): error detected');
+        this.log.error(`onClientError(): error detected ${err}`);
         this.errorHandler(err, 'onClientError');
     }
 
@@ -491,7 +491,7 @@ class Extron extends utils.Adapter {
 
                         this.log.debug(`onStreamData(): command "${command}", ext1 "${ext1}", ext2 "${ext2}`);
 
-                        this.pollCount = 0;     // reset pollcounter as valid data has been received
+                        this.pollCount = 1;     // reset pollcounter as valid data has been received
                         this.timers.timeoutQueryStatus.refresh();   // refresh poll timer
 
                         switch (command) {
@@ -707,7 +707,11 @@ class Extron extends utils.Adapter {
             // @ts-ignore
             if (err.message === 'Device mismatch error') {
                 this.log.debug('onStreamData(): device mismatch ... terminating');
-                this.terminate('Device mismatch error');
+                if (typeof this.terminate === 'function') {
+                    this.terminate(utils.EXIT_CODES.INVALID_ADAPTER_CONFIG);
+                } else {
+                    process.exit(utils.EXIT_CODES.INVALID_ADAPTER_CONFIG);
+                }
             }
         }
     }
@@ -825,14 +829,14 @@ class Extron extends utils.Adapter {
         try {
             if (this.pollCount > maxPollCount) {
                 this.log.error('queryStatus(): maxPollCount exceeded');
-                this.pollCount = 0;
+                this.pollCount = 1;
                 this.clientReConnect();
             } else {
                 if (typeof this.timers.timeoutQueryStatus !== 'undefined') this.timers.timeoutQueryStatus.refresh();
                 if (!this.fileSend) {
+                    this.log.debug(`queryStatus(): Extron send a status query #${this.pollCount}`);
                     this.streamSend('Q');
                     this.pollCount += 1;
-                    this.log.debug(`queryStatus(): Extron send a status query #${this.pollCount}`);
                 }
             }
         } catch (err) {
@@ -908,7 +912,7 @@ class Extron extends utils.Adapter {
                 await this.setObjectAsync(this.objectsTemplate.userflash.freespace._id, this.objectsTemplate.userflash.freespace);
                 await this.setObjectAsync(this.objectsTemplate.userflash.filecount._id, this.objectsTemplate.userflash.filecount);
                 await this.setObjectAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
-                await this.setStateAsync('fs.dir',false,true); // reset directory request flag
+                this.setState('fs.dir',false,true); // reset directory request flag
                 this.log.debug(`createDatabaseAsync(): set user fileSystem`);
             }
             // if we have inputs on the device
@@ -1013,7 +1017,7 @@ class Extron extends utils.Adapter {
                         }
                     }
                 }
-                this.log.debug(`createDatabaseAsync(): set inpts`);
+                this.log.debug(`createDatabaseAsync(): set inputs`);
             }
             // if we have players on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].ply) {
@@ -1133,6 +1137,7 @@ class Extron extends utils.Adapter {
      * called to create a list of all states in the database
      */
     async createStatesListAsync(){
+        this.log.debug(`createDStatesListAsync(): requesting states`);
         this.stateList = Object.keys(await this.getStatesAsync('*'));
     }
 
@@ -2065,7 +2070,7 @@ class Extron extends utils.Adapter {
             const hour = fileTimeStamp.slice(11,13);
             const minute = fileTimeStamp.slice(14,16);
             const second = fileTimeStamp.slice(17,19);
-            if (fileStats.size < this.fileList.freespace) {
+            if (fileStats.size < this.fileList.freeSpace) {
                 const streamData = `W+UF${fileStats.size}*2 ${month} ${day} ${year} ${hour} ${minute} ${second},${fileName}\r`;
                 //const streamData = `W+UF${fileStats.size},${fileName}\r`;
                 this.log.debug('loadUserFile(): starting file transmission');
@@ -2076,7 +2081,7 @@ class Extron extends utils.Adapter {
                     this.streamSend(data);    // transmit file to device
                 });
                 this.fileSend = false;
-            } else this.log.warn(`loadUserFile(): filesize "${fileStats.size}" of "${fileName}" exceeds remaining freespace "${this.fileList.freespace}" on device`);
+            } else this.log.warn(`loadUserFile(): filesize "${fileStats.size}" of "${fileName}" exceeds remaining freespace "${this.fileList.freeSpace}" on device`);
         } catch (err) {
             this.fileSend = false;
             this.errorHandler(err, 'loadUserFile');
@@ -2120,7 +2125,7 @@ class Extron extends utils.Adapter {
             for (const userFile of userFileList) {                              // check each line
                 if (userFile.match(/(\d+\b Bytes Left)/g)) {
                     this.fileList.freeSpace = Number(userFile.match(/\d+/g));
-                    this.log.debug(`freespace: ${this.fileList.freespace}`);
+                    this.log.debug(`freespace: ${this.fileList.freeSpace}`);
                 }
                 // @ts-ignore
                 this.file.fileName = userFile.match(/^(.+\.\w{3}\b)/g)?`${userFile.match(/^(.+\.\w{3}\b)/g)[0]}`:'';    // extract filename
@@ -3254,7 +3259,9 @@ class Extron extends utils.Adapter {
             // clearTimeout(timeout1);
             // clearTimeout(timeout2);
             // ...
-            clearTimeout(this.timers.intervallQueryStatus);
+            this.log.debug('onUnload(): calling clearTimeout()');
+            clearTimeout(this.timers.timeoutQueryStatus); // clear the query timer
+            clearTimeout(this.timers.timeoutReconnectClient); // clear reconnect timer
 
             // close client connection
             switch (this.config.type) {
@@ -3267,6 +3274,7 @@ class Extron extends utils.Adapter {
                     this.net.destroy();
                     break;
             }
+            this.log.debug('onUnload(): calling callback()');
             callback();
         } catch (e) {
             callback();
