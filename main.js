@@ -2143,13 +2143,13 @@ class Extron extends utils.Adapter {
                     await this.setObjectAsync(`fs.files.${i}`, this.objectsTemplate.userflash.files.channel);
                     await this.setObjectAsync(`fs.files.${i}.filename`, this.objectsTemplate.userflash.files.filename);
                     this.setState(`fs.files.${i}.filename`, this.file.fileName, true);
-                    this.log.debug(`Object "fs.files.${i}.filename ${this.file.fileName}" updated`);
+                    this.log.debug(`setUserFile(): Object "fs.files.${i}.filename ${this.file.fileName}" updated`);
                 }
             }
             this.setState(`fs.filecount`, i, true);
             this.setState('fs.freespace',this.fileList.freeSpace,true);
             this.setState('fs.dir',false,true);
-            this.log.debug(`Extron userFlash filelist updated: ${userFileList.join('; ')}`);
+            this.log.debug(`setUserFile(): Extron userFlash filelist updated: ${userFileList.join('; ')}`);
         } catch (err) {
             this.requestDir = false;
             this.errorHandler(err, 'setUserFiles');
