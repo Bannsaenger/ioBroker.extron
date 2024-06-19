@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.15 20240611
+ *      iobroker extron (SIS) Adapter V0.2.15 20240618
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -2121,7 +2121,10 @@ class Extron extends utils.Adapter {
         try {
             let i = 0;
             userFileList.sort();    // sort list alphabetically to resemble DSP configurator display
-            this.setObjectAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
+            this.log.info(`setUserFile(): deleting file objects...`);
+            await this.delObjectAsync(this.objectsTemplate.userflash.file._id,{recursive:true}); // delete files recursively
+            this.log.info(`setUserFile(): create files folder object...`);
+            await this.setObjectAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
             for (const userFile of userFileList) {                              // check each line
                 if (userFile.match(/(\d+\b Bytes Left)/g)) {
                     this.fileList.freeSpace = Number(userFile.match(/\d+/g));
@@ -2136,6 +2139,7 @@ class Extron extends utils.Adapter {
                 if (this.file.fileName.match(/.raw$/)) {        // check if AudioFile
                     i++;
                     this.fileList.files[i] = this.file;                             // add to filelist array
+                    this.log.info(`setUserFile(): creating file object for: ${this.file.fileName}`);
                     await this.setObjectAsync(`fs.files.${i}`, this.objectsTemplate.userflash.files.channel);
                     await this.setObjectAsync(`fs.files.${i}.filename`, this.objectsTemplate.userflash.files.filename);
                     this.setState(`fs.files.${i}.filename`, this.file.fileName, true);
