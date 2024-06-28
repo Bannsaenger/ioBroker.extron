@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.15 20240618
+ *      iobroker extron (SIS) Adapter V0.2.16 20240628
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -67,31 +67,25 @@ class Extron extends utils.Adapter {
         this.grpCmdBuf = new Array(65);    // buffer for group command while a group deletion is pending
         this.grpCmdBuf.fill([]);
         // Status variables
-        this.isDeviceChecked = false;       // will be true if device sends banner and will be verified
-        this.isLoggedIn = false;            // will be true once telnet login completed
-        this.isVerboseMode = false;         // will be true if verbose mode 3 is active
-        this.initDone = false;              // will be true if all init is done
-        this.versionSet = false;            // will be true if the version is once set in the db
+        this.isDeviceChecked = false;   // will be true if device sends banner and will be verified
+        this.isLoggedIn = false;        // will be true once telnet login completed
+        this.isVerboseMode = false;     // will be true if verbose mode 3 is active
+        this.initDone = false;          // will be true if all init is done
+        this.versionSet = false;        // will be true if the version is once set in the db
         this.device = {'model':'','name':'','version':''}; // will be filled according to device responses
-        this.statusRequested = false;       // will be true once device status has been requested after init
-        this.statusSent = false;          // will be true once database settings have been sent to device
-        this.clientReady = false;           // will be true if device connection is ready
-        // Some timers and intervalls
-        this.timers = {};
-        // Create a client socket to connect to the device
-        // first implementation only ssh
-        this.debugSSH = false;
-        // debug option for full ssh debug log on adapter.log.silly
-        this.client = new Client();
-        // the SSH shell stream
-        // Create a client socket to connect to the device
-        this.net = new Net.Socket({'readable':true,'writable' : true});
+        this.statusRequested = false;   // will be true once device status has been requested after init
+        this.statusSent = false;        // will be true once database settings have been sent to device
+        this.clientReady = false;       // will be true if device connection is ready
+        this.timers = {};               // Some timers and intervalls
+        this.debugSSH = false;          // debug option for full ssh debug log on adapter.log.silly
+        this.client = new Client();     // Create a ssh lient socket to connect to the device
+        this.net = new Net.Socket({'readable':true,'writable' : true, 'allowHalfOpen' : false}); // Create a client socket to connect to the device
         this.net.setKeepAlive(true);
         this.net.setNoDelay(true);
-        this.stream = undefined;
+        this.stream = undefined;        // placeholder for the stream
         this.streamAvailable = true;    // if false wait for continue event
         this.stateList = [];            // will be filled with all existing states
-        this.pollCount = 1;             // count sent status query
+        this.pollCount = 0;             // count sent status query
         this.playerLoaded = [false, false, false, false, false, false, false,false];    // remember which player has a file assigned
         this.auxOutEnabled = [false, false, false, false, false, false, false,false];   // remember which aux output is enabled
         this.groupTypes = new Array(65);    // prepare array to hold the type of groups
@@ -104,8 +98,8 @@ class Extron extends utils.Adapter {
         this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize': 0};         // file object
         this.fileList = {'freeSpace' : 0, 'files' : [this.file]};              // array to hold current file list
         this.stateBuf = [{'id': '', 'timestamp' : 0}];  // array to hold state changes with timestamp
-        this.presetList = ''; // list of SMD202 preset channels
-        this.requestPresets = false;
+        this.presetList = '';           // list of SMD202 preset channels
+        this.requestPresets = false;    // flag to signal thet device filr directory has been requested
     }
 
     /**
@@ -166,16 +160,20 @@ class Extron extends utils.Adapter {
                     break;
 
                 case 'telnet' :
+                    this.net.on('connectionAttempt',()=>{this.log.debug(`Telnet: connectionAttempt started`);});
+                    this.net.on('connectionAttemptTimeout',()=>{this.log.warn(`Telnet: connectionAttemptTimeout`);});
+                    this.net.on('connectionAttemptFailed',()=>{this.log.warn(`Telnet: connectionAttemptFailed`);});
+                    this.net.on('timeout',()=>{this.log.warn(`Telnet: connection idle timeout`);});
+                    this.net.on('connect',()=>{this.log.debug(`Telnet: connected`);});
                     this.net.on('ready', this.onClientReady.bind(this));
-                    this.net.on('data', this.onStreamData.bind(this));
-                    this.net.on('error', this.onStreamError.bind(this));
-                    this.net.on('close', this.onStreamClose.bind(this));
-                    this.net.on('drain', this.onStreamContinue.bind(this));
+                    this.net.on('error', this.onClientError.bind(this));
                     this.net.on('end', this.onClientEnd.bind(this));
+                    this.net.on('close', ()=>{
+                        this.log.debug(`Telnet: socket closed`);
+                        this.clientReConnect();
+                    });
                     break;
             }
-            this.timers.timeoutQueryStatus = setTimeout(this.queryStatus.bind(this), this.config.pollDelay);
-
             this.log.info(`onReady(): Extron took ${Date.now() - startTime}ms to initialize and setup db`);
 
             this.clientConnect();
@@ -222,17 +220,33 @@ class Extron extends utils.Adapter {
         // clear poll timer
         clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
         // Status variables to be reset
+        this.setState('info.connection', false, true);
+        this.isLoggedIn = false;        // will be true once telnet login completed
+        this.isVerboseMode = false;     // will be true if verbose mode 3 is active
+        this.isDeviceChecked = false;   // will be true if device sends banner and will be verified
+        /*
         switch (this.config.type) {
             case 'ssh' :
+                this.log.debug(`clientReConnect(): calling this.client.end()`);
                 this.client.end();
                 break;
             case 'telnet' :
+                this.log.debug(`clientReConnect(): calling this.net.destroy()`);
                 this.net.destroy();
                 break;
         }
         this.initVars();
+        */
         this.log.info(`clientReConnect(): reconnecting after ${this.config.reconnectDelay}ms`);
         this.timers.timeoutReconnectClient = setTimeout(this.clientConnect.bind(this),this.config.reconnectDelay);
+        /*
+        this.log.error(`Extron terminating due to comms error`);
+        if (typeof this.terminate === 'function') {
+            this.terminate(utils.EXIT_CODES.UNCAUGHT_EXCEPTION);
+        } else {
+            process.exit(utils.EXIT_CODES.UNCAUGHT_EXCEPTION);
+        }
+        */
     }
 
     /**
@@ -273,12 +287,7 @@ class Extron extends utils.Adapter {
                             // @ts-ignore
                             this.stream.on('data', this.onStreamData.bind(this));
                             // @ts-ignore
-                            this.stream.on('continue', this.onStreamContinue.bind(this));
-                            // Set the connection indicator after authentication and an open stream
-                            // @ts-ignore
-                            this.log.info('onClientReady(): Extron connected');
-                            // @ts-ignore
-                            this.setState('info.connection', true, true);
+                            this.stream.on('drain', this.onStreamContinue.bind(this));
                         } catch (err) {
                             // @ts-ignore
                             this.errorHandler(err, 'onClientReady');
@@ -286,16 +295,22 @@ class Extron extends utils.Adapter {
                     });
                     break;
                 case 'telnet' :
-                    try {
-                        this.log.info('onClientReady(): Extron established connection');
-                        // Set the connection indicator after authentication and an open stream
-                        this.log.info('onClientReady(): Extron connected');
-                        this.setState('info.connection', true, true);
-                    } catch (err) {
-                        this.errorHandler(err, 'onClientReady');
-                    }
+                    this.log.info('onClientReady(): Extron established Telnet connection');
+                    this.stream.on('error', this.onStreamError.bind(this));
+                    // @ts-ignore
+                    this.stream.on('close', this.onStreamClose.bind(this));
+                    // @ts-ignore
+                    this.stream.on('data', this.onStreamData.bind(this));
+                    // @ts-ignore
+                    this.stream.on('drain', this.onStreamContinue.bind(this));
                     break;
             }
+            // Set the connection indicator after authentication and an open stream
+            // @ts-ignore
+            this.log.info('onClientReady(): Extron connected');
+            // @ts-ignore
+            this.setState('info.connection', true, true);
+            this.timers.timeoutQueryStatus = setTimeout(this.queryStatus.bind(this), this.config.pollDelay);    // start polling the device
         } catch (err) {
             this.errorHandler(err, 'onClientReady');
         }
@@ -316,7 +331,7 @@ class Extron extends utils.Adapter {
      */
     onClientClose() {
         try {
-            this.log.info('onClientClose(): Extron client closed');
+            this.log.info('onClientClose(): Extron SSH client closed');
             // Reset the connection indicator
             this.setState('info.connection', false, true);
             this.clientReady = false;
@@ -336,7 +351,7 @@ class Extron extends utils.Adapter {
      */
     onClientEnd() {
         try {
-            this.log.info('onClientEnd(): Extron client socket disconnected');
+            this.log.info('onClientEnd(): Extron client socket got disconnected');
             this.setState('info.connection', false, true);
         } catch (err) {
             this.errorHandler(err, 'onClientEnd');
@@ -347,27 +362,38 @@ class Extron extends utils.Adapter {
      * @param {any} err
      */
     onClientError(err) {
+        switch (this.config.type) {
+            case 'ssh' :
+                break;
+            case 'telnet' :
+                if (this.net.connect) {
+                    this.log.debug(`onClientError(): telnet connection pending ...`);
+                    return;
+                }
+                break;
+        }
         this.log.error(`onClientError(): error detected ${err}`);
         this.errorHandler(err, 'onClientError');
     }
 
     /**
      * called to send data to the stream
-     * @param {string | Uint8Array} data
+     * @param {string | Uint8Array | any} data
      */
     streamSend(data) {
         try {
             if (this.streamAvailable) {
                 this.log.debug(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.fileSend?'file data':this.decodeBufferToLog(data)}"`);
                 this.setState('info.connection', true, true);
-                switch (this.config.type) {
+                this.streamAvailable = this.stream.write(data);
+                /*switch (this.config.type) {
                     case 'ssh' :
                         this.streamAvailable = this.stream.write(data);
                         break;
                     case 'telnet' :
                         this.streamAvailable = this.net.write(data);
                         break;
-                }
+                }*/
             } else {
                 const bufSize = this.sendBuffer.push(data);
                 this.setState('info.connection', false, true);
@@ -481,8 +507,7 @@ class Extron extends utils.Adapter {
                         this.setPresets(this.presetList);
                     }
                 } else
-                {
-                    // lookup the command
+                {   // lookup the command
                     const matchArray = answer.match(/([A-Z][a-z]+[A-Z]|\w{3})(\d*)\*{0,1},{0,1} {0,1}(.*)/i);
                     if (matchArray) {       // if any match
                         const command = matchArray[1].toUpperCase();
@@ -491,7 +516,7 @@ class Extron extends utils.Adapter {
 
                         this.log.debug(`onStreamData(): command "${command}", ext1 "${ext1}", ext2 "${ext2}`);
 
-                        this.pollCount = 1;     // reset pollcounter as valid data has been received
+                        this.pollCount = 0;     // reset pollcounter as valid data has been received
                         this.timers.timeoutQueryStatus.refresh();   // refresh poll timer
 
                         switch (command) {
@@ -765,9 +790,9 @@ class Extron extends utils.Adapter {
     async onStreamContinue() {
         try {
             this.log.debug('onStreamContinue(): Extron stream can continue');
-            this.streamAvailable = true;
             this.setState('info.connection', true, true);
-            this.streamSend(this.sendBuffer.pop());
+            this.streamAvailable = true;
+            while (this.sendBuffer.length && this.streamAvailable) this.streamSend(this.sendBuffer.shift());
         } catch (err) {
             this.errorHandler(err, 'onStreamContinue');
         }
@@ -779,24 +804,24 @@ class Extron extends utils.Adapter {
      */
     onStreamError(err) {
         this.errorHandler(err, 'onStreamError');
-        this.log.warn('onSteamError(): Extron is calling clientReConnect');
-        this.clientReConnect();
+        this.log.warn('onStreamError(): Extron is calling clientReConnect');
+        //this.clientReConnect();
     }
 
     /**
      * called if stream is closed
      */
     onStreamClose() {
-        this.log.debug('onStreamClose(): clear query timer');
-        clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
+        this.log.debug('onStreamClose(): stream closed');
+        /*
         try {
             switch (this.config.type) {
                 case 'ssh' :
-                    this.log.info('onStreamClose(): Extron stream closed, now calling client.end()');
+                    this.log.info('onStreamClose(): Extron SSH stream closed, now calling client.end()');
                     this.client.end();
                     break;
                 case 'telnet' :
-                    this.log.info('onStreamClose(): Extron stream closed, now calling net.destroy()');
+                    this.log.info('onStreamClose(): Extron Telnet stream closed, now calling net.destroy()');
                     this.net.destroy();
                     break;
             }
@@ -804,6 +829,7 @@ class Extron extends utils.Adapter {
         } catch (err) {
             this.errorHandler(err, 'onStreamClose');
         }
+        */
     }
 
     /**
@@ -824,17 +850,24 @@ class Extron extends utils.Adapter {
 
     /**
      * called to send a status query
+     * cmd = Q
      */
     queryStatus() {
         try {
             if (this.pollCount > maxPollCount) {
-                this.log.error('queryStatus(): maxPollCount exceeded');
-                this.pollCount = 1;
-                this.clientReConnect();
+                this.log.warn('queryStatus(): maxPollCount exceeded, closing connection');
+                this.pollCount = 0;
+                switch (this.config.type) {
+                    case 'telnet':
+                        this.net.destroy();     // close the connection
+                        break;
+                    case 'ssh' :
+                        break;
+                }
             } else {
                 if (typeof this.timers.timeoutQueryStatus !== 'undefined') this.timers.timeoutQueryStatus.refresh();
                 if (!this.fileSend) {
-                    this.log.debug(`queryStatus(): Extron send a status query #${this.pollCount}`);
+                    if (this.pollCount) this.log.debug(`queryStatus(): Extron send query poll #${this.pollCount}`);
                     this.streamSend('Q');
                     this.pollCount += 1;
                 }
@@ -911,7 +944,7 @@ class Extron extends utils.Adapter {
                 await this.setObjectAsync(this.objectsTemplate.userflash.upload._id, this.objectsTemplate.userflash.upload);
                 await this.setObjectAsync(this.objectsTemplate.userflash.freespace._id, this.objectsTemplate.userflash.freespace);
                 await this.setObjectAsync(this.objectsTemplate.userflash.filecount._id, this.objectsTemplate.userflash.filecount);
-                await this.setObjectAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
+                await this.setObjectAsync(this.objectsTemplate.userflash.files._id, this.objectsTemplate.userflash.files);
                 this.setState('fs.dir',false,true); // reset directory request flag
                 this.log.debug(`createDatabaseAsync(): set user fileSystem`);
             }
@@ -1137,7 +1170,7 @@ class Extron extends utils.Adapter {
      * called to create a list of all states in the database
      */
     async createStatesListAsync(){
-        this.log.debug(`createDStatesListAsync(): requesting states`);
+        this.log.debug(`createStatesListAsync(): requesting device states from database`);
         this.stateList = Object.keys(await this.getStatesAsync('*'));
     }
 
@@ -1578,6 +1611,7 @@ class Extron extends utils.Adapter {
      * Send the mute status to the device
      * @param {string} baseId
      * @param {string | boolean | number} value
+     * cmd = M[oid]*[0/1]AU
      */
     sendMuteStatus(baseId, value) {
         try {
@@ -1593,6 +1627,7 @@ class Extron extends utils.Adapter {
     /**
      * request the mute status from device
      * @param {string} baseId
+     * cmd = M[oid]AU
      */
     getMuteStatus(baseId) {
         try {
@@ -1609,6 +1644,7 @@ class Extron extends utils.Adapter {
      * Send the gain level to the device
      * @param {string} baseId
      * @param {string | any} value
+     * cmd = G[oid]*[value]AU
      */
     sendGainLevel(baseId, value) {
         try {
@@ -1643,6 +1679,7 @@ class Extron extends utils.Adapter {
     /**
      * get the gain level from device
      * @param {string} baseId
+     * cmd = G[oid]AU
      */
     getGainLevel(baseId) {
         try {
@@ -1651,7 +1688,7 @@ class Extron extends utils.Adapter {
                 this.streamSend(`WG${oid}AU\r`);
             }
         } catch (err) {
-            this.errorHandler(err, 'sendGainLevel');
+            this.errorHandler(err, 'getGainLevel');
         }
     }
 
@@ -1674,6 +1711,7 @@ class Extron extends utils.Adapter {
      * Send the source mode to the device
      * @param {string} baseId
      * @param {string | number} value
+     * cmd = D[oid]*[value]AU
      */
     sendSource(baseId, value) {
         try {
@@ -1689,6 +1727,7 @@ class Extron extends utils.Adapter {
     /**
      * get the source mode from device
      * @param {string} baseId
+     * cmd = D[oid]AU
      */
     getSource(baseId) {
         try {
@@ -1704,6 +1743,7 @@ class Extron extends utils.Adapter {
     /**
      * get the i/o name from device
      * @param {string} Id
+     * cmd = [ioNumber]{ioType}
      */
     getIOName(Id) {
         try {
@@ -1742,6 +1782,7 @@ class Extron extends utils.Adapter {
      * send the i/o name to device
      * @param {string} Id
      * @param {string} name
+     * cmd = [ioNumber],[ioName]{ioType}
      */
     sendIOName(Id, name) {
         try {
@@ -1808,7 +1849,7 @@ class Extron extends utils.Adapter {
     /**
      * get limiter status
      * @param {string} baseId
-     * cmd WE[oid]AU
+     * cmd = E[oid]AU
      */
     getLimitStatus(baseId) {
         try {
@@ -1825,7 +1866,7 @@ class Extron extends utils.Adapter {
      * send Limiter status to device
      * @param {string} baseId
      * @param {string | any} value
-     * cmd WE[oid]*[0/1]AU
+     * cmd = E[oid]*[0/1]AU
      */
     sendLimitStatus(baseId, value) {
         try {
@@ -1855,7 +1896,7 @@ class Extron extends utils.Adapter {
     /**
      * get limiter threshold from device
      * @param {string} baseId
-     * cmd WT[oid]AU
+     * cmd = T[oid]AU
      */
     getLimitThreshold(baseId) {
         try {
@@ -1872,7 +1913,7 @@ class Extron extends utils.Adapter {
      * send new Limiter Threshold to device
      * @param {string} baseId
      * @param {string | any} value
-     * cmd WT[oid]*[value]AU
+     * cmd = T[oid]*[value]AU
      */
     sendLimitThreshold(baseId, value) {
         try {
@@ -1961,8 +2002,9 @@ class Extron extends utils.Adapter {
         try {
             const oid = this.id2oid(baseId);
             if (oid) {
-                this.streamSend(`WM${oid}*${(value?'1':'0')}CPLY\r`);
-                if (!this.playerLoaded[Number(oid)-1]) this.log.error(`sendRepeatMode(): player ${oid} has no file assigned`);
+                if (this.playerLoaded[Number(oid)-1]) {
+                    this.streamSend(`WM${oid}*${(value?'1':'0')}CPLY\r`);
+                } else this.log.error(`sendRepeatMode(): player ${oid} has no file assigned`);
             }
         } catch (err) {
             this.errorHandler(err, 'sendRepeatMode');
@@ -2055,33 +2097,34 @@ class Extron extends utils.Adapter {
     /** BEGIN user flash memory file management */
     /** called to load a file into device user flash memory
      * @param {string} filePath
+     * cmd = +UF[fileSize]*2 [month] [day] [year] [hour] [minute] [second],[fileName]
      */
     loadUserFile(filePath) {
         try {
             fs.accessSync(filePath);                            // check if given path is accessible
             const fileName = path.basename(filePath);           // extract filename
-            //const fileExt = path.extname(filePath);
+            const fileExt = path.extname(filePath);             // extract file extension
             const fileStats = fs.statSync(filePath);            // load file statistics
-            //fileStream.setEncoding('binary');                   // switch stream to binary mode
-            const fileTimeStamp = fileStats.mtime.toJSON();
-            const year = fileTimeStamp.slice(0,4);
+            const fileTimeStamp = fileStats.mtime.toJSON();     // parse file timestamp
+            const year = fileTimeStamp.slice(0,4);              // split timestamp information ...
             const month = fileTimeStamp.slice(5,7);
             const day = fileTimeStamp.slice(8,10);
             const hour = fileTimeStamp.slice(11,13);
             const minute = fileTimeStamp.slice(14,16);
             const second = fileTimeStamp.slice(17,19);
-            if (fileStats.size < this.fileList.freeSpace) {
-                const streamData = `W+UF${fileStats.size}*2 ${month} ${day} ${year} ${hour} ${minute} ${second},${fileName}\r`;
-                //const streamData = `W+UF${fileStats.size},${fileName}\r`;
-                this.log.debug('loadUserFile(): starting file transmission');
-                this.streamSend(streamData);    // issue upload command to device
-                this.fileSend = true;
-                fs.readFile(filePath, (err, data) => {
-                    if (err) throw err;
-                    this.streamSend(data);    // transmit file to device
-                });
-                this.fileSend = false;
-            } else this.log.warn(`loadUserFile(): filesize "${fileStats.size}" of "${fileName}" exceeds remaining freespace "${this.fileList.freeSpace}" on device`);
+            if (fileExt.toLowerCase() == 'raw') {
+                if (fileStats.size < this.fileList.freeSpace) {
+                    const streamData = `W+UF${fileStats.size}*2 ${month} ${day} ${year} ${hour} ${minute} ${second},${fileName}\r`;
+                    this.log.debug('loadUserFile(): starting file transmission');
+                    this.streamSend(streamData);    // issue upload command to device
+                    this.fileSend = true;           // flag file transmission
+                    fs.readFile(filePath, (err, data) => {
+                        if (err) throw err;
+                        this.streamSend(data);    // transmit file to device
+                    });
+                    this.fileSend = false;          // unflag file transmission
+                } else this.log.error(`loadUserFile(): filesize "${fileStats.size}" of "${fileName}" exceeds remaining freespace "${this.fileList.freeSpace}" on device`);
+            } else this.log.error(`loadUserFile(): ivalid filetype: ".${fileExt}"`);
         } catch (err) {
             this.fileSend = false;
             this.errorHandler(err, 'loadUserFile');
@@ -2091,6 +2134,7 @@ class Extron extends utils.Adapter {
     /**
      * delete the user file from device
      * @param {string} fileName
+     * cmd = [fileName]EF
      */
     eraseUserFile(fileName) {
         try {
@@ -2102,14 +2146,14 @@ class Extron extends utils.Adapter {
     }
 
     /** called to list current files in device user flash memory
-     *
+     * cmd = DF
      */
     listUserFiles() {
         try {
             this.streamSend(`WDF\r`);
-            if (this.config.type === 'telnet') this.requestDir = true;
+            this.requestDir = true;     // flag directory request
         } catch (err) {
-            this.requestDir = false;
+            this.requestDir = false;    // unflag directory request
             this.errorHandler(err, 'listUserFiles');
         }
     }
@@ -2122,9 +2166,9 @@ class Extron extends utils.Adapter {
             let i = 0;
             userFileList.sort();    // sort list alphabetically to resemble DSP configurator display
             this.log.info(`setUserFile(): deleting file objects...`);
-            await this.delObjectAsync(this.objectsTemplate.userflash.file._id,{recursive:true}); // delete files recursively
+            await this.delObjectAsync(this.objectsTemplate.userflash.files._id,{recursive:true}); // delete files recursively
             this.log.info(`setUserFile(): create files folder object...`);
-            await this.setObjectAsync(this.objectsTemplate.userflash.file._id, this.objectsTemplate.userflash.file);
+            await this.setObjectAsync(this.objectsTemplate.userflash.files._id, this.objectsTemplate.userflash.files);
             for (const userFile of userFileList) {                              // check each line
                 if (userFile.match(/(\d+\b Bytes Left)/g)) {
                     this.fileList.freeSpace = Number(userFile.match(/\d+/g));
@@ -2138,10 +2182,10 @@ class Extron extends utils.Adapter {
                 this.file.fileSize = userFile.match(/(\d+)$/g)?Number(userFile.match(/(\d+)$/g)[0]):0; // extract filesize
                 if (this.file.fileName.match(/.raw$/)) {        // check if AudioFile
                     i++;
-                    this.fileList.files[i] = this.file;                             // add to filelist array
+                    this.fileList.files[i] = this.file;         // add to filelist array
                     this.log.info(`setUserFile(): creating file object for: ${this.file.fileName}`);
-                    await this.setObjectAsync(`fs.files.${i}`, this.objectsTemplate.userflash.files.channel);
-                    await this.setObjectAsync(`fs.files.${i}.filename`, this.objectsTemplate.userflash.files.filename);
+                    await this.setObjectAsync(`fs.files.${i}`, this.objectsTemplate.userflash.file.channel);
+                    await this.setObjectAsync(`fs.files.${i}.filename`, this.objectsTemplate.userflash.file.filename);
                     this.setState(`fs.files.${i}.filename`, this.file.fileName, true);
                     this.log.debug(`setUserFile(): Object "fs.files.${i}.filename ${this.file.fileName}" updated`);
                 }
@@ -2160,7 +2204,7 @@ class Extron extends utils.Adapter {
     /** BEGIN group control */
 
     /**
-     * queue group commands during deleteion pending
+     * queue group commands during group deletion pending
      * @param {number} group
      * @param {string} cmd
      */
@@ -2275,7 +2319,7 @@ class Extron extends utils.Adapter {
             } else this.grpCmdBuf[group].push(cmd);
         }
         catch (err) {
-            this.errorHandler(err, 'deleteGroup');
+            this.errorHandler(err, 'sendDeleteGroup');
         }
     }
 
@@ -2362,7 +2406,7 @@ class Extron extends utils.Adapter {
                 this.streamSend(cmd); // send command
             }
             catch (err) {
-                this.errorHandler(err, 'sendGroupLevel');
+                this.errorHandler(err, 'getGroupLevel');
             }
         } else {
             this.queueGrpCmd(group,cmd); // push command to buffer
@@ -2528,6 +2572,9 @@ class Extron extends utils.Adapter {
      * Send the tie status to the device
      * @param {string} baseId
      * @param {string | any} value
+     * cmd = [input]*[output]! tie input to output
+     * cmd = [input]LOUT tie input to loopOut
+     * cmd = [input]*[output]
      */
     sendTieCommand(baseId, value) {
         try {
@@ -2549,6 +2596,7 @@ class Extron extends utils.Adapter {
      * Send Video mute command to the device
      * @param {string} baseId
      * @param {string | any} value
+     * cmd = [value]B / *[value]B
      */
     sendVideoMute(baseId, value) {
         try {
@@ -2565,6 +2613,7 @@ class Extron extends utils.Adapter {
     /**
      * get Video mute status from device
      * @param {string} baseId
+     * cmd = B / *B
      */
     getVideoMute(baseId) {
         try {
@@ -2606,7 +2655,7 @@ class Extron extends utils.Adapter {
         }
     }
     /** send start payback command
-     * cmd = WS1*1PLYR
+     * cmd = S1*1PLYR
      */
     sendPlayVideo() {
         try {
@@ -2664,7 +2713,7 @@ class Extron extends utils.Adapter {
     /** send loop payback command
      * @param {string} id
      * @param {boolean} mode
-     * cmd = R1*[mode]PLYR
+     * cmd = R1*[0/1]PLYR
      */
     sendLoopVideo(id, mode) {
         try {
@@ -2712,7 +2761,7 @@ class Extron extends utils.Adapter {
     }
 
     /** get current preset list
-     * cmd = WGTVPR
+     * cmd = GTVPR
      */
     getPresets() {
         try {
@@ -2737,7 +2786,7 @@ class Extron extends utils.Adapter {
     }
 
     /** get current preset channel
-     * cmd = WT1TVPR
+     * cmd = T1TVPR
      */
     getChannel() {
         try {
@@ -2761,6 +2810,7 @@ class Extron extends utils.Adapter {
 
     /** send channel change to device
      * @param {string|number} channel
+     * cmd = T1*[channel]TVPR
      */
     sendChannel(channel){
         try {
@@ -2794,6 +2844,7 @@ class Extron extends utils.Adapter {
 
     /** send mute to device
      * @param {boolean | number} mute
+     * cmd = [1/0]Z
      */
     sendMute(mute){
         try {
@@ -2826,6 +2877,7 @@ class Extron extends utils.Adapter {
     }
     /** set output volume on device
      * @param {string | any} volume
+     * cmd = [value]V
      */
     sendVol(volume){
         try {
@@ -2839,7 +2891,7 @@ class Extron extends utils.Adapter {
     /** BEGIN SME211 stream control */
     /** send streaming mode to device
      * @param {number} mode
-     *  cmd = Y[mode]STRM
+     *  cmd = Y[0/1]STRM
     */
     sendStreamMode(mode) {
         try {
@@ -3514,20 +3566,20 @@ class Extron extends utils.Adapter {
         //        if (err.stack) errorStack = err.stack.replace(/\n/g, '<br>');
         if (err.name === 'ResponseError') {     // gerade nicht benötigt, template ....
             if (err.message.includes('Permission denied') || err.message.includes('Keine Berechtigung')) {
-                this.log.error(`Permisson denied. Check the permission rights of your user on your device!`);
+                this.log.error(`errorHandler(): Permisson denied. Check the permission rights of your user on your device!`);
             }
-            this.log.error(`Extron error in method: [${module}] response error: ${err.message.replace(module, '')}, stack: ${errorStack}`);
+            this.log.error(`errorHandler(): Extron error in method: [${module}] response error: ${err.message.replace(module, '')}, stack: ${errorStack}`);
         } else {
             if (module === 'onClientError') {
                 if (err.level === 'client-socket') {
-                    this.log.error(`Extron error in ssh client (sockel level): ${err.message}, stack: ${errorStack}`);
+                    this.log.error(`errorHandler(): Extron error in [${module}] (sockel level): ${err.message}, stack: ${errorStack}`);
                 } else if (err.level === 'client-ssh') {
-                    this.log.error(`Extron error in ssh client (ssh): ${err.message}, stack: ${errorStack}, description: ${err.description}`);
+                    this.log.error(`errorHandler(): Extron error in [${module}] (ssh): ${err.message}, stack: ${errorStack}, description: ${err.description}`);
                 } else {
-                    this.log.error(`Extron error in ssh client (unknown): ${err.message}, stack: ${errorStack}`);
+                    this.log.error(`errorHandler(): Extron error in [${module}] (${err.level}): ${err.message}, stack: ${errorStack}`);
                 }
             } else {
-                this.log.error(`Extron error in method: [${module}] error: ${err.message}, stack: ${errorStack}`);
+                this.log.error(`errorHandler(): Extron error in method: [${module}] error: ${err.message}, stack: ${errorStack}`);
             }
         }
     }

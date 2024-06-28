@@ -1,9 +1,13 @@
 {
   "common": {
     "name": "extron",
-    "version": "0.2.15",
+    "version": "0.2.16",
     "blockedVersions" : ["0.2.11", "0.2.12","0.2.14"],
     "news": {
+      "0.2.16": {
+        "en": "enhanced network reconnect functionality",
+        "de": "Netzwerk wiederverbindnung verbessert"
+      },
       "0.2.15": {
         "en": "fixed typo in io-package.json",
         "de": "tippfehler in io-package.json korrigiert"
