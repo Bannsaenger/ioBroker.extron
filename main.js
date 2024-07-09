@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.16 20240628
+ *      iobroker extron (SIS) Adapter V0.2.16 20240709
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -379,21 +379,18 @@ class Extron extends utils.Adapter {
     /**
      * called to send data to the stream
      * @param {string | Uint8Array | any} data
+     * @param {string | void} device
      */
-    streamSend(data) {
+    streamSend(data, device = '') {
+        if (device !== '' &&  this.devices[this.config.device].name.includes('Plus')) { // DANTE control only on DMP plus series
+            data.replace('\r','|');
+            data = `{dante@${device}:${data}}\r`;
+        }
         try {
             if (this.streamAvailable) {
                 this.log.debug(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.fileSend?'file data':this.decodeBufferToLog(data)}"`);
                 this.setState('info.connection', true, true);
                 this.streamAvailable = this.stream.write(data);
-                /*switch (this.config.type) {
-                    case 'ssh' :
-                        this.streamAvailable = this.stream.write(data);
-                        break;
-                    case 'telnet' :
-                        this.streamAvailable = this.net.write(data);
-                        break;
-                }*/
             } else {
                 const bufSize = this.sendBuffer.push(data);
                 this.setState('info.connection', false, true);
@@ -417,9 +414,10 @@ class Extron extends utils.Adapter {
         if (this.fileSend) return; // do nothing during file transmission
         try {
             this.log.debug(`onStreamData(): Extron got data: "${this.decodeBufferToLog(data)}"`);
+            data = data.toString();     // convert buffer to String
 
             if (!this.isDeviceChecked) {        // the first data has to be the banner with device info
-                if (data.toString().includes(this.devices[this.config.device].name)) {
+                if (data.includes(this.devices[this.config.device].name)) {
                     this.isDeviceChecked = true;
                     this.log.info(`onStreamData(): Device ${this.devices[this.config.device].name} verified`);
                     this.setState('info.connection', true, true);
@@ -437,12 +435,12 @@ class Extron extends utils.Adapter {
             }
             if (this.config.type === 'telnet') {
                 if (!this.isLoggedIn) {
-                    if (data.toString().includes('Password:')) {
+                    if (data.includes('Password:')) {
                         this.log.info('onStreamData(): Extron received Telnet Password request');
                         this.streamSend(`${this.config.pass}\r`);
                         return;
                     }
-                    if (data.toString().includes('Login Administrator')) {
+                    if (data.includes('Login Administrator')) {
                         this.isLoggedIn = true;
                         this.log.info('onStreamData(): Extron Telnet logged in');
                         this.setState('info.connection', true, true);
@@ -455,8 +453,15 @@ class Extron extends utils.Adapter {
                 }
             }
 
+            // check for DANTE control / setup messages
+            if  (data.match(/^Expr[a,l] ?[\s\S]*\n\n$/i)) {
+                data.replace(/[\n]/gm,'*'); // change device list separator from "\n" to "*"
+                data.replace('**', '\n');   // restore end of message
+                this.log.info(`onStreamData(): received DANTE control message: "${data}"`);
+            }
+
             // iterate through multiple answers connected via [LF]
-            for (const cmdPart of data.toString().split('\n')) {
+            for (const cmdPart of data.split('\n')) {
 
                 if (cmdPart.includes('3CV')) {
                     this.log.info('onStreamData(): Extron device switched to verbose mode 3');
@@ -508,7 +513,8 @@ class Extron extends utils.Adapter {
                     }
                 } else
                 {   // lookup the command
-                    const matchArray = answer.match(/([A-Z][a-z]+[A-Z]|\w{3})(\d*)\*{0,1},{0,1} {0,1}(.*)/i);
+                    //const matchArray = answer.match(/([A-Z][a-z]+[A-Z]|\w{3})(\d*)\*?,? ?(.*)/i);
+                    const matchArray = answer.match(/{?(dante|[A-Z][a-z]+[A-Z]|\w{3})@?([\w,-]*|\d*)}?,?\*? ?(.*)/i); // extended to detect DANTE remote responses
                     if (matchArray) {       // if any match
                         const command = matchArray[1].toUpperCase();
                         const ext1 = matchArray[2] ? matchArray[2] : '';
@@ -708,7 +714,7 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron got I/O Name "${ext2}" for I/O: "${this.oid2id(`${command}${ext1}`)}"`);
                                 this.setIOName(`${command}${ext1}`, ext2);
                                 break;
-                            case 'CNFG' :
+                            case 'CNFG' :   // configuration
                                 switch (ext2) {
                                     case '0' :    // configuration restored
                                         this.log.info(`onStreamData(): Extron IP configuration ${ext1 == '0'?'restored':'saved'}`);
@@ -718,6 +724,22 @@ class Extron extends utils.Adapter {
                                         break;
                                 }
                                 this.log.info(`onStreamData(): Extron configuration ${ext1}, ${ext2} `);
+                                break;
+                            case 'PSAV' :   // Power / Standby status
+                                this.log.info(`onStreamData(): Extron got power mode: "${ext1}", standby mode: "${ext2}"`);
+                                break;
+                            // Dante control and configuration commands
+                            case 'EXPRA':
+                                this.log.info(`onStreamData(): Extron got available remote devices: ${ext1}, ${ext2} `);
+                                break;
+                            case 'EXPRC':
+                                this.log.info(`onStreamData(): Extron listening to remote device: ${ext1}, ${ext2} `);
+                                break;
+                            case 'EXPRL':
+                                this.log.info(`onStreamData(): Extron listening to remote devices: ${ext1}, ${ext2} `);
+                                break;
+                            case 'DANTE':
+                                this.log.info(`onStreamData(): received DANTE relay command response: device:"${ext1}", command:"${ext2}"`);
                                 break;
                         }
                     } else {

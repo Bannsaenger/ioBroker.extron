@@ -19,6 +19,19 @@
         "DMP128Plus_C_V_AT" : {
             "en" : "12x8 ProDSP Processor w/AEC, VoIP, and Dante (DMP 128 Plus C V AT)",
             "de" : "12x8 Matrix-Prozessoren mit ProDSP, AEC, VoIP und Dante (DMP 128 Plus C V AT)"
+        },
+        "XMP240_C_AT" : {
+            "en" : "Dante Audio Matrix Processor with AEC",
+            "de" : "Matrixprozessor mit 24 AEC-Kanälen und Dante"
+
+        },
+        "NETPA_U_1002" : {
+            "en" : "100 watt 2 channel low impwdance amplifier with DSP and ante",
+            "de" : "Verstärker mit zwei Kanälen mit Dante und DSP 100 W je Kanal"
+        },
+        "NETPA_U_1004" : {
+            "en" : "100 watt 4 channel low impwdance amplifier with DSP and ante",
+            "de" : "Verstärker mit vier Kanälen mit Dante und DSP 100 W je Kanal"
         }
     }    
 }

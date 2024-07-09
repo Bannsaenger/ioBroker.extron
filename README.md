@@ -48,8 +48,8 @@ If you are a non commercial organisation or use it for private use you can get a
 * (Bannsaenger) updated to adapter-dev and release script
 * (Bannsaenger) updated dependencies
 
-### 0.2.16 (2024-06-28)
-* (mschlgl) enhanced network reconnect functionality
+### 0.2.16 (2024-07-09)
+* (mschlgl) enhanced network reconnect functionality, added DANTE remote commands, additional devices
 
 ### 0.2.15 (2024-06-12)
 * (mschlgl) fixed typo in io-package.json

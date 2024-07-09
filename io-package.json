@@ -5,8 +5,8 @@
     "blockedVersions" : ["0.2.11", "0.2.12","0.2.14"],
     "news": {
       "0.2.16": {
-        "en": "enhanced network reconnect functionality",
-        "de": "Netzwerk wiederverbindnung verbessert"
+        "en": "enhanced network reconnect functionality, added DANTE remote commands, additional devices",
+        "de": "Netzwerk wiederverbindnung verbessert, DANTE Fernsteuerbefehle und zusätzliche gerätetypen hinzugefügt"
       },
       "0.2.15": {
         "en": "fixed typo in io-package.json",
@@ -296,7 +296,8 @@
     "answerTimeout": 500,
     "inactivityTimeout": 100000,
     "pushDeviceStatus": true,
-    "stateDelay": 50
+    "stateDelay": 50,
+    "remoteDevices" : [{}]
   },
   "objects": [],
   "instanceObjects": [

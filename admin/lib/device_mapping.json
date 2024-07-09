@@ -161,7 +161,7 @@
     },
     "DMP128Plus_C_V_AT" : {
         "name" : "DMP 128 Plus C V AT",
-        "short" : "dmp128cv",
+        "short" : "dmp128",
         "objects" : [
             "common",
             "dmp128"
@@ -233,6 +233,223 @@
                 "name" : "Groups",
                 "short" : "GRP",
                 "amount" : 64
+            }
+        }
+    },
+    "DMP64Plus_AT" : {
+        "name" : "DMP 64 Plus AT",
+        "short" : "dmp64",
+        "objects" : [
+            "common",
+            "dmp128"
+        ],
+        "in" : {
+            "inputs" : {
+                "name" : "Inputs",
+                "short" : "I",
+                "amount" : 6
+            },
+            "auxInputs" : {
+                "name" : "Aux Inputs",
+                "short" : "X",
+                "amount" : 8
+            },
+            "virtualReturns" : {
+                "name" : "Virtual Returns",
+                "short" : "R",
+                "amount" : 16
+            },
+            "expansionInputs" : {
+                "name" : "Expansion Bus (AT Inputs)",
+                "short" : "D",
+                "amount" : 48
+            }
+        },
+        "mp" : {
+            "mixPoints" : {
+                "name" : "Mixpoints",
+                "short" : "MP"
+            }
+        },
+        "out" : {
+            "outputs" : {
+                "name" : "Output",
+                "short" : "O",
+                "amount" : 4
+            },
+            "auxOutputs" : {
+                "name" : "Aux Output",
+                "short" : "A",
+                "amount" : 8
+            },
+            "virtualSendBus" : {
+                "name" : "virtual SendBus",
+                "short" : "V",
+                "amount" : 16
+            },
+            "expansionOutputs" : {
+                "name" : "Expansion Output",
+                "short" : "E",
+                "amount" : 16
+            }
+        },
+        "ply" : {
+            "players": {
+                "name" : "Audio Player",
+                "short" : "P",
+                "amount" : 8
+            }
+        },
+        "fs" :{
+            "files": {
+                "name" : "Flash Memory"
+            }
+        },
+        "grp" : {
+            "groups" : {
+                "name" : "Group",
+                "short" : "GRP",
+                "amount" : 64
+            }
+        }
+    },
+    "XMP240_C_AT" : {
+        "name" : "XMP 240 C AT",
+        "short" : "xmp240cat",
+        "objects" : [
+            "common",
+            "xmp240"
+        ],
+        "in" : {
+            "virtualReturns" : {
+                "name" : "Virtual Returns",
+                "short" : "R",
+                "amount" : 16
+            },
+            "expansionInputs" : {
+                "name" : "Expansion Bus (AT Inputs)",
+                "short" : "D",
+                "amount" : 48
+            }
+        },
+        "mp" : {
+            "mixPoints" : {
+                "name" : "Mixpoints",
+                "short" : "MP"
+            }
+        },
+        "out" : {
+            "virtualSendBus" : {
+                "name" : "virtual SendBus",
+                "short" : "V",
+                "amount" : 16
+            },
+            "expansionOutputs" : {
+                "name" : "Expansion Output",
+                "short" : "E",
+                "amount" : 48
+            }
+        },
+        "grp" : {
+            "groups" : {
+                "name" : "Groups",
+                "short" : "GRP",
+                "amount" : 64
+            }
+        }   
+    },
+    "NetPAU_1002" :{
+        "name" : "NetPA U 1002",
+        "short" : "netpau1002",
+        "objects" : [
+            "common",
+            "netpa"
+        ],
+        "in" : {
+            "inputs" : {
+                "name" : "Inputs",
+                "short" : "I",
+                "amount" : 4
+            },
+            "expansionInputs" : {
+                "name" : "Expansion Bus (AT Inputs)",
+                "short" : "D",
+                "amount" : 2
+            }
+        },
+        "mp" : {
+            "mixPoints" : {
+                "name" : "Mixpoints",
+                "short" : "MP"
+            }
+        },
+        "out" : {
+            "outputs" : {
+                "name" : "Output",
+                "short" : "O",
+                "amount" : 2
+            },
+            "auxOutputs" : {
+                "name" : "Aux Output",
+                "short" : "A",
+                "amount" : 2
+            },
+            "expansionOutputs" : {
+                "name" : "Expansion Output",
+                "short" : "E",
+                "amount" : 2
+            }
+        },
+        "grp" : {
+            "groups" : {
+                "name" : "Groups",
+                "short" : "GRP",
+                "amount" : 32
+            }
+        }
+    },
+    "NetPA_U_1004":{
+        "name" : "NetPA U 1004",
+        "short" : "netpau1004",
+        "objects" : [
+            "common",
+            "netpa"
+        ],
+        "in" : {
+            "inputs" : {
+                "name" : "Inputs",
+                "short" : "I",
+                "amount" : 4
+            },
+            "expansionInputs" : {
+                "name" : "Expansion Bus (AT Inputs)",
+                "short" : "D",
+                "amount" : 4
+            }
+        },
+        "mp" : {
+            "mixPoints" : {
+                "name" : "Mixpoints",
+                "short" : "MP"
+            }
+        },
+        "out" : {
+            "outputs" : {
+                "name" : "Output",
+                "short" : "O",
+                "amount" : 4
+            },
+            "expansionOutputs" : {
+                "name" : "Expansion Output",
+                "short" : "E",
+                "amount" : 4
+            }
+        },
+        "grp" : {
+            "groups" : {
+                "name" : "Groups",
+                "short" : "GRP",
+                "amount" : 32
             }
         }
     }
