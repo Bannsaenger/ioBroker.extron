@@ -453,10 +453,10 @@ class Extron extends utils.Adapter {
                 }
             }
 
-            // check for DANTE control / setup messages
-            if  (data.match(/^Expr[a,l] ?[\s\S]*\n\n$/i)) {
+            // check for DANTE control / setup messages returning a lisu of DANTE device names separated by \r\n
+            if  (data.match(/(Expr[al]) ([\w-]*[\s\S]*)\r\n/im)) {
                 data.replace(/[\n]/gm,'*'); // change device list separator from "\n" to "*"
-                data.replace('**', '\n');   // restore end of message
+                data.replace('\r*', '\r\n');   // restore end of message
                 this.log.info(`onStreamData(): received DANTE control message: "${data}"`);
             }
 
@@ -2965,7 +2965,7 @@ class Extron extends utils.Adapter {
                 const what = Number(whatstr);
                 const where = Number(oid.slice(1,3));
                 const val = Number(oid.slice(3,7));
-                if (whatstr === 'N') {
+                if (whatstr === 'N') {  // Input/Output naming
                     switch (oid.slice(1,3)) {
                         case 'MI' :
                             if (val < 13) retId = `in.inputs.${val.toString().padStart(2,'0')}.name`;
