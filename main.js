@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.16 20240709
+ *      iobroker extron (SIS) Adapter V0.2.16 20240712
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -38,7 +38,7 @@ const errCodes = {
     'E30' : 'Hardware failure',
     'E31' : 'Attempt to break port passthrough when not set'
 };
-const maxPollCount = 10;
+
 const invalidChars = ['+','~',',','@','=',"'",'[',']','{','}','<','>','`','"',':',';','|','\\','?'];
 
 class Extron extends utils.Adapter {
@@ -85,6 +85,8 @@ class Extron extends utils.Adapter {
         this.stream = undefined;        // placeholder for the stream
         this.streamAvailable = true;    // if false wait for continue event
         this.stateList = [];            // will be filled with all existing states
+        //this.maxPollCount = typeof this.config.maxPollCount != 'undefined'?this.config.maxPollCount:10; // set maxPollCount if undefined set 10
+        this.maxPollCount = 10;
         this.pollCount = 0;             // count sent status query
         this.playerLoaded = [false, false, false, false, false, false, false,false];    // remember which player has a file assigned
         this.auxOutEnabled = [false, false, false, false, false, false, false,false];   // remember which aux output is enabled
@@ -99,7 +101,8 @@ class Extron extends utils.Adapter {
         this.fileList = {'freeSpace' : 0, 'files' : [this.file]};              // array to hold current file list
         this.stateBuf = [{'id': '', 'timestamp' : 0}];  // array to hold state changes with timestamp
         this.presetList = '';           // list of SMD202 preset channels
-        this.requestPresets = false;    // flag to signal thet device filr directory has been requested
+        this.requestPresets = false;    // flag to signal thet device preset list has been requested (applies to SMD202)
+        this.danteDevices = {};           // store subdevices controlled via DANTE
     }
 
     /**
@@ -127,6 +130,7 @@ class Extron extends utils.Adapter {
             /*
             * For every state in the system there has to be also an object of type state
             */
+            await this.setInstanceNameAsync();
             await this.createDatabaseAsync();
             await this.createStatesListAsync();
 
@@ -876,7 +880,7 @@ class Extron extends utils.Adapter {
      */
     queryStatus() {
         try {
-            if (this.pollCount > maxPollCount) {
+            if (this.pollCount > this.maxPollCount) {
                 this.log.warn('queryStatus(): maxPollCount exceeded, closing connection');
                 this.pollCount = 0;
                 switch (this.config.type) {
@@ -900,10 +904,9 @@ class Extron extends utils.Adapter {
     }
 
     /**
-     * called to set up the database according device type
+     * called to set instance name in database
      */
-    async createDatabaseAsync() {
-        this.log.debug(`createDatabaseAsync(): start`);
+    async setInstanceNameAsync() {
         try {
             // get current instance object
             const instanceObj = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
@@ -918,7 +921,7 @@ class Extron extends utils.Adapter {
                         //@ts-ignore
                         instanceObj.common.titleLang = `${this.devices[this.config.device].name}`;
                         await this.setForeignObjectAsync(`system.adapter.${this.namespace}`, instanceObj);
-                        this.log.debug(`createDatabaseAsync(): set titleLang`);
+                        this.log.debug(`setInstanceNamec(): set titleLang`);
                     }
                     break;
                 case 'object' :
@@ -927,11 +930,22 @@ class Extron extends utils.Adapter {
                             instanceObj.common.titleLang[key] = `${this.devices[this.config.device].name}`;
                         }
                         await this.setForeignObjectAsync(`system.adapter.${this.namespace}`, instanceObj);
-                        this.log.debug(`createDatabaseAsync(): set titleLang.xx`);
+                        this.log.debug(`setInstanceNamec(): set titleLang.xx`);
                     }
                     break;
             }
+        } catch (err) {
+            this.errorHandler(err, 'setInstanceName');
+        }
+        this.log.debug(`setInstanceNamec(): completed`);
+    }
 
+    /**
+     * called to set up the database according device type
+     */
+    async createDatabaseAsync() {
+        this.log.debug(`createDatabaseAsync(): start`);
+        try {
             // create the common section
             for (const element of this.objectsTemplate.common) {
                 await this.setObjectAsync(element._id, element);
@@ -1154,7 +1168,7 @@ class Extron extends utils.Adapter {
                 }
                 this.log.debug(`createDatabaseAsync(): set outputs`);
             }
-            // if cp82 : create groupss
+            // if cp82 : create groups
             if (this.devices[this.config.device].short === 'cp82') {
                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].groups) {
                     await this.setObjectAsync(element._id, element);
@@ -1189,6 +1203,31 @@ class Extron extends utils.Adapter {
     }
 
     /**
+     * called to create DANTE device objects in database
+     * @param {string} deviceName
+     * @param {string} deviceType
+     */
+    async createDanteDeviceAsync(deviceName, deviceType) {
+        this.log.debug(`createDanteDevice(): setting up database for "${deviceName}" as "${deviceType}"`);
+        // create the common section
+        for (const element of this.objectsTemplate.common) {
+            await this.setObjectAsync(`dante.${deviceName}.${element._id}`, element);
+        }
+        // add deviceName to database
+        const deviceObj = this.objectsTemplate.common[0];
+        deviceObj.common.name = deviceName;
+        await this.setObjectAsync(`dante.${deviceName}.device`, deviceObj);
+        this.log.debug(`createDanteDevice(): set deviceName`);
+        /*
+        for (const element of this.objectsTemplate[deviceType]) {
+            await this.setObjectAsync(`${deviceName}.${element._id}`, element);
+        }
+        this.log.debug(`createDatabaseAsync(): create common section`);
+        */
+
+    }
+
+    /**
      * called to create a list of all states in the database
      */
     async createStatesListAsync(){
@@ -1197,16 +1236,33 @@ class Extron extends utils.Adapter {
     }
 
     /**
-     * called to get all database item status from device
+     * called to create a DANTE device statelist
+     * @param {string} deviceName
+     * @returns {Promise <any[]>}
      */
-    async getDeviceStatusAsync() {
+    async createDanteStatesListAsync(deviceName) {
+        if (deviceName) {
+            this.log.info(`createDanteStatesListAsync(): requesting dante device states from database`);
+            return Object.keys(await this.getStatesAsync(`dante.${deviceName}.*`));
+        } else {
+            this.log.warn(`createDanteStatesListAsync(): no device specified`);
+            return [];
+        }
+    }
+
+    /**
+     * called to get all database item status from device
+     * @param {array} stateList
+     */
+    async getDeviceStatusAsync(stateList = this.stateList) {
         try {
             // if status has not been requested
             if (!this.statusRequested && this.isVerboseMode) {
                 this.log.info('Extron request device status started');
                 // iterate through stateList to request status from device
-                for (let index = 0; index < this.stateList.length; index++) {
-                    const id = this.stateList[index];
+                //for (let index = 0; index < stateList.length; index++) {
+                for (const id of stateList) {
+                    //const id = stateList[index];
                     const baseId = id.slice(0, id.lastIndexOf('.'));
                     const stateName = id.slice(id.lastIndexOf('.') + 1);
                     const idArray = id.split('.');
@@ -1415,6 +1471,7 @@ class Extron extends utils.Adapter {
      * devTrim, linTrim, logTrim (-120 .. 120, 0 .. 1000, -12 .. 12)
      * devAtt, linAtt, logAtt (-1000 .. 0, 0 .. 1000, -100 .. 0)
      * returns: Object with all 3 value types
+     * @returns {object}
      */
     calculateFaderValue(value, type) {
         const locObj = {};
@@ -2947,12 +3004,63 @@ class Extron extends utils.Adapter {
     }
     /** END SME 211 stream control */
 
+    /** BEGIN DANTE control and configuration messages */
+    /** get available DANTE devices
+     * cmd = AEXPR
+     */
+    getDanteDevices() {
+        try {
+            this.streamSend(`WAEXPR\r`);
+        } catch (err) {
+            this.errorHandler(err, 'getDanteDevices');
+        }
+    }
+
+    /** control danteDeviceconnection
+     * @param {string} deviceName
+     * @param {number | boolean} state
+     * cmd = C[device]*[state]EXPR
+     */
+    ctrlDanteConnection(deviceName, state) {
+        try {
+            this.streamSend(`WC${deviceName}*${state?1:0}EXPR\r`);
+        } catch (err) {
+            this.errorHandler(err, 'ctrlDanteConnection');
+        }
+    }
+
+    /** check DANTE connection
+     * @param {string} deviceName
+     * cmd = C[deviceName]EXPR
+    */
+    checkDanteConnection(deviceName) {
+        try {
+            this.streamSend(`WC${deviceName}EXPR\r`);
+        } catch (err) {
+            this.errorHandler(err, 'ckeckDanteConnection');
+        }
+    }
+
+    /** list DANTE connections
+     * cmd = LEXPR
+    */
+    listDanteConnections() {
+        try {
+            this.streamSend(`WLEXPR\r`);
+        } catch (err) {
+            this.errorHandler(err, 'listDanteConnections');
+        }
+    }
+    /** END DANTE control messages */
+
     /**
      * determine the database id from oid e.g. 20002 -> in.inputs.01.mixPoints.O03
      * @param {string} oid
+     * @param {string} deviceName
      * returns: String with complete base id to mixPoint or the gainBlock
+     * @returns {string}
      */
-    oid2id(oid) {
+    oid2id(oid, deviceName = '') {
         let retId = '';
         try {
             if (oid.length < 2) {
@@ -3134,13 +3242,15 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'oid2id');
             return '';
         }
-        return retId;
+
+        return deviceName == ''? retId :'dante.'+ deviceName + '.' + retId;
     }
 
     /**
      * determine the oid from the database id e.g. in.inputs.01.mixPoints.O03 -> 20002
      * @param {string} id
      * returns: String with complete base id to mixPoint or the gainBlock
+     * @returns {string}
      */
     id2oid(id) {
         let retOid = '';

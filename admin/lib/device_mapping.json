@@ -452,5 +452,49 @@
                 "amount" : 32
             }
         }
+    },
+    "AXI44_AT":{
+        "name" : "AXI 44 AT",
+        "short" : "axi44",
+        "objects" : [
+            "common",
+            "axi"
+        ],
+        "in" : {
+            "inputs" : {
+                "name" : "Inputs",
+                "short" : "I",
+                "amount" : 4
+            }
+        },
+        "out" : {
+            "outputs" : {
+                "name" : "Output",
+                "short" : "O",
+                "amount" : 4
+            }
+        }
+    },
+    "AXI22_AT":{
+        "name" : "AXI 44 AT",
+        "short" : "axi44",
+        "objects" : [
+            "common",
+            "axi"
+        ],
+        "in" : {
+            "inputs" : {
+                "name" : "Inputs",
+                "short" : "I",
+                "amount" : 2
+            }
+        },
+        "out" : {
+            "outputs" : {
+                "name" : "Output",
+                "short" : "O",
+                "amount" : 2
+            }
+        }
     }
 }

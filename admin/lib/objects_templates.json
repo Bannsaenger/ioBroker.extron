@@ -4207,5 +4207,155 @@
                 "native": {}
             }
         ]
+    },
+    "axi" : {
+        "input": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "Input"
+            },
+            "native": {}
+        },
+        "inputs": [
+            {
+                "_id": "name",
+                "type": "state",
+                "common": {
+                    "role": "text",
+                    "name": "input name",
+                    "type": "string",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.mute",
+                "type": "state",
+                "common": {
+                    "role": "media.mute",
+                    "name": "If true the input is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain linear from 0 to 1000 (0 db is 236)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain logarithmic from -18 to 80 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 42,
+                    "def": 0
+                },
+                "native": {}
+            }
+        ],
+        "output": {
+            "_id": "0",
+            "type": "folder",
+            "common": {
+                "name": "Output"
+            },
+            "native": {}
+        },
+        "outputs": [
+            {
+                "_id": "name",
+                "type": "state",
+                "common": {
+                    "role": "text",
+                    "name": "output name",
+                    "type": "string",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation",
+                "type": "channel",
+                "common": {
+                    "role": "output.channel",
+                    "name": "Common output parameters"
+                },
+                "native": {}
+            },       
+            {
+                "_id": "attenuation.mute",
+                "type": "state",
+                "common": {
+                    "role": "media.mute",
+                    "name": "If true the output at postmix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Output attenuation linear from 0 to 1000",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "attenuation.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Output attenuation logarithmic from -100 to 0 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 0.0,
+                    "def": -100.0
+                },
+                "native": {}
+            }
+        ]
     }
 }

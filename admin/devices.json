@@ -34,6 +34,14 @@
         "NETPA_U_1004" : {
             "en" : "100 watt 4 channel low impwdance amplifier with DSP and Dante (NetPA U 1004)",
             "de" : "Verstärker mit vier Kanälen mit Dante und DSP 100 W je Kanal (NetPA U 1004)"
+        },
+        "AXI44_AT":{
+            "en" : "Audio expansion interface with Dante DDM AES67 4 inputs 4 outputs (AXI44 AT)",
+            "de" : "Dante-Audiointerface mit 4 Eingängen, 4 Ausgängen, DDM und AES67 (AXI44 AT)"
+        },
+        "AXI22_AT":{
+            "en" : "Audio expansion interface with Dante DDM AES67 2 inputs 2 outputs (AXI22 AT)",
+            "de" : "Dante-Audiointerface mit 2 Eingängen, 2 Ausgängen, DDM und AES67 (AXI22 AT)"
         }
     }    
 }
