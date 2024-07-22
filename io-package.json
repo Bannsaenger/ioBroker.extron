@@ -1,326 +1,317 @@
 {
-  "common": {
-    "name": "extron",
-    "version": "0.2.16",
-    "blockedVersions" : ["0.2.11", "0.2.12","0.2.14"],
-    "news": {
-      "0.2.16": {
-        "en": "enhanced network reconnect functionality, added DANTE remote commands, additional devices",
-        "de": "Netzwerk wiederverbindnung verbessert, DANTE Fernsteuerbefehle und zusätzliche gerätetypen hinzugefügt"
-      },
-      "0.2.15": {
-        "en": "fixed typo in io-package.json",
-        "de": "tippfehler in io-package.json korrigiert"
-      },
-      "0.2.14": {
-        "en": "changed functon createDatabase() to use setObj()",
-        "de": "Funktion createDatabase() auf Verwendung von setObj() geändert"
-      },
-      "0.2.13": {
-        "en": "corrected instance.comon.titleLang to be set at startup, updated role definitions, added audiofile transfer functionality for DMPxxx",
-        "de": "setzen von instance.common.titleLang bei Adapterstart korrigiert, Definition der zustands-Rollen überarbeitet, Audio-DatiÜbertragung für DMPxxx hinzugefügt"
-      },
-      "0.2.12": {
-        "en": "added instance.common.title/.titleLang set on startup",
-        "de": "setzen von instance.common.title/.titleLang bei Adapterstart hinzugefügt"
-      },
-      "0.2.11": {
-        "en": "added instance.device.name set on startup",
-        "de": "setzen von instance.device.name bei Adapterstart hinzugefügt"
-      },
-      "0.2.10": {
-        "en": "SMD202: corrected preset list handling",
-        "de": "SMD202: verarbeitung der Kanalliste korrigiert"
-      },
-      "0.2.9": {
-        "en": "SMD202: disable subtitle command at startup added",
-        "de": "SMD202: Abschaltung Untertitel bei Adapterstart hinzugefügt"
-      },
-      "0.2.8": {
-        "en": "onStreamData command debug msg added",
-        "de": "onSTreamData debug-Meldung für command hinzugefügt"
-      },
-      "0.2.7": {
-        "en": "SMD202 preset list handling update",
-        "de": "Verarbeitung der SMD202 Preset-Liste überarbeitet"
-      },
-      "0.2.6": {
-        "en": "added SMD202 preset list handling oin startup",
-        "de": "Verarbeitung der SMD202 Preset-Liste beim Adapterstart hinzugefügt"
-      },
-      "0.2.5": {
-        "en": "added SMD202 preset list handling",
-        "de": "Verarbeitung der SMD202 Preset-Liste hinzugefügt"
-      },
-      "0.2.4": {
-        "en": "corrected typo in object_templates",
-        "de": "Tippfehler in Datei object_templates korrigiert"
-      },
-      "0.2.3": {
-        "en": "fixed DMP 128 file handling",
-        "de": "Dateiverwaltung für DMP!128 korrigiert"
-      },
-      "0.2.2": {
-        "en": "fixed SMD202 loopmode command",
-        "de": "Fehler im Befehl loopmode für den SMD202 behoben"
-      },
-      "0.2.1": {
-        "en": "fixed log messages, improved group control timing issues",
-        "de": "Protokollnachrichten verbessert, Zeitprobleme bei Gruppenkonfiguration behoben"
-      },
-      "0.2.0": {
-        "en": "updated dependencies",
-        "de": "Abhängigkeiten aktualisiert",
-        "ru": "обновленные зависимости",
-        "pt": "dependências atualizadas",
-        "nl": "vertaling:",
-        "fr": "dépendances actualisées",
-        "it": "dipendenze aggiornate",
-        "es": "dependencias actualizadas",
-        "pl": "zależności aktualizacji",
-        "zh-cn": "二. 最新依赖"
-      },
-      "0.1.16":{
-        "en": "fixed group command issues added statedelay log message",
-        "de": "Probleme in group-Befehlen behoben, protokollnachricht hinzugefügt"
-      },
-      "0.1.15":{
-        "en": "added statedelay log message",
-        "de": "Protokollnachricht fuer statedelay hinzugefügt"
-      },
-      "0.1.14":{
-        "en": "fixed grouup command issues",
-        "de": "Probleme in group-Befehlen behoben"
-      },"0.1.13":{
-        "en": "fixed sourcecode version issues",
-        "de": "Versionskonflikte im Sourcecode behoben"
-      },"0.1.12":{
-        "en": "added support for playback channel preset selection in SMD202",
-        "de": "Unterstützung für die Auswahl des Wiedergabe-Kanal-Preset im SMD202 hinzugefügt"
-      },
-      "0.1.11": {
-        "en": "fixed support for groups in DSP DMP128",
-        "de": "Unterstützung für Gruppen in DSP DMP128 gefixed",
-        "ru": "исправлена поддержка групп в DSP DMP128",
-        "pt": "suporte fixo para grupos em DSP DMP128",
-        "nl": "vaste ondersteuning voor groepen in DSP DMP128",
-        "fr": "prise en charge fixe des groupes dans DSP DMP128",
-        "it": "supporto fisso per i gruppi in DSP DMP128",
-        "es": "soporte fijo para grupos en DSP DMP128",
-        "pl": "poprawiono obsługę grup w DSP DMP128",
-        "zh-cn": "固定支持 DSP DMP128 中的组"        
-      },
-      "0.1.10": {
-        "en": "added support for groups in DSP DMP128",
-        "de": "Unterstützung für Gruppen im DSP DMP128 hinzugefügt",
-        "ru": "добавлена поддержка групп в DSP DMP128",
-        "pt": "adicionado suporte para grupos em DSP DMP128",
-        "nl": "ondersteuning toegevoegd voor groepen in DSP DMP128",
-        "fr": "ajout de la prise en charge des groupes dans DSP DMP128",
-        "it": "aggiunto il supporto per i gruppi in DSP DMP128",
-        "es": "soporte agregado para grupos en DSP DMP128",
-        "pl": "dodano obsługę grup w DSP DMP128",
-        "zh-cn": "增加了对 DSP DMP128 中的组的支持"      },
-      "0.1.9": {
-        "en": "fixed setting of info.connection in telnet mode",
-        "de": "info.connection im Telnet Mode gefixed",
-        "ru": "исправлена настройка инфо.соединения в режиме telnet",
-        "pt": "configuração fixa de info.connection no modo telnet",
-        "nl": "vaste instelling van info.verbinding in telnet-modus",
-        "fr": "réglage fixe de info.connection en mode telnet",
-        "it": "impostazione fissa di info.connection in modalità telnet",
-        "es": "configuración fija de info.connection en modo telnet",
-        "pl": "poprawione ustawienie info.połączenia w trybie telnet",
-        "zh-cn": "修复了 telnet 模式下 info.connection 的设置"
-      },
-      "0.1.7": {
-        "en": "added plain Telnet communication for DMP128",
-        "de": "Telnet Kommunikation für DMP128 hinzugefügt",
-        "ru": "добавлена простая связь Telnet для DMP128",
-        "pt": "adicionada comunicação Telnet simples para DMP128",
-        "nl": "toegevoegde duidelijke Telnet-communicatie voor DMP128",
-        "fr": "ajout d'une communication Telnet simple pour DMP128",
-        "it": "aggiunta semplice comunicazione Telnet per DMP128",
-        "es": "comunicación Telnet simple agregada para DMP128",
-        "pl": "dodano zwykłą komunikację Telnet dla DMP128",
-        "zh-cn": "为 DMP128 添加了普通 Telnet 通信"
-      },
-      "0.1.6": {
-        "en": "added limiter section for DMP128",
-        "de": "Limitersteuerung für DMP128 hinzugefügt",
-        "ru": "добавлена секция лимитера для DMP128",
-        "pt": "seção de limitador adicionada para DMP128",
-        "nl": "toegevoegd limiter-gedeelte voor DMP128",
-        "fr": "section limiteur ajoutée pour DMP128",
-        "it": "aggiunta sezione limitatore per DMP128",
-        "es": "sección limitada añadida para DMP128",
-        "pl": "dodano sekcję limitera dla DMP128",
-        "zh-cn": "为 DMP128 添加了限制器部分"
-      },
-      "0.1.5": {
-        "en": "fixed errors in the device communication for SME211",
-        "de": "Fehler in der Gerätekommunikation für SME211 behoben",
-        "ru": "исправлены ошибки связи устройства для SME211",
-        "pt": "corrigidos erros na comunicação do dispositivo para SME211",
-        "nl": "opgeloste fouten in de apparaatcommunicatie voor SME211",
-        "fr": "correction d'erreurs dans la communication de l'appareil pour SME211",
-        "it": "errori corretti nella comunicazione del dispositivo per SME211",
-        "es": "errores fijos en la comunicación del dispositivo para SME211",
-        "pl": "naprawiono błędy w komunikacji urządzenia dla SME211",
-        "zh-cn": "修复了 SME211 设备通信中的错误"
-      },
-      "0.1.4": {
-        "en": "fixed errors in the device communication for CP82 / SMD202",
-        "de": "Fehler in der Gerätekommunikation für CP82 / SMD202 behoben",
-        "ru": "исправлены ошибки связи устройства для CP82/SMD202",
-        "pt": "corrigidos erros na comunicação do dispositivo para CP82 / SMD202",
-        "nl": "opgeloste fouten in de apparaatcommunicatie voor CP82 / SMD202",
-        "fr": "correction d'erreurs dans la communication de l'appareil pour CP82 / SMD202",
-        "it": "errori corretti nella comunicazione del dispositivo per CP82 / SMD202",
-        "es": "errores fijos en la comunicación del dispositivo para CP82 / SMD202",
-        "pl": "naprawiono błędy w komunikacji urządzenia dla CP82 / SMD202",
-        "zh-cn": "修复了 CP82 / SMD202 设备通信中的错误"
-      },
-      "0.1.3": {
-        "en": "fixed errors in the device communication and user flash file management",
-        "de": "Fehler in der Gerätekommunikation und Benutzer-Flash-Dateiverwaltung behoben",
-        "ru": "исправлены ошибки при обмене данными с устройством и управлении пользовательскими флеш-файлами",
-        "pt": "erros corrigidos na comunicação do dispositivo e gerenciamento de arquivos flash do usuário",
-        "nl": "opgeloste fouten in de apparaatcommunicatie en gebruikersflash-bestandsbeheer",
-        "fr": "correction d'erreurs dans la communication de l'appareil et la gestion des fichiers flash utilisateur",
-        "it": "corretti gli errori nella comunicazione del dispositivo e nella gestione dei file flash dell'utente",
-        "es": "errores corregidos en la comunicación del dispositivo y la gestión de archivos flash del usuario",
-        "pl": "naprawiono błędy w komunikacji urządzenia i zarządzaniu plikami flash użytkownika",
-        "zh-cn": "修复了设备通信和用户闪存文件管理中的错误"
-      },
-      "0.1.2": {
-        "en": "extended device/database structure to add user flash memory",
-        "de": "Geräte-/Datenbankstruktur erweitert zum Hinzufügen von user flash memory",
-        "ru": "расширенная структура устройства/базы данных для добавления пользовательской флэш-памяти",
-        "pt": "estrutura estendida de dispositivo/banco de dados para adicionar memória flash do usuário",
-        "nl": "uitgebreide apparaat-/databasestructuur om gebruikersflashgeheugen toe te voegen",
-        "fr": "structure de périphérique/base de données étendue pour ajouter de la mémoire flash utilisateur",
-        "it": "struttura estesa del dispositivo/database per aggiungere memoria flash utente",
-        "es": "dispositivo extendido/estructura de base de datos para agregar memoria flash de usuario",
-        "pl": "rozszerzona struktura urządzenia/bazy danych w celu dodania pamięci flash użytkownika",
-        "zh-cn": "扩展设备/数据库结构以添加用户闪存"
-      },
-      "0.1.1": {
-        "en": "extend device/database structure to add devices CP82, SMD202, SME211",
-        "de": "Erweiterung der Geräte-/Datenbankstruktur um die Geräte CP82, SMD202, SME211",
-        "ru": "расширить структуру устройства/базы данных для добавления устройств CP82, SMD202, SME211",
-        "pt": "estender a estrutura do dispositivo/banco de dados para adicionar dispositivos CP82, SMD202, SME211",
-        "nl": "apparaat-/databasestructuur uitbreiden om apparaten CP82, SMD202, SME211 toe te voegen",
-        "fr": "étendre la structure de l'appareil/de la base de données pour ajouter des appareils CP82, SMD202, SME211",
-        "it": "estendere la struttura del dispositivo/database per aggiungere dispositivi CP82, SMD202, SME211",
-        "es": "ampliar la estructura del dispositivo/base de datos para agregar dispositivos CP82, SMD202, SME211",
-        "pl": "rozszerzenie struktury urządzenia/bazy danych o urządzenia CP82, SMD202, SME211",
-        "zh-cn": "扩展设备/数据库结构以添加设备 CP82、SMD202、SME211"
-      },
-      "0.1.0": {
-        "en": "extend device/database structure to cover all controllable elements",
-        "de": "Datenbankstruktur erweitert um alle steuerbaren Elemente abzubilden",
-        "ru": "расширить структуру устройства/базы данных, чтобы охватить все контролируемые элементы",
-        "pt": "estender a estrutura do dispositivo/banco de dados para cobrir todos os elementos controláveis",
-        "nl": "de apparaat-/databasestructuur uitbreiden om alle bestuurbare elementen te dekken",
-        "fr": "étendre la structure de l'appareil/de la base de données pour couvrir tous les éléments contrôlables",
-        "it": "estendere la struttura del dispositivo/database per coprire tutti gli elementi controllabili",
-        "es": "extender la estructura del dispositivo/base de datos para cubrir todos los elementos controlables",
-        "pl": "rozszerzyć strukturę urządzenia/bazy danych o wszystkie elementy, którymi można sterować",
-        "zh-cn": "扩展设备/数据库结构以覆盖所有可控元素"
-      }
+    "common": {
+        "name": "extron",
+        "version": "0.2.16",
+        "blockedVersions": [
+            "0.2.11",
+            "0.2.12",
+            "0.2.14"
+        ],
+        "news": {
+            "0.2.16": {
+                "en": "enhanced network reconnect functionality, added DANTE remote commands, additional devices",
+                "de": "Netzwerk wiederverbindnung verbessert, DANTE Fernsteuerbefehle und zusätzliche gerätetypen hinzugefügt",
+                "ru": "расширенная функция повторного подключения к сети, добавлены удаленные команды DANTE, дополнительные устройства",
+                "pt": "funcionalidade aprimorada de reconexão de rede, comandos remotos DANTE adicionados, dispositivos adicionais",
+                "nl": "verbeterde functionaliteit voor het opnieuw verbinden van netwerken, toegevoegde DANTE-afstandsbedieningsopdrachten, extra apparaten",
+                "fr": "fonctionnalité de reconnexion réseau améliorée, commandes à distance DANTE ajoutées, appareils supplémentaires",
+                "it": "funzionalità di riconnessione alla rete migliorata, aggiunti comandi remoti DANTE, dispositivi aggiuntivi",
+                "es": "funcionalidad mejorada de reconexión de red, comandos remotos DANTE agregados, dispositivos adicionales",
+                "pl": "ulepszona funkcjonalność ponownego łączenia sieci, dodane zdalne polecenia DANTE, dodatkowe urządzenia",
+                "uk": "розширена функція повторного підключення до мережі, додані віддалені команди DANTE, додаткові пристрої",
+                "zh-cn": "增强的网络重新连接功能、添加 DANTE 远程命令、附加设备"
+            },
+            "0.2.15": {
+                "en": "fixed typo in io-package.json",
+                "de": "tippfehler in io-package.json korrigiert",
+                "ru": "исправлена ​​опечатка в io-package.json",
+                "pt": "erro de digitação corrigido em io-package.json",
+                "nl": "vaste typefout in io-package.json",
+                "fr": "correction d'une faute de frappe dans io-package.json",
+                "it": "corretto errore di battitura in io-package.json",
+                "es": "error tipográfico corregido en io-package.json",
+                "pl": "naprawiono literówkę w io-package.json",
+                "uk": "виправлено помилку в io-package.json",
+                "zh-cn": "修复了 io-package.json 中的拼写错误"
+            },
+            "0.2.14": {
+                "en": "changed functon createDatabase() to use setObj()",
+                "de": "Funktion createDatabase() auf Verwendung von setObj() geändert",
+                "ru": "изменена функция createDatabase() для использования setObj()",
+                "pt": "alterou a função createDatabase() para usar setObj()",
+                "nl": "functie createDatabase() gewijzigd om setObj() te gebruiken",
+                "fr": "modification de la fonction createDatabase() pour utiliser setObj()",
+                "it": "modificata la funzione createDatabase() per utilizzare setObj()",
+                "es": "Se cambió la función createDatabase() para usar setObj().",
+                "pl": "zmieniono funkcję createDatabase(), aby używać setObj()",
+                "uk": "змінено функцію createDatabase() на використання setObj()",
+                "zh-cn": "将函数 createDatabase() 更改为使用 setObj()"
+            },
+            "0.2.13": {
+                "en": "corrected instance.comon.titleLang to be set at startup, updated role definitions, added audiofile transfer functionality for DMPxxx",
+                "de": "setzen von instance.common.titleLang bei Adapterstart korrigiert, Definition der zustands-Rollen überarbeitet, Audio-DatiÜbertragung für DMPxxx hinzugefügt",
+                "ru": "исправлен параметр instance.comon.titleLang при запуске, обновлены определения ролей, добавлена ​​функция передачи аудиофайлов для DMPxxx.",
+                "pt": "corrigido instance.comon.titleLang para ser definido na inicialização, definições de função atualizadas, funcionalidade de transferência de arquivo de áudio adicionada para DMPxxx",
+                "nl": "gecorrigeerde instance.comon.titleLang die moet worden ingesteld bij het opstarten, bijgewerkte roldefinities, toegevoegde functionaliteit voor audiobestandsoverdracht voor DMPxxx",
+                "fr": "instance.comon.titleLang corrigé à définir au démarrage, définitions de rôles mises à jour, fonctionnalité de transfert de fichiers audio ajoutée pour DMPxxx",
+                "it": "corretto l'impostazione di example.comon.titleLang all'avvio, definizioni di ruolo aggiornate, aggiunta funzionalità di trasferimento di file audio per DMPxxx",
+                "es": "Se corrigió el archivostance.comon.titleLang para configurarlo al inicio, se actualizaron las definiciones de roles y se agregó la funcionalidad de transferencia de archivos de audio para DMPxxx.",
+                "pl": "poprawiono instancję.comon.titleLang do ustawienia przy uruchomieniu, zaktualizowano definicje ról, dodano funkcjonalność przesyłania plików audio dla DMPxxx",
+                "uk": "виправлено instance.comon.titleLang, який буде встановлено під час запуску, оновлено визначення ролей, додано функцію передачі аудіофайлів для DMPxxx",
+                "zh-cn": "更正了启动时设置的 instance.comon.titleLang、更新了角色定义、添加了 DMPxxx 的音频文件传输功能"
+            },
+            "0.2.12": {
+                "en": "added instance.common.title/.titleLang set on startup",
+                "de": "setzen von instance.common.title/.titleLang bei Adapterstart hinzugefügt",
+                "ru": "добавлен экземпляр.common.title/.titleLang, устанавливаемый при запуске",
+                "pt": "adicionado instance.common.title/.titleLang definido na inicialização",
+                "nl": "instance.common.title/.titleLang toegevoegd, ingesteld bij het opstarten",
+                "fr": "ajout de instance.common.title/.titleLang défini au démarrage",
+                "it": "aggiunto istanza.common.title/.titleLang impostato all'avvio",
+                "es": "se agregó instancia.common.title/.titleLang configurado al inicio",
+                "pl": "dodano instancję.common.title/.titleLang ustawioną podczas uruchamiania",
+                "uk": "додано instance.common.title/.titleLang, встановлене під час запуску",
+                "zh-cn": "添加了启动时设置的instance.common.title/.titleLang"
+            },
+            "0.2.11": {
+                "en": "added instance.device.name set on startup",
+                "de": "setzen von instance.device.name bei Adapterstart hinzugefügt",
+                "ru": "добавлен экземпляр.device.name, устанавливаемый при запуске",
+                "pt": "adicionado instance.device.name definido na inicialização",
+                "nl": "toegevoegd instance.device.name ingesteld bij het opstarten",
+                "fr": "ajout de instance.device.name défini au démarrage",
+                "it": "aggiunto istanza.device.name impostato all'avvio",
+                "es": "agregado instancia.device.name establecido en el inicio",
+                "pl": "dodano nazwę.urządzenia instancji ustawioną podczas uruchamiania",
+                "uk": "додано instance.device.name, встановлене під час запуску",
+                "zh-cn": "添加了启动时设置的instance.device.name"
+            },
+            "0.2.10": {
+                "en": "SMD202: corrected preset list handling",
+                "de": "SMD202: verarbeitung der Kanalliste korrigiert",
+                "ru": "SMD202: исправлена ​​обработка списка пресетов.",
+                "pt": "SMD202: manipulação de lista predefinida corrigida",
+                "nl": "SMD202: afhandeling van vooraf ingestelde lijsten gecorrigeerd",
+                "fr": "SMD202 : correction de la gestion des listes de préréglages",
+                "it": "SMD202: corretta gestione dell'elenco dei preset",
+                "es": "SMD202: manejo de lista de presets corregido",
+                "pl": "SMD202: poprawiona obsługa listy ustawień wstępnych",
+                "uk": "SMD202: виправлена ​​обробка попередньо встановленого списку",
+                "zh-cn": "SMD202：更正预设列表处理"
+            },
+            "0.2.9": {
+                "en": "SMD202: disable subtitle command at startup added",
+                "de": "SMD202: Abschaltung Untertitel bei Adapterstart hinzugefügt",
+                "ru": "SMD202: добавлена ​​команда отключения субтитров при запуске.",
+                "pt": "SMD202: comando desabilitar legenda na inicialização adicionado",
+                "nl": "SMD202: opdracht ondertiteling uitschakelen bij opstarten toegevoegd",
+                "fr": "SMD202 : ajout de la commande de désactivation des sous-titres au démarrage",
+                "it": "SMD202: aggiunto il comando disabilita i sottotitoli all'avvio",
+                "es": "SMD202: se agregó el comando deshabilitar subtítulos al inicio",
+                "pl": "SMD202: dodano polecenie wyłączenia napisów przy uruchomieniu",
+                "uk": "SMD202: додано команду вимкнення субтитрів під час запуску",
+                "zh-cn": "SMD202：添加了启动时禁用字幕命令"
+            },
+            "0.2.8": {
+                "en": "onStreamData command debug msg added",
+                "de": "onSTreamData debug-Meldung für command hinzugefügt",
+                "ru": "Добавлено сообщение отладки команды onStreamData",
+                "pt": "Mensagem de depuração do comando onStreamData adicionada",
+                "nl": "onStreamData-opdracht debug-bericht toegevoegd",
+                "fr": "Msg de débogage de la commande onStreamData ajouté",
+                "it": "Aggiunto messaggio di debug del comando onStreamData",
+                "es": "Se agregó el mensaje de depuración del comando onStreamData",
+                "pl": "Dodano komunikat debugowania polecenia onStreamData",
+                "uk": "Додано повідомлення про налагодження команди onStreamData",
+                "zh-cn": "添加了 onStreamData 命令调试消息"
+            },
+            "0.2.7": {
+                "en": "SMD202 preset list handling update",
+                "de": "Verarbeitung der SMD202 Preset-Liste überarbeitet",
+                "ru": "Обновление обработки списка предустановок SMD202",
+                "pt": "Atualização de manipulação de lista predefinida SMD202",
+                "nl": "Update voor verwerking van SMD202-voorinstellingenlijst",
+                "fr": "Mise à jour de la gestion de la liste de préréglages SMD202",
+                "it": "Aggiornamento della gestione dell'elenco delle preimpostazioni SMD202",
+                "es": "Actualización de manejo de lista preestablecida SMD202",
+                "pl": "Aktualizacja obsługi listy ustawień wstępnych SMD202",
+                "uk": "Оновлення обробки списку попередніх налаштувань SMD202",
+                "zh-cn": "SMD202预设列表处理更新"
+            },
+            "0.2.6": {
+                "en": "added SMD202 preset list handling oin startup",
+                "de": "Verarbeitung der SMD202 Preset-Liste beim Adapterstart hinzugefügt",
+                "ru": "добавлена ​​обработка списка предустановок SMD202 при запуске",
+                "pt": "adicionado gerenciamento de lista predefinida SMD202 na inicialização",
+                "nl": "SMD202-presetlijst toegevoegd voor afhandeling bij opstarten",
+                "fr": "ajout de la liste de préréglages SMD202 pour la gestion du démarrage",
+                "it": "aggiunto elenco preimpostato SMD202 per la gestione dell'avvio",
+                "es": "Se agregó el manejo de la lista preestablecida SMD202 en el inicio.",
+                "pl": "dodano listę presetów SMD202 obsługującą uruchamianie",
+                "uk": "додано обробку попередньо встановленого списку SMD202 під час запуску",
+                "zh-cn": "添加了 SMD202 预设列表处理启动"
+            },
+            "0.2.5": {
+                "en": "added SMD202 preset list handling",
+                "de": "Verarbeitung der SMD202 Preset-Liste hinzugefügt",
+                "ru": "добавлена ​​обработка списка предустановок SMD202",
+                "pt": "adicionado manipulação de lista predefinida SMD202",
+                "nl": "verwerking van SMD202-voorkeuzelijsten toegevoegd",
+                "fr": "ajout de la gestion de la liste de préréglages SMD202",
+                "it": "aggiunta la gestione dell'elenco dei preset SMD202",
+                "es": "Se agregó manejo de lista preestablecida SMD202.",
+                "pl": "dodano obsługę listy presetów SMD202",
+                "uk": "додано обробку попередньо встановленого списку SMD202",
+                "zh-cn": "添加了 SMD202 预设列表处理"
+            },
+            "0.2.4": {
+                "en": "corrected typo in object_templates",
+                "de": "Tippfehler in Datei object_templates korrigiert",
+                "ru": "исправлена ​​опечатка в object_templates",
+                "pt": "erro de digitação corrigido em object_templates",
+                "nl": "typfout in object_templates gecorrigeerd",
+                "fr": "faute de frappe corrigée dans object_templates",
+                "it": "corretto errore di battitura in object_templates",
+                "es": "error tipográfico corregido en object_templates",
+                "pl": "poprawiona literówka w object_templates",
+                "uk": "виправлено помилку в object_templates",
+                "zh-cn": "更正了 object_templates 中的拼写错误"
+            },
+            "0.2.3": {
+                "en": "fixed DMP 128 file handling",
+                "de": "Dateiverwaltung für DMP!128 korrigiert",
+                "ru": "исправлена ​​обработка файлов DMP 128",
+                "pt": "manipulação fixa de arquivos DMP 128",
+                "nl": "vaste DMP 128-bestandsafhandeling",
+                "fr": "correction de la gestion des fichiers DMP 128",
+                "it": "corretta la gestione dei file DMP 128",
+                "es": "Se corrigió el manejo de archivos DMP 128.",
+                "pl": "naprawiono obsługę plików DMP 128",
+                "uk": "виправлено обробку файлів DMP 128",
+                "zh-cn": "修复了 DMP 128 文件处理"
+            },
+            "0.2.2": {
+                "en": "fixed SMD202 loopmode command",
+                "de": "Fehler im Befehl loopmode für den SMD202 behoben",
+                "ru": "исправлена ​​команда режима петли SMD202",
+                "pt": "comando loopmode SMD202 fixo",
+                "nl": "vaste SMD202 loopmode-opdracht",
+                "fr": "commande de mode boucle SMD202 fixe",
+                "it": "corretto il comando loopmode SMD202",
+                "es": "comando de modo de bucle SMD202 fijo",
+                "pl": "naprawiono polecenie trybu pętli SMD202",
+                "uk": "виправлена ​​команда SMD202 loopmode",
+                "zh-cn": "修复SMD202循环模式命令"
+            },
+            "0.2.1": {
+                "en": "fixed log messages, improved group control timing issues",
+                "de": "Protokollnachrichten verbessert, Zeitprobleme bei Gruppenkonfiguration behoben",
+                "ru": "исправлены сообщения журнала, улучшены проблемы с синхронизацией группового контроля",
+                "pt": "mensagens de log corrigidas, problemas aprimorados de tempo de controle de grupo",
+                "nl": "vaste logberichten, verbeterde timingproblemen met groepscontrole",
+                "fr": "messages de journal corrigés, problèmes de synchronisation de contrôle de groupe améliorés",
+                "it": "messaggi di registro corretti, problemi di temporizzazione del controllo di gruppo migliorati",
+                "es": "mensajes de registro fijos, problemas de tiempo de control de grupo mejorados",
+                "pl": "poprawione komunikaty dziennika, poprawione problemy z synchronizacją kontroli grupowej",
+                "uk": "виправлені повідомлення журналу, покращені проблеми з часом керування групою",
+                "zh-cn": "修复了日志消息，改进了组控制计时问题"
+            }
+        },
+        "titleLang": {
+            "en": "Extron SIS",
+            "de": "Extron SIS",
+            "ru": "Extron SIS",
+            "pt": "Extron SIS",
+            "nl": "Extron SIS",
+            "fr": "Extron SIS",
+            "it": "Extron SIS",
+            "es": "Extron SIS",
+            "pl": "Extron SIS",
+            "zh-cn": "Extron SIS",
+            "uk": "Extron SIS"
+        },
+        "desc": {
+            "en": "Extron SIS adapter",
+            "de": "Extron SIS-Adapter",
+            "ru": "Адаптер Extron SIS",
+            "pt": "Adaptador Extron SIS",
+            "nl": "Extron SIS-adapter",
+            "fr": "Adaptateur SIS Extron",
+            "it": "Adattatore SIS di Extron",
+            "es": "Adaptador SIS de Extron",
+            "pl": "Adapter Extron SIS",
+            "zh-cn": "Extron SIS适配器",
+            "uk": "Адаптер Extron SIS"
+        },
+        "authors": [
+            "Bannsaenger <bannsaenger@gmx.de>",
+            "mschlgl <mschlgl@gmail.com>"
+        ],
+        "keywords": [
+            "extron"
+        ],
+        "license": "CC-BY-NC-4.0",
+        "platform": "Javascript/Node.js",
+        "main": "main.js",
+        "icon": "extron.png",
+        "enabled": false,
+        "extIcon": "https://raw.githubusercontent.com/Bannsaenger/ioBroker.extron/master/admin/extron.png",
+        "readme": "https://github.com/Bannsaenger/ioBroker.extron/blob/master/README.md",
+        "loglevel": "info",
+        "mode": "daemon",
+        "type": "hardware",
+        "connectionType": "local",
+        "dataSource": "push",
+        "compact": true,
+        "materialize": true,
+        "dependencies": [
+            {
+                "js-controller": ">=2.0.0"
+            }
+        ],
+        "adminUI": {
+            "config": "materialize"
+        }
     },
-    "titleLang": {
-      "en": "Extron SIS",
-      "de": "Extron SIS",
-      "ru": "Extron SIS",
-      "pt": "Extron SIS",
-      "nl": "Extron SIS",
-      "fr": "Extron SIS",
-      "it": "Extron SIS",
-      "es": "Extron SIS",
-      "pl": "Extron SIS",
-      "zh-cn": "Extron SIS"
+    "native": {
+        "host": "127.0.0.1",
+        "type": "ssh",
+        "port": "22023",
+        "device": "",
+        "user": "admin",
+        "pass": "",
+        "pollDelay": 10000,
+        "reconnectDelay": 30000,
+        "answerTimeout": 500,
+        "inactivityTimeout": 100000,
+        "pushDeviceStatus": true,
+        "stateDelay": 50,
+        "remoteDevices": [
+            {}
+        ]
     },
-    "desc": {
-      "en": "Extron SIS adapter",
-      "de": "Extron SIS-Adapter",
-      "ru": "Адаптер Extron SIS",
-      "pt": "Adaptador Extron SIS",
-      "nl": "Extron SIS-adapter",
-      "fr": "Adaptateur SIS Extron",
-      "it": "Adattatore SIS di Extron",
-      "es": "Adaptador SIS de Extron",
-      "pl": "Adapter Extron SIS",
-      "zh-cn": "Extron SIS适配器"
-    },
-    "authors": [
-      "Bannsaenger <bannsaenger@gmx.de>",
-      "mschlgl <mschlgl@gmail.com>"
-    ],
-    "keywords": [
-      "extron"
-    ],
-    "license": "CC-BY-NC-4.0",
-    "platform": "Javascript/Node.js",
-    "main": "main.js",
-    "icon": "extron.png",
-    "enabled": false,
-    "extIcon": "https://raw.githubusercontent.com/Bannsaenger/ioBroker.extron/master/admin/extron.png",
-    "readme": "https://github.com/Bannsaenger/ioBroker.extron/blob/master/README.md",
-    "loglevel": "info",
-    "mode": "daemon",
-    "type": "hardware",
-    "connectionType": "local",
-    "dataSource": "push",
-    "compact": true,
-    "materialize": true,
-    "dependencies": [
-      {
-        "js-controller": ">=2.0.0"
-      }
-    ],
-    "adminUI": {
-      "config":"materialize"
-    }
-  },
-  "native": {
-    "host": "127.0.0.1",
-    "type": "ssh",
-    "port": "22023",
-    "device": "",
-    "user": "admin",
-    "pass": "",
-    "pollDelay": 10000,
-    "reconnectDelay": 30000,
-    "answerTimeout": 500,
-    "inactivityTimeout": 100000,
-    "pushDeviceStatus": true,
-    "stateDelay": 50,
-    "remoteDevices" : [{}]
-  },
-  "objects": [],
-  "instanceObjects": [
-    {
-      "_id": "info",
-      "type": "channel",
-      "common": {
-        "name": "Information"
-      },
-      "native": {}
-    },
-    {
-      "_id": "info.connection",
-      "type": "state",
-      "common": {
-        "role": "indicator.connected",
-        "name": "Device or service connected",
-        "type": "boolean",
-        "read": true,
-        "write": false,
-        "def": false
-      },
-      "native": {}
-    }
-  ]
+    "objects": [],
+    "instanceObjects": [
+        {
+            "_id": "info",
+            "type": "channel",
+            "common": {
+                "name": "Information"
+            },
+            "native": {}
+        },
+        {
+            "_id": "info.connection",
+            "type": "state",
+            "common": {
+                "role": "indicator.connected",
+                "name": "Device or service connected",
+                "type": "boolean",
+                "read": true,
+                "write": false,
+                "def": false
+            },
+            "native": {}
+        }
+    ]
 }
