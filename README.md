@@ -31,6 +31,7 @@ If you are a non commercial organisation or use it for private use you can get a
 - Streaming Media Encoder (SME 211)
 - 12x8 ProDSP Processor w/Dante (DMP 128 Plus AT)
 - 12x8 ProDSP Processor w/AEC, VoIP, and Dante (DMP 128 Plus C V AT)
+- Dante Audio Matrix Processor with AEC (XMP 240 C AT)
 
 ## ToDo
 - The device type is checked on begin of the conversation. This fails sometimes. Must be changed to a more reliable mechanism. 
@@ -42,11 +43,11 @@ If you are a non commercial organisation or use it for private use you can get a
 <!--
     Placeholder for the next version (at the beginning of the line):
     ### **WORK IN PROGRESS**
-    * (Bannsaenger) introducing admin 5 UI (jsonConfig)
 -->
 ### **WORK IN PROGRESS**
 * (Bannsaenger) updated to adapter-dev and release script
 * (Bannsaenger) updated dependencies
+* (Bannsaenger) introducing jsonConfig
 
 ### 0.2.16 (2024-07-09)
 * (mschlgl) enhanced network reconnect functionality, added DANTE remote commands, additional devices
