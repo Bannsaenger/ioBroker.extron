@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.16 20240715
+ *      iobroker extron (SIS) Adapter V0.2.16 20240722
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -40,6 +40,7 @@ const errCodes = {
 };
 
 const invalidChars = ['+','~',',','@','=',"'",'[',']','{','}','<','>','`','"',':',';','|','\\','?'];
+const danteRelayDevices = ['dmp128', 'dmp64', 'xmp240'];
 
 class Extron extends utils.Adapter {
 
@@ -392,7 +393,7 @@ class Extron extends utils.Adapter {
         }
         try {
             if (this.streamAvailable) {
-                this.log.debug(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.fileSend?'file data':this.decodeBufferToLog(data)}"`);
+                this.log.info(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.fileSend?'file data':this.decodeBufferToLog(data)}"`);
                 this.setState('info.connection', true, true);
                 this.streamAvailable = this.stream.write(data);
             } else {
@@ -519,7 +520,7 @@ class Extron extends utils.Adapter {
                 } else
                 {   // lookup the command
                     //const matchArray = answer.match(/([A-Z][a-z]+[A-Z]|\w{3})(\d*)\*?,? ?(.*)/i);
-                    const matchArray = answer.match(/{?(dante|[A-Z][a-z]+[A-Z]|\w{3})@?([\w,-]*|\d*)}?,?\*? ?(.*)/i); // extended to detect DANTE remote responses
+                    const matchArray = answer.match(/{?(dante|[A-Z][a-z]+[A-Z]|\w{3})@?([\w-]*|\d*)}?,?\*? ?(.*)/i); // extended to detect DANTE remote responses
                     if (matchArray) {       // if any match
                         const command = matchArray[1].toUpperCase();
                         const ext1 = matchArray[2] ? matchArray[2] : '';
@@ -586,14 +587,38 @@ class Extron extends utils.Adapter {
                                 this.setSource(ext1, ext2);
                                 break;
 
-                            case 'DSE' :            //received a limiter status change
-                                this.log.info(`onStreamData(): Extron got a limiter status change from OID : "${ext1}" value: "-${ext2}"`);
+                            case 'DSE' :            // dynamics status change
+                                this.log.info(`onStreamData(): Extron got a dynamics status change from OID : "${ext1}" value: "-${ext2}"`);
                                 this.setLimitStatus(ext1, ext2);
                                 break;
 
-                            case 'DST' :            //received a limiter threshold change
-                                this.log.info(`onStreamData(): Extron got a limiter threshold change from OID : "${ext1}" value: "${ext2}"`);
+                            case 'DST' :            // dynamics threshold change
+                                this.log.info(`onStreamData(): Extron got a threshold change from OID : "${ext1}" value: "${ext2}"`);
                                 this.setLimitThreshold(ext1, ext2);
+                                break;
+
+                            case 'DSY' :            // dynamics block change 0=no dyn, 1=cmp, 2=lim, 3=gate, 4=agc
+                                this.log.info(`onStreamData(): Extron received dynamics activation change from OID : "${ext1}" value "${ext2}"`);
+                                break;
+
+                            case 'DSA' :            // dynamics attack
+                                this.log.info(`onStreamData(): Extron received attack time change from OID : "${ext1}" value "${ext2}"`);
+                                break;
+
+                            case 'DSR' :            // dynamics ratio
+                                this.log.info(`onStreamData(): Extron received ratio change from OID : "${ext1}" value "${ext2}"`);
+                                break;
+
+                            case 'DSH' :            // dynamics hold
+                                this.log.info(`onStreamData(): Extron received hold time change from OID : "${ext1}" value "${ext2}"`);
+                                break;
+
+                            case 'DSL' :            // dynamics release
+                                this.log.info(`onStreamData(): Extron received release time change from OID : "${ext1}" value "${ext2}"`);
+                                break;
+
+                            case 'DSK' :            // dynamics knee
+                                this.log.info(`onStreamData(): Extron received dynamic knee change from OID : "${ext1}" value "${ext2}"`);
                                 break;
 
                             case 'PLAY':             //received a play mode command
@@ -774,12 +799,15 @@ class Extron extends utils.Adapter {
                                 break;
                             case 'EXPRA':
                                 this.log.info(`onStreamData(): Extron got available remote devices: ${ext1}, ${ext2}`);
+                                this.setDanteDevices(ext1.split('*'));
                                 break;
                             case 'EXPRC':
                                 this.log.info(`onStreamData(): Extron DANTE connection to remote device: ${ext1}, ${ext2=='1'?'established':'disconnected'} `);
+                                this.setDanteConnection(ext1,ext2 == '1');
                                 break;
                             case 'EXPRL':
                                 this.log.info(`onStreamData(): Extron listening to remote devices: ${ext1}, ${ext2}`);
+                                this.setDanteConnections(ext1.split('*'));
                                 break;
                             case 'DANTE':
                                 this.log.info(`onStreamData(): received DANTE relay command response: device:"${ext1}", command:"${ext2}"`);
@@ -1209,13 +1237,6 @@ class Extron extends utils.Adapter {
                 }
                 this.log.debug(`createDatabaseAsync(): set outputs`);
             }
-            // if cp82 : create groups
-            if (device === 'cp82') {
-                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].groups) {
-                    await this.setObjectAsync(element._id, element);
-                }
-                this.log.debug(`createDatabaseAsync(): cp82 create groups`);
-            }
             // if we have groups on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].grp) {
                 await this.setObjectAsync('groups', {
@@ -1237,6 +1258,13 @@ class Extron extends utils.Adapter {
                 }
                 this.log.debug(`createDatabaseAsync(): set groups`);
             }
+            // if we have a DANTE relay device
+            if (this.devices[this.config.device] && this.devices[this.config.device].objects.includes('danterelay')) {
+                for (const element of this.objectsTemplate.danterelay) {
+                    await this.setObjectAsync(element._id, element);
+                }
+                this.log.debug(`createDatabaseAsync(): create dante devices`);
+            }
         } catch (err) {
             this.errorHandler(err, 'createDatabase');
         }
@@ -1252,16 +1280,19 @@ class Extron extends utils.Adapter {
         this.log.debug(`createDanteDevice(): setting up database for "${deviceName}" as "${deviceType}"`);
         // create the common section
         for (const element of this.objectsTemplate.common) {
-            await this.setObjectAsync(`dante.${deviceName}.${element._id}`, element);
+            element._id = `dante.${deviceName}.${element._id}`;
+            await this.setObjectAsync(element._id, element);
         }
         // add deviceName to database
         const deviceObj = this.objectsTemplate.common[0];
         deviceObj.common.name = deviceName;
-        await this.setObjectAsync(`dante.${deviceName}.device`, deviceObj);
+        deviceObj._id = `dante.${deviceName}.${deviceObj._id}`;
+        await this.setObjectAsync(deviceObj._id, deviceObj);
         this.log.debug(`createDanteDevice(): set deviceName`);
         /*
         for (const element of this.objectsTemplate[deviceType]) {
-            await this.setObjectAsync(`${deviceName}.${element._id}`, element);
+            elemnt._id = `dante.${deviceName}.${element._id}`;
+            await this.setObjectAsync(element._id, element);
         }
         this.log.debug(`createDatabaseAsync(): create common section`);
         */
@@ -1305,10 +1336,17 @@ class Extron extends utils.Adapter {
                 //for (let index = 0; index < stateList.length; index++) {
                 for (const id of stateList) {
                     //const id = stateList[index];
+                    this.log.debug(`getDeviceStatus(): ${id}`);
+                    // extron.[n].[fld].[type].[number].[block]
+                    //   0     1    2     3       4        5
+                    // extron.[n].in.auxInputs.01.mixPoints.A01
+                    // extron.[n].dante.available
+                    // extron.[n].dante.[deviceName].[fld].[type].[number].[block]
+                    //   0     1    2       3          4     5       6        7
                     const baseId = id.slice(0, id.lastIndexOf('.'));
                     const stateName = id.slice(id.lastIndexOf('.') + 1);
                     const idArray = id.split('.');
-                    const dante = idArray[1] == 'dante';
+                    const dante = (idArray[2] == 'dante');
                     const idType = !dante ?idArray[2]: idArray[4];
                     const grpId = Number(!dante ?idArray[3]: idArray[5]);
 
@@ -1397,6 +1435,16 @@ class Extron extends utils.Adapter {
                                 this.getPresets();
                                 break;
 
+                            case 'available' :
+                                if (device in danteRelayDevices) {
+                                    this.getDanteDevices();
+                                }
+                                break;
+                            case 'connected' :
+                                if (device in danteRelayDevices) {
+                                    this.listDanteConnections();
+                                }
+                                break;
                         }
                     }
                 }
@@ -3055,6 +3103,18 @@ class Extron extends utils.Adapter {
         }
     }
 
+    /** BEGIN DANTE control and configuration messages */
+    /** set available DANTE devices in database
+     * @param {array} deviceList
+     */
+    setDanteDevices(deviceList) {
+        try {
+            this.setState(`dante.available`, JSON.stringify(deviceList), true);
+        } catch (err) {
+            this.errorHandler(err, 'setDanteDevices');
+        }
+    }
+
     /** control danteDeviceconnection
      * @param {string} deviceName
      * @param {number | boolean} state
@@ -3080,6 +3140,18 @@ class Extron extends utils.Adapter {
         }
     }
 
+    /** set DANTE connection
+     * @param {string} deviceName
+     * @param {boolean} connectionState
+    */
+    setDanteConnection(deviceName, connectionState) {
+        try {
+            this.setState(`dante.${deviceName}.info.connection`, connectionState, true);
+        } catch (err) {
+            this.errorHandler(err, 'setDanteConnection');
+        }
+    }
+
     /** list DANTE connections
      * cmd = LEXPR
     */
@@ -3088,6 +3160,18 @@ class Extron extends utils.Adapter {
             this.streamSend(`WLEXPR\r`);
         } catch (err) {
             this.errorHandler(err, 'listDanteConnections');
+        }
+    }
+
+    /** set DANTE connections in database
+     * @param {array} deviceList
+    */
+    setDanteConnections(deviceList) {
+        try {
+            this.setState(`dante.connected`, JSON.stringify(deviceList), true);
+            this.listDanteConnections();    // update connection list
+        } catch (err) {
+            this.errorHandler(err, 'setDanteConnections');
         }
     }
     /** END DANTE control messages */
@@ -3285,7 +3369,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'oid2id');
             return '';
         }
-
+        this.log.debug(`oid2id(): "${oid}" to "${retId}"`);
         return deviceName == ''? retId :'dante.'+ deviceName + '.' + retId;
     }
 
@@ -3299,13 +3383,19 @@ class Extron extends utils.Adapter {
         const device = this.devices[this.config.device].short;
         let retOid = '';
         const idArray = id.split('.');
-        const dante = idArray[1] == 'dante';
+        // extron.[n].[fld].[type].[number].[block]
+        //   0     1    2     3       4        5
+        // extron.[n].in.auxInputs.01.mixPoints.A01
+        // extron.[n].dante.available
+        // extron.[n].dante.[deviceName].[fld].[type].[number].[block]
+        //   0     1    2       3          4     5       6        7
+        const dante = (idArray[2] == 'dante');
         const idType = !dante ? idArray[3]: idArray[5];
         const idNumber = !dante ? Number(idArray[4]) : Number(idArray[6]);
         const idBlock = !dante ? idArray[5] : idArray[7];
         let outputType = 'O';
         let outputNumber = 1;
-        if (idArray.length >= 7) {
+        if (idArray.length >= (!dante?7:9)) {
             outputType = !dante ? idArray[6].slice(0,1) : idArray[8].slice(0,1);
             outputNumber = !dante ? Number(idArray[6].slice(1,3)): Number(idArray[8].slice(1,3));
         }
@@ -3314,7 +3404,7 @@ class Extron extends utils.Adapter {
             if (idType === 'players') {
                 retOid = `${idNumber}`;
             }
-            else if (!dante ? idArray[2] : idArray[4] === 'groups') {
+            else if ((!dante ? idArray[2] : idArray[4]) === 'groups') {
                 retOid = `${!dante ? idArray[3] : idArray[5]}`;
             }
             else
@@ -3480,6 +3570,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'id2oid');
             return '';
         }
+        this.log.debug(`id2oid(): "${id}" to "${retOid}"`);
         return retOid;
     }
 

@@ -661,7 +661,7 @@
                 "native": {}
             },
             {
-                "_id": "limiter",
+                "_id": "dynamics",
                 "type": "channel",
                 "common": {
                     "role": "output.channel",
@@ -670,30 +670,120 @@
                 "native": {}
             },
             {
-                "_id": "limiter.threshold",
+                "_id": "dynamics.type",
                 "type": "state",
                 "common": {
-                    "role": "level.volume",
-                    "name": "limiter threshold from -80 to 0db in 0.1 db steps",
+                    "role": "value",
+                    "name": "type of dyn insert",
                     "type": "number",
+                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
                     "read": true,
                     "write": true,
-                    "min": -800,
-                    "max": 0,
+                    "min":0,
+                    "max":4,
                     "def": 0
                 },
                 "native": {}
             },
             {
-                "_id": "limiter.status",
+                "_id": "dynamics.status",
                 "type": "state",
                 "common": {
                     "role": "switch",
-                    "name": "if true limiter is active",
+                    "name": "if true dynamics is active",
                     "type": "boolean",
                     "read": true,
                     "write": true,
                     "def": false
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.threshold",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "threshold from -80 to 0db in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -800,
+                    "max": 0,
+                    "def": -300
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.attack",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "attack time from 0 to 200ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 2000,
+                    "def": 5
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.hold",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "hold time from 0 to 500ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 5000,
+                    "def": 1000
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.release",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "release time from 10 to 1000ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 10,
+                    "max": 5000,
+                    "def": 10000
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.ratio",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "rratio from 1:1 to 100:1 in 0.1 steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 1,
+                    "max": 1000,
+                    "def": 100
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.knee",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "if true soft knee",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "def": 0,
+                    "states":{"0":"hard knee", "1":"soft knee"}
                 },
                 "native": {}
             },
@@ -1080,7 +1170,7 @@
                     "type": "number",
                     "read": true,
                     "write": true,
-                    "states": {"6":"Gain","12":"Mute"},
+                    "states": {"6":"Gain","12":"Mute","21":"Meter"},
                     "def": 6
                 },
                 "native": {}
@@ -1154,7 +1244,7 @@
                     "type": "array",
                     "read": true,
                     "write": true,
-                    "def":""
+                    "def": ""
                 },
                 "native": {}
             },
@@ -1436,7 +1526,7 @@
                 "native": {}
             },
             {
-                "_id": "limiter",
+                "_id": "dynamics",
                 "type": "channel",
                 "common": {
                     "role": "output.channel",
@@ -1445,30 +1535,120 @@
                 "native": {}
             },
             {
-                "_id": "limiter.threshold",
+                "_id": "dynamics.type",
                 "type": "state",
                 "common": {
-                    "role": "level.volume",
-                    "name": "limiter threshold from -80 to 0db in 0.1 db steps",
+                    "role": "value",
+                    "name": "type of dyn insert",
                     "type": "number",
+                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
                     "read": true,
                     "write": true,
-                    "min": -800,
-                    "max": 0,
+                    "min":0,
+                    "max":4,
                     "def": 0
                 },
                 "native": {}
             },
             {
-                "_id": "limiter.status",
+                "_id": "dynamics.status",
                 "type": "state",
                 "common": {
                     "role": "switch",
-                    "name": "if true limiter is active",
+                    "name": "if true dynamics is active",
                     "type": "boolean",
                     "read": true,
                     "write": true,
                     "def": false
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.threshold",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "threshold from -80 to 0db in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -800,
+                    "max": 0,
+                    "def": -300
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.attack",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "attack time from 0 to 200ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 2000,
+                    "def": 5
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.hold",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "hold time from 0 to 500ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 5000,
+                    "def": 1000
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.release",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "release time from 10 to 1000ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 10,
+                    "max": 5000,
+                    "def": 10000
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.ratio",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "rratio from 1:1 to 100:1 in 0.1 steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 1,
+                    "max": 1000,
+                    "def": 100
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.knee",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "if true soft knee",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "def": 0,
+                    "states":{"0":"hard knee", "1":"soft knee"}
                 },
                 "native": {}
             },
@@ -1698,7 +1878,7 @@
                     "type": "number",
                     "read": true,
                     "write": true,
-                    "states": {"6":"Gain","12":"Mute"},
+                    "states": {"6":"Gain","12":"Mute","21":"Meter"},
                     "def": 6
                 },
                 "native": {}
@@ -2480,15 +2660,20 @@
         },
         "groups": [
             {
-                "_id": "groups.01",
-                "type": "channel",
+                "_id": "name",
+                "type": "state",
                 "common": {
-                     "name": "mic volume group"
+                    "role": "text",
+                    "name": "group name",
+                    "type": "string",
+                    "read": true,
+                    "write": true,
+                    "def":""
                 },
                 "native": {}
             },
             {
-                "_id": "groups.01.type",
+                "_id": "type",
                 "type": "state",
                 "common": {
                     "role": "value",
@@ -2496,13 +2681,13 @@
                     "type": "number",
                     "read": true,
                     "write": true,
-                    "states": {"6":"Gain","12":"Mute"},
+                    "states": {"6":"Gain","12":"Mute","21":"Meter"},
                     "def": 6
                 },
                 "native": {}
             },
             {
-                "_id": "groups.01.level",
+                "_id": "level",
                 "type": "state",
                 "common": {
                     "role": "level.volume.group",
@@ -2517,7 +2702,7 @@
                 "native": {}
             },
             {
-                "_id": "groups.01.level_db",
+                "_id": "level_db",
                 "type": "state",
                 "common": {
                     "role": "level.volume.group",
@@ -2532,7 +2717,7 @@
                 "native": {}
             },
             {
-                "_id": "groups.01.upperLimit",
+                "_id": "upperLimit",
                 "type": "state",
                 "common": {
                     "role": "value",
@@ -2540,14 +2725,14 @@
                     "type":"number",
                     "read": true,
                     "write": true,
-                    "max": 120,
-                    "min": -1000,
-                    "def": 120
+                    "max": 32767,
+                    "min": -32767,
+                    "def": 32767
                 },
                 "native": {}
             },
             {
-                "_id": "groups.01.lowerLimit",
+                "_id": "lowerLimit",
                 "type": "state",
                 "common": {
                     "role": "value",
@@ -2555,623 +2740,35 @@
                     "type":"number",
                     "read": true,
                     "write": true,
-                    "max": 120,
-                    "min": -1000,
-                    "def": -1000
-                },
-                "native": {}
-            },{
-                "_id": "groups.02",
-                "type": "channel",
-                "common": {
-                    "name": "mic mute group"
+                    "max": 32767,
+                    "min": -32767,
+                    "def": -32767
                 },
                 "native": {}
             },
             {
-                "_id": "groups.02.type",
+                "_id": "members",
                 "type": "state",
                 "common": {
-                    "role": "value",
-                    "name": "group type",
-                    "type": "number",
+                    "role": "list",
+                    "name": "group members",
+                    "type": "array",
                     "read": true,
                     "write": true,
-                    "states": {"6":"Gain","12":"Mute"},
-                    "def": 12
+                    "def":""
                 },
                 "native": {}
             },
             {
-                "_id": "groups.02.level",
+                "_id": "deleted",
                 "type": "state",
                 "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
-                    "type": "number",
+                    "role": "switch",
+                    "name": "group is deleted",
+                    "type": "boolean",
                     "read": true,
                     "write": true,
-                    "max": 1,
-                    "min": 0,
-                    "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.02.level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level in 0.1 dB steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 1,
-                    "min": 0,
-                    "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.03",
-                "type": "channel",
-                "common": {
-                    "name": "program volume group"
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.03.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group type",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "states": {"6":"Gain","12":"Mute"},
-                    "def": 6
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.03.level",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 1000,
-                    "min": 0,
-                    "def": 764
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.03.level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level in 0.1 dB steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 12.0,
-                    "min": -100.0,
-                    "def": 0.0
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.03.upperLimit",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group level upper limit",
-                    "type":"number",
-                    "read": true,
-                    "write": true,
-                    "max": 120,
-                    "min": -1000,
-                    "def": 120
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.03.lowerLimit",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group level lower limit",
-                    "type":"number",
-                    "read": true,
-                    "write": true,
-                    "max": 120,
-                    "min": -1000,
-                    "def": -1000
-                },
-                "native": {}
-            },{
-                "_id": "groups.04",
-                "type": "channel",
-                "common": {
-                    "name": "program mute group"
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.04.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group type",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "states": {"6":"Gain","12":"Mute"},
-                    "def": 12
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.04.level",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 1000,
-                    "min": 0,
-                    "def": 764
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.04.level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level in 0.1 dB steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 12.0,
-                    "min": -100.0,
-                    "def": 0.0
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.05",
-                "type": "channel",
-                "common": {
-                    "name": "line volume group"
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.05.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group type",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "states": {"6":"Gain","12":"Mute"},
-                    "def": 6
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.05.level",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 1000,
-                    "min": 0,
-                    "def": 764
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.05.level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level in 0.1 dB steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 12.0,
-                    "min": -100.0,
-                    "def": 0.0
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.05.upperLimit",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group level upper limit",
-                    "type":"number",
-                    "read": true,
-                    "write": true,
-                    "max": 120,
-                    "min": -1000,
-                    "def": 120
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.05.lowerLimit",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group level lower limit",
-                    "type":"number",
-                    "read": true,
-                    "write": true,
-                    "max": 120,
-                    "min": -1000,
-                    "def": -1000
-                },
-                "native": {}
-            },{
-                "_id": "groups.06",
-                "type": "channel",
-                "common": {
-                    "name": "Line mute group"
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.06.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group type",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "states": {"6":"Gain","12":"Mute"},
-                    "def": 12
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.06.level",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 1,
-                    "min": 0,
-                    "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.06.level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level in 0.1 dB steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 1.0,
-                    "min": 0.0,
-                    "def": 0.0
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.07",
-                "type": "channel",
-                "common": {
-                    "name": "bass eq group"
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.07.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group type",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "states": {"6":"Gain","12":"Mute"},
-                    "def": 6
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.07.level",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 1000,
-                    "min": 0,
-                    "def": 500
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.07.level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level in 0.1 dB steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 24.0,
-                    "min": -24.0,
-                    "def": 0.0
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.07.upperLimit",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group level upper limit",
-                    "type":"number",
-                    "read": true,
-                    "write": true,
-                    "max": 240,
-                    "min": -240,
-                    "def": 240
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.07.lowerLimit",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group level lower limit",
-                    "type":"number",
-                    "read": true,
-                    "write": true,
-                    "max": 240,
-                    "min": -240,
-                    "def": -240
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.08",
-                "type": "channel",
-                "common": {
-                    "name": "treble eq group"
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.08.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group type",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "states": {"6":"Gain","12":"Mute"},
-                    "def": 6
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.08.level",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 1000,
-                    "min": 0,
-                    "def": 500
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.08.level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level in 0.1 dB steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 24.0,
-                    "min": -24.0,
-                    "def": 0.0
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.08.upperLimit",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group level upper limit",
-                    "type":"number",
-                    "read": true,
-                    "write": true,
-                    "max": 240,
-                    "min": -240,
-                    "def": 240
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.08.lowerLimit",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group level lower limit",
-                    "type":"number",
-                    "read": true,
-                    "write": true,
-                    "max": 240,
-                    "min": -240,
-                    "def": -240
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.09",
-                "type": "channel",
-                "common": {
-                    "name": "output volume group"
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.09.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group type",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "states": {"6":"Gain","12":"Mute"},
-                    "def": 6
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.09.level",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 1000,
-                    "min": 0,
-                    "def": 1000
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.09.level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level in 0.1 dB steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 0.0,
-                    "min": -100.0,
-                    "def": 0.0
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.09.upperLimit",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group level upper limit",
-                    "type":"number",
-                    "read": true,
-                    "write": true,
-                    "max": 0,
-                    "min": -1000,
-                    "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.09.lowerLimit",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group level lower limit",
-                    "type":"number",
-                    "read": true,
-                    "write": true,
-                    "max": 0,
-                    "min": -1000,
-                    "def": -1000
-                },
-                "native": {}
-            },{
-                "_id": "groups.10",
-                "type": "channel",
-                "common": {
-                    "name": "output mute group"
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.10.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "group type",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "states": {"6":"Gain","12":"Mute"},
-                    "def": 12
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.10.level",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level linear from 0 to 1000 (0 dB is 764)",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 1,
-                    "min": 0,
-                    "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "groups.10.level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume.group",
-                    "name": "group master level in 0.1 dB steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "max": 1.0,
-                    "min": 0.0,
-                    "def": 0.0
+                    "def" : true
                 },
                 "native": {}
             }
@@ -3512,7 +3109,7 @@
                 },
             "native": {}
         },
-        "file" : {
+        "files" : {
             "_id": "fs.files",
             "type": "folder",
             "common": {
@@ -3520,7 +3117,7 @@
             },
             "native": {}
         },
-        "files" : {
+        "file" : {
             "channel": {
                 "_id":"0",
                 "type": "channel",
@@ -3831,7 +3428,7 @@
                 "native": {}
             },
             {
-                "_id": "limiter",
+                "_id": "dynamics",
                 "type": "channel",
                 "common": {
                     "role": "output.channel",
@@ -3840,30 +3437,120 @@
                 "native": {}
             },
             {
-                "_id": "limiter.threshold",
+                "_id": "dynamics.type",
                 "type": "state",
                 "common": {
-                    "role": "level.volume",
-                    "name": "limiter threshold from -80 to 0db in 0.1 db steps",
+                    "role": "value",
+                    "name": "type of dyn insert",
                     "type": "number",
+                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
                     "read": true,
                     "write": true,
-                    "min": -800,
-                    "max": 0,
+                    "min":0,
+                    "max":4,
                     "def": 0
                 },
                 "native": {}
             },
             {
-                "_id": "limiter.status",
+                "_id": "dynamics.status",
                 "type": "state",
                 "common": {
                     "role": "switch",
-                    "name": "if true limiter is active",
+                    "name": "if true dynamics is active",
                     "type": "boolean",
                     "read": true,
                     "write": true,
                     "def": false
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.threshold",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "threshold from -80 to 0db in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -800,
+                    "max": 0,
+                    "def": -300
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.attack",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "attack time from 0 to 200ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 2000,
+                    "def": 5
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.hold",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "hold time from 0 to 500ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 5000,
+                    "def": 1000
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.release",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "release time from 10 to 1000ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 10,
+                    "max": 5000,
+                    "def": 10000
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.ratio",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "rratio from 1:1 to 100:1 in 0.1 steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 1,
+                    "max": 1000,
+                    "def": 100
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.knee",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "if true soft knee",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "def": 0,
+                    "states":{"0":"hard knee", "1":"soft knee"}
                 },
                 "native": {}
             },
@@ -4369,5 +4056,43 @@
                 "native": {}
             }
         ]
-    }
+    },
+    "danterelay" : [
+        {
+            "_id": "dante",
+            "type": "folder",
+            "common": {
+                "name": "dante devices"
+            },
+            "native": {}
+        },
+        {
+            "_id": "dante.available",
+            "type": "state",
+            "common": {
+                "name": "available",
+                "desc": "as received by AEXPR",
+                "role": "value",
+                "type": "object",
+                "read": true,
+                "write": true,
+                "def" : "[]"
+            },
+            "native": {}
+        },
+        {
+            "_id": "dante.connected",
+            "type": "state",
+            "common": {
+                "name": "connected",
+                "desc": "as received by LEXPR",
+                "role": "value",
+                "type": "object",
+                "read": true,
+                "write": true,
+                "def": "[]"
+              },
+              "native": {}
+        }
+    ]
 }

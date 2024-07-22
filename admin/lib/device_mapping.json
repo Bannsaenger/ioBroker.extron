@@ -45,6 +45,13 @@
                 "short" : "O",
                 "amount" : 8
             }
+        },
+        "grp" : {
+            "groups" : {
+                "name" : "Groups",
+                "short" : "GRP",
+                "amount" : 10
+            }
         }
     },
     "SMD202" : {
@@ -87,7 +94,8 @@
         "short" : "dmp128",
         "objects" : [
             "common",
-            "dmp128"
+            "dmp128",
+            "danterelay"
         ],
         "in" : {
             "inputs" : {
@@ -164,7 +172,8 @@
         "short" : "dmp128",
         "objects" : [
             "common",
-            "dmp128"
+            "dmp128",
+            "danterelay"
         ],
         "in" : {
             "inputs" : {
@@ -241,7 +250,8 @@
         "short" : "dmp64",
         "objects" : [
             "common",
-            "dmp128"
+            "dmp128",
+            "danterelay"
         ],
         "in" : {
             "inputs" : {
@@ -318,7 +328,8 @@
         "short" : "xmp240cat",
         "objects" : [
             "common",
-            "xmp240"
+            "xmp240",
+            "danterelay"
         ],
         "in" : {
             "virtualReturns" : {
