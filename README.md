@@ -5,7 +5,7 @@
 [![Downloads](https://img.shields.io/npm/dm/iobroker.extron.svg)](https://www.npmjs.com/package/iobroker.extron)
 ![Number of Installations (latest)](http://iobroker.live/badges/extron-installed.svg)
 ![Number of Installations (stable)](http://iobroker.live/badges/extron-stable.svg)
-[![Dependency Status](https://img.shields.io/david/Bannsaenger/iobroker.extron.svg)](https://david-dm.org/Bannsaenger/iobroker.extron)
+![Test and Release](https://github.com/bannsaenger/iobroker.extron/workflows/Test%20and%20Release/badge.svg)
 [![Known Vulnerabilities](https://snyk.io/test/github/Bannsaenger/ioBroker.extron/badge.svg)](https://snyk.io/test/github/Bannsaenger/ioBroker.extron)
 
 [![NPM](https://nodei.co/npm/iobroker.extron.png?downloads=true)](https://nodei.co/npm/iobroker.extron/)

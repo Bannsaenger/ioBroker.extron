@@ -1,59 +1,59 @@
 {
     "devices": {
-        "DTP2_CrossPoint_82" : {
-            "en" : "8x2 Presentation Matrix Switcher (DTP2 CrossPoint 82)",
-            "de" : "8x2 Präsentationskreuzschiene (DTP2 CrossPoint 82)"
+        "DTP2_CrossPoint_82": {
+            "en": "8x2 Presentation Matrix Switcher (DTP2 CrossPoint 82)",
+            "de": "8x2 Präsentationskreuzschiene (DTP2 CrossPoint 82)"
         },
-        "SMD202" : {
-            "en" : "H.264 Streaming Media Player and Decoder (SMD 202)",
-            "de" : "H.264-Player und Dekodierer (SMD 202)"
+        "SMD202": {
+            "en": "H.264 Streaming Media Player and Decoder (SMD 202)",
+            "de": "H.264-Player und Dekodierer (SMD 202)"
         },
-        "SME211" : {
-            "en" : "Streaming Media Encoder (SME 211)",
-            "de" : "Kodierer für Medien-Streaming (SME 211)"
+        "SME211": {
+            "en": "Streaming Media Encoder (SME 211)",
+            "de": "Kodierer für Medien-Streaming (SME 211)"
         },
-        "DMP128Plus_AT" : {
-            "en" : "12x8 ProDSP Processor w/Dante (DMP 128 Plus AT)",
-            "de" : "12x8 Matrix-Prozessoren mit ProDSP und Dante (DMP 128 Plus AT)"
+        "DMP128Plus_AT": {
+            "en": "12x8 ProDSP Processor w/Dante (DMP 128 Plus AT)",
+            "de": "12x8 Matrix-Prozessoren mit ProDSP und Dante (DMP 128 Plus AT)"
         },
-        "DMP128Plus_C_V_AT" : {
-            "en" : "12x8 ProDSP Processor w/AEC, VoIP, and Dante (DMP 128 Plus C V AT)",
-            "de" : "12x8 Matrix-Prozessoren mit ProDSP, AEC, VoIP und Dante (DMP 128 Plus C V AT)"
+        "DMP128Plus_C_V_AT": {
+            "en": "12x8 ProDSP Processor w/AEC, VoIP, and Dante (DMP 128 Plus C V AT)",
+            "de": "12x8 Matrix-Prozessoren mit ProDSP, AEC, VoIP und Dante (DMP 128 Plus C V AT)"
         },
-        "XMP240_C_AT" : {
-            "en" : "Dante Audio Matrix Processor with AEC (XMP 240 C AT)",
-            "de" : "Matrixprozessor mit 24 AEC-Kanälen und Dante (XMP 240 C AT)"
+        "XMP240_C_AT": {
+            "en": "Dante Audio Matrix Processor with AEC (XMP 240 C AT)",
+            "de": "Matrixprozessor mit 24 AEC-Kanälen und Dante (XMP 240 C AT)"
 
         }
     },
-    "danteDevices":{
-        "NETPA_U_1002" : {
-            "en" : "100 watt 2 channel low impwdance amplifier with DSP and Dante (NetPA U 1002)",
-            "de" : "Verstärker mit zwei Kanälen mit Dante und DSP 100 W je Kanal (NetPA U 1002)"
+    "danteDevices": {
+        "NETPA_U_1002": {
+            "en": "100 watt 2 channel low impwdance amplifier with DSP and Dante (NetPA U 1002)",
+            "de": "Verstärker mit zwei Kanälen mit Dante und DSP 100 W je Kanal (NetPA U 1002)"
         },
-        "NETPA_U_1004" : {
-            "en" : "100 watt 4 channel low impwdance amplifier with DSP and Dante (NetPA U 1004)",
-            "de" : "Verstärker mit vier Kanälen mit Dante und DSP 100 W je Kanal (NetPA U 1004)"
+        "NETPA_U_1004": {
+            "en": "100 watt 4 channel low impwdance amplifier with DSP and Dante (NetPA U 1004)",
+            "de": "Verstärker mit vier Kanälen mit Dante und DSP 100 W je Kanal (NetPA U 1004)"
         },
-        "NETPA_U_2002" : {
-            "en" : "200 watt 2 channel low impwdance amplifier with DSP and Dante (NetPA U 1002)",
-            "de" : "Verstärker mit zwei Kanälen mit Dante und DSP 200 W je Kanal (NetPA U 1002)"
+        "NETPA_U_2002": {
+            "en": "200 watt 2 channel low impwdance amplifier with DSP and Dante (NetPA U 1002)",
+            "de": "Verstärker mit zwei Kanälen mit Dante und DSP 200 W je Kanal (NetPA U 1002)"
         },
-        "NETPA_U_8001" : {
-            "en" : "800W Mono Subwoofer Amplifier with Dante and DSP (NetPA U 8001)",
-            "de" : "Mono Subwoofer Verstärker mit Dante und DSP 800 W (NetPA U 8001)"
+        "NETPA_U_8001": {
+            "en": "800W Mono Subwoofer Amplifier with Dante and DSP (NetPA U 8001)",
+            "de": "Mono Subwoofer Verstärker mit Dante und DSP 800 W (NetPA U 8001)"
         },
-        "AXI44_AT":{
-            "en" : "Audio expansion interface with Dante DDM AES67 4 inputs 4 outputs (AXI44 AT)",
-            "de" : "Dante-Audiointerface mit 4 Eingängen, 4 Ausgängen, DDM und AES67 (AXI44 AT)"
+        "AXI44_AT": {
+            "en": "Audio expansion interface with Dante DDM AES67 4 inputs 4 outputs (AXI44 AT)",
+            "de": "Dante-Audiointerface mit 4 Eingängen, 4 Ausgängen, DDM und AES67 (AXI44 AT)"
         },
-        "AXI22_AT":{
-            "en" : "Audio expansion interface with Dante DDM AES67 2 inputs 2 outputs (AXI22 AT)",
-            "de" : "Dante-Audiointerface mit 2 Eingängen, 2 Ausgängen, DDM und AES67 (AXI22 AT)"
+        "AXI22_AT": {
+            "en": "Audio expansion interface with Dante DDM AES67 2 inputs 2 outputs (AXI22 AT)",
+            "de": "Dante-Audiointerface mit 2 Eingängen, 2 Ausgängen, DDM und AES67 (AXI22 AT)"
         },
-        "AXI02_AT":{
-            "en" : "Audio expansion interface with Dante DDM AES67 2 outputs (AXI02 AT)",
-            "de" : "Dante-Audiointerface mit 2 Ausgängen, DDM und AES67 (AXI02 AT)"
+        "AXI02_AT": {
+            "en": "Audio expansion interface with Dante DDM AES67 2 outputs (AXI02 AT)",
+            "de": "Dante-Audiointerface mit 2 Ausgängen, DDM und AES67 (AXI02 AT)"
         }
     }    
 }
