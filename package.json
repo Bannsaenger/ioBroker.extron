@@ -58,7 +58,7 @@
     "test:unit": "mocha test/unit --exit",
     "test:integration": "mocha test/integration --exit",
     "test": "npm run test:js && npm run test:package",
-    "lint": "eslint",
+    "lint": "eslint --ext .js,.jsx .",
     "translate": "translate-adapter",
     "release": "release-script patch --all --verbose -p iobroker license",
     "release-minor": "release-script minor --all --verbose -p iobroker license",
