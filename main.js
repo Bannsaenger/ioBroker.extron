@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.16 20240722
+ *      iobroker extron (SIS) Adapter V0.2.16 20240723
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -124,9 +124,9 @@ class Extron extends utils.Adapter {
 
 
             // read Objects template for object generation
-            this.objectsTemplate = JSON.parse(fs.readFileSync(__dirname + '/admin/lib/objects_templates.json', 'utf8'));
+            this.objectsTemplate = JSON.parse(fs.readFileSync(__dirname + '/lib/objects_templates.json', 'utf8'));
             // read devices for device check
-            this.devices = JSON.parse(fs.readFileSync(__dirname + '/admin/lib/device_mapping.json', 'utf8'));
+            this.devices = JSON.parse(fs.readFileSync(__dirname + '/lib/device_mapping.json', 'utf8'));
 
             /*
             * For every state in the system there has to be also an object of type state
