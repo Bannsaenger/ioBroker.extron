@@ -40,7 +40,6 @@ const errCodes = {
 };
 
 const invalidChars = ['+','~',',','@','=',"'",'[',']','{','}','<','>','`','"',':',';','|','\\','?'];
-const danteRelayDevices = ['dmp128', 'dmp64', 'xmp240'];
 
 class Extron extends utils.Adapter {
 
@@ -388,7 +387,7 @@ class Extron extends utils.Adapter {
      */
     streamSend(data, device = '') {
         if (device !== '' &&  (this.devices[this.config.device].name.includes('Plus')||this.devices[this.config.device].name.includes('XMP') )) { // DANTE control only on DMP plus / XMP series
-            data.replace('\r','|');
+            data = data.replace('\r','|');
             data = `{dante@${device}:${data}}\r`;
         }
         try {
@@ -461,9 +460,9 @@ class Extron extends utils.Adapter {
 
             // check for DANTE control / setup messages returning a list of DANTE device names separated by \r\n
             if  (data.match(/(Expr[al]) ([\w-]*[\s\S]*)\r\n/im)) {
-                data.replace(/[\n]/gm,'*'); // change device list separator from "\n" to "*"
-                data.replace('\r*', '\r\n');   // restore end of message
-                this.log.info(`onStreamData(): received DANTE control message: "${data}"`);
+                data = data.replace(/[\n]/gm,'*');      // change device list separator from "\n" to "*"
+                data = data.replace('\r*', '\r\n');     // restore end of message
+                this.log.debug(`onStreamData(): received DANTE control message: "${this.decodeBufferToLog(data)}"`);
             }
 
             // iterate through multiple answers connected via [LF]
@@ -589,16 +588,17 @@ class Extron extends utils.Adapter {
 
                             case 'DSE' :            // dynamics status change
                                 this.log.info(`onStreamData(): Extron got a dynamics status change from OID : "${ext1}" value: "-${ext2}"`);
-                                this.setLimitStatus(ext1, ext2);
+                                this.setDynamicsStatus(ext1, ext2);
                                 break;
 
                             case 'DST' :            // dynamics threshold change
                                 this.log.info(`onStreamData(): Extron got a threshold change from OID : "${ext1}" value: "${ext2}"`);
-                                this.setLimitThreshold(ext1, ext2);
+                                this.setDynamicsThreshold(ext1, ext2);
                                 break;
 
-                            case 'DSY' :            // dynamics block change 0=no dyn, 1=cmp, 2=lim, 3=gate, 4=agc
-                                this.log.info(`onStreamData(): Extron received dynamics activation change from OID : "${ext1}" value "${ext2}"`);
+                            case 'DSY' :            // dynamics block type change 0=no dyn, 1=cmp, 2=lim, 3=gate, 4=agc
+                                this.log.info(`onStreamData(): Extron received dynamics type change from OID : "${ext1}" value "${ext2}"`);
+                                this.setDynamicsType(ext1, ext2);
                                 break;
 
                             case 'DSA' :            // dynamics attack
@@ -742,31 +742,31 @@ class Extron extends utils.Adapter {
                             // End file transmission commands
                             // begn group commands
                             case 'GRPMZ' :      // delete Group command
-                                this.log.info(`onStreamData(): Extron got group #"${ext1} deleted`);
+                                this.log.info(`onStreamData(): Extron got group #${ext1} deleted`);
                                 this.grpDelPnd[Number(ext1)] = false;   // flag group deletion confirmation
                                 this.setState(`groups.${ext1.padStart(2,'0')}.deleted`,true,true); // confirm group deletion in database
                                 this.setGroupMembers(Number(ext1),[]);
                                 this.sendGrpCmdBuf(Number(ext1)); // process group commands queued during pending deletion
                                 break;
                             case 'GRPMD' :      // set Group fader value
-                                this.log.info(`onStreamData(): Extron got group #'${ext1}" fader value:"${ext2}"`);
+                                this.log.info(`onStreamData(): Extron got group #${ext1} fader value:"${ext2}"`);
                                 this.setGroupLevel(Number(ext1),Number(ext2));
                                 break;
                             case 'GRPMP' :      // set Group type
-                                this.log.info(`onStreamData(): Extron got group #"${ext1}" type: "${ext2}"`);
+                                this.log.info(`onStreamData(): Extron got group #${ext1} type: "${ext2}"`);
                                 this.setGroupType(Number(ext1), Number(ext2));
                                 break;
                             case 'GRPMO' :      // add group member
                                 members = ext2.split('*');
-                                this.log.info(`onStreamData(): Extron got group #"${ext1}" member(s): "${members}"`);
+                                this.log.info(`onStreamData(): Extron got group #${ext1} member(s): "${members}"`);
                                 this.setGroupMembers(Number(ext1),members);
                                 break;
                             case 'GRPML' :      // set group limits
-                                this.log.info(`onStreamData(): Extron got group #"${ext1}" limits upper: "${ext2.split('*')[0]}" lower: "${ext2.split('*')[1]}""`);
+                                this.log.info(`onStreamData(): Extron got group #${ext1} limits upper: "${ext2.split('*')[0]}" lower: "${ext2.split('*')[1]}""`);
                                 this.setGroupLimits(Number(ext1),Number(ext2.split('*')[0]),Number(ext2.split('*')[1]));
                                 break;
                             case 'GRPMN' :      // group name
-                                this.log.info(`onStreamData(): Extron got group #"${ext1}" name: "${ext2}"`);
+                                this.log.info(`onStreamData(): Extron got group #${ext1} name: "${ext2}"`);
                                 this.setGroupName(Number(ext1), ext2);
                                 break;
                             // I/O naming commands
@@ -794,20 +794,20 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron got power mode: "${ext1}", standby mode: "${ext2}"`);
                                 break;
                             // Dante control and configuration commands
-                            case 'NEXPD' :
+                            case 'NEXPD' :  // DANTE devicename
                                 this.log.info(`onStremData(): Extron got Dante deviceName "${ext2}"`);
                                 break;
-                            case 'EXPRA':
-                                this.log.info(`onStreamData(): Extron got available remote devices: ${ext1}, ${ext2}`);
-                                this.setDanteDevices(ext1.split('*'));
+                            case 'EXPRA':   // available DANTE devices
+                                this.log.info(`onStreamData(): Extron got available remote devices: "${ext2.split('*')}"`);
+                                this.setDanteDevices(ext2.split('*'));    // remove ending * before split
                                 break;
-                            case 'EXPRC':
+                            case 'EXPRC':   // DANTE connection status
                                 this.log.info(`onStreamData(): Extron DANTE connection to remote device: ${ext1}, ${ext2=='1'?'established':'disconnected'} `);
                                 this.setDanteConnection(ext1,ext2 == '1');
                                 break;
-                            case 'EXPRL':
-                                this.log.info(`onStreamData(): Extron listening to remote devices: ${ext1}, ${ext2}`);
-                                this.setDanteConnections(ext1.split('*'));
+                            case 'EXPRL':   // list of DANTE connected devices
+                                this.log.info(`onStreamData(): Extron listening to remote devices: "${ext2.split('*')}"`);
+                                this.setDanteConnections(ext2.split('*'));    // remove ending * before split
                                 break;
                             case 'DANTE':
                                 this.log.info(`onStreamData(): received DANTE relay command response: device:"${ext1}", command:"${ext2}"`);
@@ -1263,7 +1263,7 @@ class Extron extends utils.Adapter {
                 for (const element of this.objectsTemplate.danterelay) {
                     await this.setObjectAsync(element._id, element);
                 }
-                this.log.debug(`createDatabaseAsync(): create dante devices`);
+                this.log.debug(`createDatabaseAsync(): create dante relay`);
             }
         } catch (err) {
             this.errorHandler(err, 'createDatabase');
@@ -1328,6 +1328,7 @@ class Extron extends utils.Adapter {
      */
     async getDeviceStatusAsync(stateList = this.stateList) {
         const device = this.devices[this.config.device].short;
+        let dynamics = {};
         try {
             // if status has not been requested
             if (!this.statusRequested && this.isVerboseMode) {
@@ -1337,114 +1338,193 @@ class Extron extends utils.Adapter {
                 for (const id of stateList) {
                     //const id = stateList[index];
                     this.log.debug(`getDeviceStatus(): ${id}`);
-                    // extron.[n].[fld].[type].[number].[block]
+                    // extron.[n].[idType].[grpId].[number].[block]
                     //   0     1    2     3       4        5
                     // extron.[n].in.auxInputs.01.mixPoints.A01
+                    // extron.[n].out.outputs.01.attenuation.level
+                    // extron.[n].groups.[n].level
                     // extron.[n].dante.available
                     // extron.[n].dante.[deviceName].[fld].[type].[number].[block]
                     //   0     1    2       3          4     5       6        7
                     const baseId = id.slice(0, id.lastIndexOf('.'));
                     const stateName = id.slice(id.lastIndexOf('.') + 1);
                     const idArray = id.split('.');
-                    const dante = (idArray[2] == 'dante');
+                    const dante = (idArray[2] == 'dante' && !['available','connections'].includes(idArray[3]));
                     const idType = !dante ?idArray[2]: idArray[4];
                     const grpId = Number(!dante ?idArray[3]: idArray[5]);
 
-                    if (typeof(baseId) !== 'undefined' && baseId !== null) {
+                    if (typeof baseId !== 'undefined' && baseId !== null) {
                         // @ts-ignore
-                        switch (stateName) {
-                            case 'mute' :
-                                if (device === 'smd202') this.getMute();
-                                else if (idType === 'connections') this.getVideoMute(id);
-                                else this.getMuteStatus(id);
+                        /**
+                        switch (idType) {
+                            case 'device':
+                                switch (stateName) {
+                                default :
+                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
+                                }
                                 break;
-
-                            case 'source' :
-                                if (device === 'cp82' && !id.match(/videoInputs\.1[3456]\./)) break; // on CP82 only video line inputs 12..15 have a source attribute indicating signal presence
-                                this.getSource(id);
+                            case 'in':
+                                switch (stateName) {
+                                default :
+                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
+                                }
                                 break;
-
-                            case 'level' :
-                                if (device === 'smd202') this.getVol();
-                                else if (idType ==='groups') this.getGroupLevel(grpId);
-                                else this.getGainLevel(id);
+                            case 'out':
+                                switch (stateName) {
+                                default :
+                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
+                                }
                                 break;
-
-                            case 'playmode' :
-                                if (device === 'smd202') this.getPlayVideo();
-                                else this.getPlayMode(id);
+                            case 'groups':
+                                switch (stateName) {
+                                default :
+                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
+                                }
                                 break;
-
-                            case 'repeatmode' :
-                                this.getRepeatMode(id);
+                            case 'player':
+                                switch (stateName) {
+                                default :
+                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
+                                }
                                 break;
-
-                            case 'filename' :
-                                this.getFileName(id);
+                            case 'dante':
+                                switch (stateName) {
+                                default :
+                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
+                                }
                                 break;
+                            case 'fs':
+                                switch (stateName) {
+                                default :
+                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
+                                }
+                                break
+                            default :
+                                this.log.warn(`getDeviceStatus(): idType "${idType}" unknown`);
+                        } */
+                        if (! ['device','info'].includes(idArray[2])) { // sections doesn't need to be handled here
+                            switch (stateName) {
+                                case 'mute' :
+                                    if (device === 'smd202') this.getMute();
+                                    else if (idType === 'connections') this.getVideoMute(id);
+                                    else this.getMuteStatus(id);
+                                    break;
 
-                            case 'filepath' :
-                                if (device === 'sme211') break; // not supported on SME211
-                                this.getVideoFile();
-                                break;
+                                case 'source' :
+                                    if (device === 'cp82' && !id.match(/videoInputs\.1[3456]\./)) break; // on CP82 only video line inputs 12..15 have a source attribute indicating signal presence
+                                    this.getSource(id);
+                                    break;
 
-                            case 'loopmode' :
-                                this.getLoopVideo();
-                                break;
+                                case 'type' :
+                                    if (idType ==='groups') {
+                                        this.getGroupType(grpId);
+                                    } else this.getDynamicsType(id);
+                                    break;
 
-                            case 'streammode' :
-                                this.getStreamMode();
-                                break;
+                                case 'level' :
+                                    if (device === 'smd202') this.getVol();
+                                    else if (idType ==='groups') this.getGroupLevel(grpId);
+                                    else this.getGainLevel(id);
+                                    break;
+                                case 'level_db' :   // doesn't need to be handled as already covere by level
+                                    break;
 
-                            case 'dir' :
-                                this.listUserFiles();
-                                break;
+                                case 'playmode' :
+                                    if (device === 'smd202') this.getPlayVideo();
+                                    else this.getPlayMode(id);
+                                    break;
 
-                            case 'status' :
-                                this.getLimitStatus(id);
-                                break;
+                                case 'repeatmode' :
+                                    this.getRepeatMode(id);
+                                    break;
 
-                            case 'threshold':
-                                this.getLimitThreshold(id);
-                                break;
+                                case 'filename' :
+                                    this.getFileName(id);
+                                    break;
 
-                            case 'name' :
-                                if (idType ==='groups') {
-                                    this.getGroupName(grpId);
-                                } else this.getIOName(id);
-                                break;
+                                case 'filepath' :
+                                    if (device === 'sme211') break; // not supported on SME211
+                                    this.getVideoFile();
+                                    break;
+                                case 'filecount':
+                                case 'freespace':
+                                case 'upl':
+                                case 'deleted':
+                                    break;
 
-                            case 'type' :
-                                this.getGroupType(grpId);
-                                break;
+                                case 'loopmode' :
+                                    this.getLoopVideo();
+                                    break;
 
-                            case 'upperLimit' :
-                            case 'lowerLimit' :
-                                this.getGroupLimits(grpId);
-                                break;
+                                case 'streammode' :
+                                    this.getStreamMode();
+                                    break;
 
-                            case 'members' :
-                                this.getGroupMembers(grpId);
-                                break;
+                                case 'dir' :
+                                    this.listUserFiles();
+                                    break;
 
-                            case 'channel' :
-                                this.getChannel();
-                                break;
+                                case 'status' :
+                                    dynamics = await this.getStateAsync(`${baseId}.type`);
+                                    if (dynamics) {
+                                        this.log.info(`getDeviceStatus(): dynamics for ${baseId}: ${dynamics}`);
+                                        if ( dynamics.val != '0') {
+                                            this.getDynamicsStatus(id);
+                                        } else this.log.info(`getDeviceStatus(): for "${baseId}" no dynamics configured`);
+                                    }
+                                    break;
 
-                            case 'presets' :
-                                this.getPresets();
-                                break;
+                                case 'threshold':
+                                    dynamics = await this.getStateAsync(`${baseId}.type`);
+                                    if (dynamics) {
+                                        this.log.info(`getDeviceStatus(): dynamics for ${baseId}: ${dynamics}`);
+                                        if (dynamics.val != '0') {
+                                            this.getDynamicsThreshold(id);
+                                        } else this.log.info(`getDeviceStatus(): for "${baseId}" no dynamics configured`);
+                                    }
+                                    break;
 
-                            case 'available' :
-                                if (device in danteRelayDevices) {
+                                case 'attack' :
+                                case 'knee' :
+                                case 'ratio' :
+                                case 'hold' :
+                                case 'release' :
+                                    this.log.info(`getDeviceStatus(): dynamics "${stateName}" not yet implemented`);
+                                    break;
+
+                                case 'name' :
+                                    if (idType ==='groups') {
+                                        this.getGroupName(grpId);
+                                    } else this.getIOName(id);
+                                    break;
+
+                                case 'upperLimit' :
+                                case 'lowerLimit' :
+                                    this.getGroupLimits(grpId);
+                                    break;
+
+                                case 'members' :
+                                    this.getGroupMembers(grpId);
+                                    break;
+
+                                case 'channel' :
+                                    this.getChannel();
+                                    break;
+
+                                case 'presets' :
+                                    this.getPresets();
+                                    break;
+
+                                case 'available' :
                                     this.getDanteDevices();
-                                }
-                                break;
-                            case 'connected' :
-                                if (device in danteRelayDevices) {
+                                    break;
+                                case 'connected' :
                                     this.listDanteConnections();
-                                }
-                                break;
+                                    break;
+
+                                default :
+                                    this.log.warn(`getDeviceStatus(): baseId "${baseId}", stateName "${stateName}" unknown`);
+                            }
                         }
                     }
                 }
@@ -1997,96 +2077,143 @@ class Extron extends utils.Adapter {
     }
 
     /**
-     * set limiter status in database
-     * @param {string} oid
-     * @param {string | number} value
+     * get Dynamics type
+     * @param {string} baseId
+     * cmd = Y[oid]AU
      */
-    setLimitStatus(oid, value) {
+    getDynamicsType(baseId) {
         try {
-            const channel = this.oid2id(oid);
-            this.setState(`${channel}status`, Number(value)>0?true:false, true);
+            const oid = this.id2oid(`${baseId}.status`);
+            if (oid) {
+                this.streamSend(`WY${oid}AU\r`);
+            }
         } catch (err) {
-            this.errorHandler(err, 'setLimitStatus');
+            this.errorHandler(err, 'getDynamicsType');
         }
     }
 
     /**
-     * get limiter status
+     * send Dynamics type to device
+     * @param {string} baseId
+     * @param {number} value
+     * cmd = Y[oid]*[value]AU
+     */
+    sendDynamicsType(baseId, value) {
+        try {
+            const oid = this.id2oid(baseId);
+            if (oid) {
+                this.streamSend(`WY${oid}*${value}AU\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendDynamicsType');
+        }
+    }
+
+    /**
+     * set dynamics type in database
+     * @param {string} oid
+     * @param {string | number} value
+     */
+    setDynamicsType(oid, value) {
+        try {
+            const channel = this.oid2id(oid);
+            this.setState(`${channel}type`, Number(value), true);
+        } catch (err) {
+            this.errorHandler(err, 'setDynamicsStatus');
+        }
+    }
+
+    /**
+     * set dynamics status in database
+     * @param {string} oid
+     * @param {string | number} value
+     */
+    setDynamicsStatus(oid, value) {
+        try {
+            const channel = this.oid2id(oid);
+            this.setState(`${channel}status`, Number(value)>0?true:false, true);
+        } catch (err) {
+            this.errorHandler(err, 'setDynamicsStatus');
+        }
+    }
+
+    /**
+     * get Dynamics status
      * @param {string} baseId
      * cmd = E[oid]AU
      */
-    getLimitStatus(baseId) {
+    getDynamicsStatus(baseId) {
         try {
             const oid = this.id2oid(`${baseId}.status`);
             if (oid) {
                 this.streamSend(`WE${oid}AU\r`);
             }
         } catch (err) {
-            this.errorHandler(err, 'getLimitStatus');
+            this.errorHandler(err, 'getDynamicsStatus');
         }
     }
 
     /**
-     * send Limiter status to device
+     * send Dynamics status to device
      * @param {string} baseId
      * @param {string | any} value
      * cmd = E[oid]*[0/1]AU
      */
-    sendLimitStatus(baseId, value) {
+    sendDynamicsStatus(baseId, value) {
         try {
             const oid = this.id2oid(baseId);
             if (oid) {
                 this.streamSend(`WE${oid}*${value ? '1' : '0'}AU\r`);
             }
         } catch (err) {
-            this.errorHandler(err, 'sendLimitStatus');
+            this.errorHandler(err, 'sendDynamicsStatus');
         }
     }
 
     /**
-     * set limiter threshold in database
+     * set Dynamics threshold in database
      * @param {string} oid
      * @param {string | any} value
      */
-    setLimitThreshold(oid, value) {
+    setDynamicsThreshold(oid, value) {
         try {
             const channel = this.oid2id(oid);
             this.setState(`${channel}threshold`, Number(0-value), true);
         } catch (err) {
-            this.errorHandler(err, 'setLimitThreshold');
+            this.errorHandler(err, 'setDynamicsThreshold');
         }
     }
 
     /**
-     * get limiter threshold from device
+     * get Dynamics threshold from device
      * @param {string} baseId
      * cmd = T[oid]AU
      */
-    getLimitThreshold(baseId) {
+    getDynamicsThreshold(baseId) {
         try {
             const oid = this.id2oid(`${baseId}.status`);
             if (oid) {
                 this.streamSend(`WT${oid}AU\r`);
             }
         } catch (err) {
-            this.errorHandler(err, 'getLimitThreshold');
+            this.errorHandler(err, 'getDynamicsThreshold');
         }
     }
 
     /**
-     * send new Limiter Threshold to device
+     * send new Dynamics Threshold to device
      * @param {string} baseId
      * @param {string | any} value
      * cmd = T[oid]*[value]AU
      */
-    sendLimitThreshold(baseId, value) {
+    sendDynamicsThreshold(baseId, value) {
         try {
             const oid = this.id2oid(baseId);
             if (oid) {
                 this.streamSend(`WT${oid}*${value}AU\r`);
             }
         } catch (err) {
-            this.errorHandler(err, 'sendLimitThreshold');
+            this.errorHandler(err, 'sendDynamicsThreshold');
         }
     }
     /** END Input and Mix control */
@@ -2519,6 +2646,9 @@ class Extron extends utils.Adapter {
             case 12:    // mute group
                 cmd = `WD${group}*${level}GRPM\r`;
                 break;
+            case 21 :   // meter group
+                this.log.info(`setGroupLevel(): meter groups not supported`);
+                break;
             default:
                 this.log.error(`sendGroupLevel() groupType "${this.groupTypes[group]}" for group "${group}" not supported`);
         }
@@ -2541,17 +2671,19 @@ class Extron extends utils.Adapter {
     setGroupLevel(group, level) {
         try {
             switch (this.groupTypes[group]) {
-                case 6 :           // gain group
+                case 6 :     // gain group
                     this.setState(`groups.${group.toString().padStart(2,'0')}.level_db`, Number(this.calculateFaderValue(level, 'dev').logValue), true);
                     this.setState(`groups.${group.toString().padStart(2,'0')}.level`, Number(this.calculateFaderValue(level, 'dev').linValue), true);
                     break;
-
                 case 12 :    // mute group
                     this.setState(`groups.${group.toString().padStart(2,'0')}.level_db`, level?1:0, true);
                     this.setState(`groups.${group.toString().padStart(2,'0')}.level`, level?1:0, true);
                     break;
+                case 21 :   // meter group
+                    this.log.info(`setGroupLevel(): meter groups not supported`);
+                    break;
                 default:
-                    this.log.error(`setGroupLevel() groupType ${this.groupTypes[group]} on group "${group}"not supported`);
+                    this.log.warn(`setGroupLevel() groupType ${this.groupTypes[group]} on group "${group}"not supported`);
 
             }
         } catch (err) {
@@ -3169,7 +3301,7 @@ class Extron extends utils.Adapter {
     setDanteConnections(deviceList) {
         try {
             this.setState(`dante.connected`, JSON.stringify(deviceList), true);
-            this.listDanteConnections();    // update connection list
+            //this.listDanteConnections();    // update connection list
         } catch (err) {
             this.errorHandler(err, 'setDanteConnections');
         }
@@ -3619,6 +3751,14 @@ class Extron extends utils.Adapter {
                 if (!state.ack) {       // only react on not acknowledged state changes
                     if ((state.val === undefined) || (state.val === null)) state.val = '';
                     this.log.info(`onStateChange(): Extron state ${id} changed: ${state.val} (ack = ${state.ack})`);
+                    // extron.[n].[idType].[grpId].[number].[block]
+                    //   0     1    2     3       4        5
+                    // extron.[n].in.auxInputs.01.mixPoints.A01
+                    // extron.[n].out.outputs.01.attenuation.level
+                    // extron.[n].groups.[n].level
+                    // extron.[n].dante.available
+                    // extron.[n].dante.[deviceName].[fld].[type].[number].[block]
+                    //   0     1    2       3          4     5       6        7
                     const baseId = id.slice(0, id.lastIndexOf('.'));
                     const idArray = id.split('.');
                     const dante = idArray[1] == 'dante';
@@ -3716,10 +3856,10 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'status' :
-                                this.sendLimitStatus(id, state.val);
+                                this.sendDynamicsStatus(id, state.val);
                                 break;
                             case 'threshold':
-                                this.sendLimitThreshold(id, Math.abs(Number(state.val) < -800?-800:(Number(state.val)>0)?0:Number(state.val)));
+                                this.sendDynamicsThreshold(id, Math.abs(Number(state.val) < -800?-800:(Number(state.val)>0)?0:Number(state.val)));
                                 break;
 
                             case 'playmode' :
@@ -3778,19 +3918,23 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'type' :
-                                switch (Number(state.val)) {
-                                    case 6:     // gain group
-                                        this.sendGroupType(idGrp, Number(state.val));
-                                        this.setGroupType(idGrp, Number(state.val));
-                                        this.sendGroupLimits(idGrp, 120, -1000);
-                                        break;
-                                    case 12:    // mute group
-                                        this.sendGroupType(idGrp, Number(state.val));
-                                        this.setGroupType(idGrp, Number(state.val));
-                                        this.sendGroupLimits(idGrp, 1, 0);
-                                        break;
-                                    default:
-                                        this.log.error(`onStateChange(): groupType ${state.val} not supported`);
+                                if (idType == 'groups') {
+                                    switch (Number(state.val)) {
+                                        case 6:     // gain group
+                                            this.sendGroupType(idGrp, Number(state.val));
+                                            this.setGroupType(idGrp, Number(state.val));
+                                            this.sendGroupLimits(idGrp, 120, -1000);
+                                            break;
+                                        case 12:    // mute group
+                                            this.sendGroupType(idGrp, Number(state.val));
+                                            this.setGroupType(idGrp, Number(state.val));
+                                            this.sendGroupLimits(idGrp, 1, 0);
+                                            break;
+                                        default:
+                                            this.log.error(`onStateChange(): groupType ${state.val} not supported`);
+                                    }
+                                } else {
+                                    this.setDynamicsType(id, Number(state.val));
                                 }
                                 break;
 
@@ -3819,6 +3963,8 @@ class Extron extends utils.Adapter {
                             case 'connection' :
                                 if (idArray[1] == 'dante') this.ctrlDanteConnection(device, Number(state.val));
                                 break;
+                            default :
+                                this.log.warn(`onStateChange): stateName "${stateName}" unknown`);
                         }
                     }
                 }

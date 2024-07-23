@@ -275,8 +275,8 @@
     },
     "native": {
         "host": "127.0.0.1",
-        "type": "ssh",
-        "port": "22023",
+        "type": "telnet",
+        "port": "23",
         "device": "",
         "user": "admin",
         "pass": "",

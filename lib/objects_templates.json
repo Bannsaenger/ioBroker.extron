@@ -220,7 +220,8 @@
                     "write": true
                 },
                 "native": {}
-            },{
+            },
+            {
                 "_id": "gain",
                 "type": "channel",
                 "common": {
@@ -686,108 +687,6 @@
                 "native": {}
             },
             {
-                "_id": "dynamics.status",
-                "type": "state",
-                "common": {
-                    "role": "switch",
-                    "name": "if true dynamics is active",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": false
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.threshold",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "threshold from -80 to 0db in 0.1 db steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": -800,
-                    "max": 0,
-                    "def": -300
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.attack",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "attack time from 0 to 200ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 2000,
-                    "def": 5
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.hold",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "hold time from 0 to 500ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 5000,
-                    "def": 1000
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.release",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "release time from 10 to 1000ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 10,
-                    "max": 5000,
-                    "def": 10000
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.ratio",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "rratio from 1:1 to 100:1 in 0.1 steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 1,
-                    "max": 1000,
-                    "def": 100
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.knee",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "if true soft knee",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "def": 0,
-                    "states":{"0":"hard knee", "1":"soft knee"}
-                },
-                "native": {}
-            },
-            {
                 "_id": "attenuation",
                 "type": "channel",
                 "common": {
@@ -893,7 +792,7 @@
                 "native": {}
             },
             {
-                "_id": "limiter",
+                "_id": "dynamics",
                 "type": "channel",
                 "common": {
                     "role": "output.channel",
@@ -902,30 +801,18 @@
                 "native": {}
             },
             {
-                "_id": "limiter.threshold",
+                "_id": "dynamics.type",
                 "type": "state",
                 "common": {
-                    "role": "level.volume",
-                    "name": "limiter threshold from -80 to 0db in 0.1 db steps",
+                    "role": "value",
+                    "name": "type of dyn insert",
                     "type": "number",
+                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
                     "read": true,
                     "write": true,
-                    "min": -800,
-                    "max": 0,
+                    "min":0,
+                    "max":4,
                     "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "limiter.status",
-                "type": "state",
-                "common": {
-                    "role": "switch",
-                    "name": "if true limiter is active",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": false
                 },
                 "native": {}
             },
@@ -1050,7 +937,7 @@
                 "native": {}
             },
             {
-                "_id": "limiter",
+                "_id": "dynamics",
                 "type": "channel",
                 "common": {
                     "role": "output.channel",
@@ -1059,30 +946,18 @@
                 "native": {}
             },
             {
-                "_id": "limiter.threshold",
+                "_id": "dynamics.type",
                 "type": "state",
                 "common": {
-                    "role": "level.volume",
-                    "name": "limiter threshold from -80 to 0db in 0.1 db steps",
+                    "role": "value",
+                    "name": "type of dyn insert",
                     "type": "number",
+                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
                     "read": true,
                     "write": true,
-                    "min": -800,
-                    "max": 0,
+                    "min":0,
+                    "max":4,
                     "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "limiter.status",
-                "type": "state",
-                "common": {
-                    "role": "switch",
-                    "name": "if true limiter is active",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": false
                 },
                 "native": {}
             },
@@ -1551,108 +1426,6 @@
                 "native": {}
             },
             {
-                "_id": "dynamics.status",
-                "type": "state",
-                "common": {
-                    "role": "switch",
-                    "name": "if true dynamics is active",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": false
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.threshold",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "threshold from -80 to 0db in 0.1 db steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": -800,
-                    "max": 0,
-                    "def": -300
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.attack",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "attack time from 0 to 200ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 2000,
-                    "def": 5
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.hold",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "hold time from 0 to 500ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 5000,
-                    "def": 1000
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.release",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "release time from 10 to 1000ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 10,
-                    "max": 5000,
-                    "def": 10000
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.ratio",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "rratio from 1:1 to 100:1 in 0.1 steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 1,
-                    "max": 1000,
-                    "def": 100
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.knee",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "if true soft knee",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "def": 0,
-                    "states":{"0":"hard knee", "1":"soft knee"}
-                },
-                "native": {}
-            },
-            {
                 "_id": "attenuation",
                 "type": "channel",
                 "common": {
@@ -1758,7 +1531,7 @@
                 "native": {}
             },
             {
-                "_id": "limiter",
+                "_id": "dynamics",
                 "type": "channel",
                 "common": {
                     "role": "output.channel",
@@ -1767,30 +1540,18 @@
                 "native": {}
             },
             {
-                "_id": "limiter.threshold",
+                "_id": "dynamics.type",
                 "type": "state",
                 "common": {
-                    "role": "level.volume",
-                    "name": "limiter threshold from -80 to 0db in 0.1 db steps",
+                    "role": "value",
+                    "name": "type of dyn insert",
                     "type": "number",
+                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
                     "read": true,
                     "write": true,
-                    "min": -800,
-                    "max": 0,
+                    "min":0,
+                    "max":4,
                     "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "limiter.status",
-                "type": "state",
-                "common": {
-                    "role": "switch",
-                    "name": "if true limiter is active",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": false
                 },
                 "native": {}
             },
@@ -3048,100 +2809,6 @@
             }
         ]
     },
-    "userflash" : {
-        "filesystem" : {
-            "_id": "fs",
-            "type": "folder",
-            "common": {
-                "name": "User Filesystem"
-            },
-            "native": {}  
-        },
-        "directory" : {
-            "_id": "fs.dir",
-            "type": "state",
-            "common": {
-                "role": "switch",
-                "name": "If true, directory content is requested",
-                "type": "boolean",
-                "read": true,
-                "write": true,
-                "def": false
-                },
-            "native": {}
-        },
-        "upload" : {
-            "_id": "fs.upl",
-            "type": "state",
-            "common": {
-                "role": "media.url",
-                "name": "Filepath to be uploaded",
-                "type": "string",
-                "read": true,
-                "write": true,
-                "def": ""
-                },
-            "native": {}
-        },
-        "freespace" : {
-            "_id": "fs.freespace",
-            "type": "state",
-            "common": {
-                "role": "value",
-                "name": "remaining space in user flash",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "def": 0
-                },
-            "native": {}
-        },
-        "filecount" : {
-            "_id": "fs.filecount",
-            "type": "state",
-            "common": {
-                "role": "value",
-                "name": "number of files in user flash",
-                "type": "number",
-                "read": true,
-                "write": true,
-                "def": 0
-                },
-            "native": {}
-        },
-        "files" : {
-            "_id": "fs.files",
-            "type": "folder",
-            "common": {
-                "name": "User Flash Files"
-            },
-            "native": {}
-        },
-        "file" : {
-            "channel": {
-                "_id":"0",
-                "type": "channel",
-                "common":{
-                    "role":"media.channel",
-                    "name":"file"
-                }
-            },
-            "filename": {
-                "_id": "filename",
-                "type": "state",
-                "common": {
-                    "role": "media.link",
-                    "name": "filename",
-                    "type": "string",
-                    "read": true,
-                    "write": false,
-                    "def": ""
-                },
-                "native": {}
-            },
-            "native": {}
-        }
-    },
     "netpa" : {
         "input": {
             "_id": "0",
@@ -3453,108 +3120,6 @@
                 "native": {}
             },
             {
-                "_id": "dynamics.status",
-                "type": "state",
-                "common": {
-                    "role": "switch",
-                    "name": "if true dynamics is active",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": false
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.threshold",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "threshold from -80 to 0db in 0.1 db steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": -800,
-                    "max": 0,
-                    "def": -300
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.attack",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "attack time from 0 to 200ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 2000,
-                    "def": 5
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.hold",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "hold time from 0 to 500ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 5000,
-                    "def": 1000
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.release",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "release time from 10 to 1000ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 10,
-                    "max": 5000,
-                    "def": 10000
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.ratio",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "rratio from 1:1 to 100:1 in 0.1 steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 1,
-                    "max": 1000,
-                    "def": 100
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.knee",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "if true soft knee",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "def": 0,
-                    "states":{"0":"hard knee", "1":"soft knee"}
-                },
-                "native": {}
-            },
-            {
                 "_id": "attenuation",
                 "type": "channel",
                 "common": {
@@ -3660,7 +3225,7 @@
                 "native": {}
             },
             {
-                "_id": "limiter",
+                "_id": "dynamics",
                 "type": "channel",
                 "common": {
                     "role": "output.channel",
@@ -3669,30 +3234,18 @@
                 "native": {}
             },
             {
-                "_id": "limiter.threshold",
+                "_id": "dynamics.type",
                 "type": "state",
                 "common": {
-                    "role": "level.volume",
-                    "name": "limiter threshold from -80 to 0db in 0.1 db steps",
+                    "role": "value",
+                    "name": "type of dyn insert",
                     "type": "number",
+                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
                     "read": true,
                     "write": true,
-                    "min": -800,
-                    "max": 0,
+                    "min":0,
+                    "max":4,
                     "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "limiter.status",
-                "type": "state",
-                "common": {
-                    "role": "switch",
-                    "name": "if true limiter is active",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": false
                 },
                 "native": {}
             },
@@ -3817,7 +3370,7 @@
                 "native": {}
             },
             {
-                "_id": "limiter",
+                "_id": "dynamics",
                 "type": "channel",
                 "common": {
                     "role": "output.channel",
@@ -3826,30 +3379,120 @@
                 "native": {}
             },
             {
-                "_id": "limiter.threshold",
+                "_id": "dynamics.type",
                 "type": "state",
                 "common": {
-                    "role": "level.volume",
-                    "name": "limiter threshold from -80 to 0db in 0.1 db steps",
+                    "role": "value",
+                    "name": "type of dyn insert",
                     "type": "number",
+                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
                     "read": true,
                     "write": true,
-                    "min": -800,
-                    "max": 0,
+                    "min":0,
+                    "max":4,
                     "def": 0
                 },
                 "native": {}
             },
             {
-                "_id": "limiter.status",
+                "_id": "dynamics.status",
                 "type": "state",
                 "common": {
                     "role": "switch",
-                    "name": "if true limiter is active",
+                    "name": "if true dynamics is active",
                     "type": "boolean",
                     "read": true,
                     "write": true,
                     "def": false
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.threshold",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "threshold from -80 to 0db in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -800,
+                    "max": 0,
+                    "def": -300
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.attack",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "attack time from 0 to 200ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 2000,
+                    "def": 5
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.hold",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "hold time from 0 to 500ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 5000,
+                    "def": 1000
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.release",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "release time from 10 to 1000ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 10,
+                    "max": 5000,
+                    "def": 10000
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.ratio",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "rratio from 1:1 to 100:1 in 0.1 steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 1,
+                    "max": 1000,
+                    "def": 100
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.knee",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "if true soft knee",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "def": 0,
+                    "states":{"0":"hard knee", "1":"soft knee"}
                 },
                 "native": {}
             },
@@ -4057,6 +3700,101 @@
             }
         ]
     },
+    "userflash" : {
+        "filesystem" : {
+            "_id": "fs",
+            "type": "folder",
+            "common": {
+                "name": "User Filesystem"
+            },
+            "native": {}  
+        },
+        "directory" : {
+            "_id": "fs.dir",
+            "type": "state",
+            "common": {
+                "role": "switch",
+                "name": "If true, directory content is requested",
+                "type": "boolean",
+                "read": true,
+                "write": true,
+                "def": false
+                },
+            "native": {}
+        },
+        "upload" : {
+            "_id": "fs.upl",
+            "type": "state",
+            "common": {
+                "role": "media.url",
+                "name": "Filepath to be uploaded",
+                "type": "string",
+                "read": true,
+                "write": true,
+                "def": ""
+                },
+            "native": {}
+        },
+        "freespace" : {
+            "_id": "fs.freespace",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "remaining space in user flash",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "def": 0
+                },
+            "native": {}
+        },
+        "filecount" : {
+            "_id": "fs.filecount",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "number of files in user flash",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "def": 0
+                },
+            "native": {}
+        },
+        "files" : {
+            "_id": "fs.files",
+            "type": "folder",
+            "common": {
+                "name": "User Flash Files"
+            },
+            "native": {}
+        },
+        "file" : {
+            "channel": {
+                "_id":"0",
+                "type": "channel",
+                "common":{
+                    "role":"media.channel",
+                    "name":"file"
+                },
+                "native":{}
+            },
+            "filename": {
+                "_id": "filename",
+                "type": "state",
+                "common": {
+                    "role": "media.link",
+                    "name": "filename",
+                    "type": "string",
+                    "read": true,
+                    "write": false,
+                    "def": ""
+                },
+                "native": {}
+            },
+            "native": {}
+        }
+    },
     "danterelay" : [
         {
             "_id": "dante",
@@ -4094,5 +3832,109 @@
               },
               "native": {}
         }
+    ],
+    "dynamics": [
+            {
+                "_id": "dynamics.status",
+                "type": "state",
+                "common": {
+                    "role": "switch",
+                    "name": "if true dynamics is active",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": false
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.threshold",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "threshold from -80 to 0db in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -800,
+                    "max": 0,
+                    "def": -300
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.attack",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "attack time from 0 to 200ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 2000,
+                    "def": 5
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.hold",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "hold time from 0 to 500ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 5000,
+                    "def": 1000
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.release",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "release time from 10 to 1000ms in 0.1ms steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 10,
+                    "max": 5000,
+                    "def": 10000
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.ratio",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "rratio from 1:1 to 100:1 in 0.1 steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 1,
+                    "max": 1000,
+                    "def": 100
+                },
+                "native": {}
+            },
+            {
+                "_id": "dynamics.knee",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "if true soft knee",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "def": 0,
+                    "states":{"0":"hard knee", "1":"soft knee"}
+                },
+                "native": {}
+            }
     ]
 }
