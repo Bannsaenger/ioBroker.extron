@@ -117,6 +117,9 @@ class Extron extends utils.Adapter {
             // Reset the connection indicator during startup
             this.setState('info.connection', false, true);
 
+            // Check whether the device type is already chosen. If not, skip the initialisation process and run in offline mode
+            // only for the messageBox
+
             // The adapters config (in the instance object everything under the attribute "native") is accessible via
             // this.config:
             this.log.info('onReady(): configured host/port: ' + this.config.host + ':' + this.config.port);
