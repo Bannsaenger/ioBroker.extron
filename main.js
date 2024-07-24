@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.16 20240723
+ *      iobroker extron (SIS) Adapter V0.2.16 20240724
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -586,8 +586,8 @@ class Extron extends utils.Adapter {
                                 this.setSource(ext1, ext2);
                                 break;
 
-                            case 'DSE' :            // dynamics status change
-                                this.log.info(`onStreamData(): Extron got a dynamics status change from OID : "${ext1}" value: "-${ext2}"`);
+                            case 'DSE' :            // dsp block status change
+                                this.log.info(`onStreamData(): Extron got a DSP block status change from OID : "${ext1}" value: "${ext2}"`);
                                 this.setDynamicsStatus(ext1, ext2);
                                 break;
 
@@ -596,8 +596,8 @@ class Extron extends utils.Adapter {
                                 this.setDynamicsThreshold(ext1, ext2);
                                 break;
 
-                            case 'DSY' :            // dynamics block type change 0=no dyn, 1=cmp, 2=lim, 3=gate, 4=agc
-                                this.log.info(`onStreamData(): Extron received dynamics type change from OID : "${ext1}" value "${ext2}"`);
+                            case 'DSY' :            // DSP block type change 0=no dyn, 1=cmp, 2=lim, 3=gate, 4=agc
+                                this.log.info(`onStreamData(): Extron received DSP block change from OID : "${ext1}" value "${ext2}"`);
                                 this.setDynamicsType(ext1, ext2);
                                 break;
 
@@ -619,6 +619,18 @@ class Extron extends utils.Adapter {
 
                             case 'DSK' :            // dynamics knee
                                 this.log.info(`onStreamData(): Extron received dynamic knee change from OID : "${ext1}" value "${ext2}"`);
+                                break;
+
+                            case 'DSU' :            // delay unit change 0=samples, 1=ms, 2=fuß, 3=m
+                                this.log.info(`onStreamData(): Extron received delay unit change from OID : "${ext1}" value "${ext2}"`);
+                                break;
+                            case 'DSF' :            // DSP block frequency change
+                                this.log.info(`onStreamData(): Extron received DSP block frequency change from OID : "${ext1}" value "${ext2}"`);
+                                break;
+                            case 'DSO' :            // DSP block slope 0=6dB/O, 1=12dB/O ... 7=48dB/O
+                                this.log.info(`onStreamData(): Extron received DSP block slope change from OID : "${ext1}" value "${6+(Number(ext2)*6)}dB/O"`);
+                                break;
+                            case 'DSV' :            // unsolicited volume/meter level
                                 break;
 
                             case 'PLAY':             //received a play mode command
@@ -798,16 +810,16 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStremData(): Extron got Dante deviceName "${ext2}"`);
                                 break;
                             case 'EXPRA':   // available DANTE devices
-                                this.log.info(`onStreamData(): Extron got available remote devices: "${ext2.split('*')}"`);
-                                this.setDanteDevices(ext2.split('*'));    // remove ending * before split
+                                this.log.info(`onStreamData(): Extron got available remote devices: [${ext2.split('*')}]`);
+                                this.setDanteDevices(ext2.split('*'));
                                 break;
                             case 'EXPRC':   // DANTE connection status
                                 this.log.info(`onStreamData(): Extron DANTE connection to remote device: ${ext1}, ${ext2=='1'?'established':'disconnected'} `);
                                 this.setDanteConnection(ext1,ext2 == '1');
                                 break;
                             case 'EXPRL':   // list of DANTE connected devices
-                                this.log.info(`onStreamData(): Extron listening to remote devices: "${ext2.split('*')}"`);
-                                this.setDanteConnections(ext2.split('*'));    // remove ending * before split
+                                this.log.info(`onStreamData(): Extron listening to remote devices: [${ext2.split('*')}]`);
+                                this.setDanteConnections(ext2.split('*'));
                                 break;
                             case 'DANTE':
                                 this.log.info(`onStreamData(): received DANTE relay command response: device:"${ext1}", command:"${ext2}"`);
@@ -1467,20 +1479,20 @@ class Extron extends utils.Adapter {
                                 case 'status' :
                                     dynamics = await this.getStateAsync(`${baseId}.type`);
                                     if (dynamics) {
-                                        this.log.info(`getDeviceStatus(): dynamics for ${baseId}: ${dynamics}`);
-                                        if ( dynamics.val != '0') {
+                                        this.log.info(`getDeviceStatus(): "${baseId}.type": ${dynamics.val}`);
+                                        if ( Number(dynamics.val) != 0) {
                                             this.getDynamicsStatus(id);
-                                        } else this.log.info(`getDeviceStatus(): for "${baseId}" no dynamics configured`);
+                                        } else this.log.info(`getDeviceStatus(): "${baseId}" not configured`);
                                     }
                                     break;
 
                                 case 'threshold':
                                     dynamics = await this.getStateAsync(`${baseId}.type`);
                                     if (dynamics) {
-                                        this.log.info(`getDeviceStatus(): dynamics for ${baseId}: ${dynamics}`);
-                                        if (dynamics.val != '0') {
+                                        this.log.info(`getDeviceStatus(): dynamics for ${baseId}: ${dynamics.val}`);
+                                        if (Number(dynamics.val) != 0) {
                                             this.getDynamicsThreshold(id);
-                                        } else this.log.info(`getDeviceStatus(): for "${baseId}" no dynamics configured`);
+                                        } else this.log.info(`getDeviceStatus(): "${baseId}" not configured`);
                                     }
                                     break;
 
@@ -3355,7 +3367,7 @@ class Extron extends utils.Adapter {
                 } else if (`${oid.slice(0,5)}` === 'EXPDA') retId = `in.expansionInputs.${oid.slice(5).padStart(2,'0')}.name`;
                 else
                     switch (what) {
-                        case 2:                         // mixpoints
+                        case 2: // mixpoints
                             if (device === 'cp82') {    // mixpoints on CP82
                                 if ( where < 2) {
                                     retId = `in.programInputs.${(where +1).toString().padStart(2,'0')}.mixPoints.`;
@@ -3392,106 +3404,151 @@ class Extron extends utils.Adapter {
                                 } else if (val <= 47) {     // expansion output 1 - 16
                                     retId += `E${(val - 31).toString().padStart(2,'0')}.`;
                                 } else {
-                                    throw { 'message': 'no known mixpoint output',
-                                        'stack'  : `oid: ${oid}` };
+                                    throw { 'message': 'no known mixpoint output', 'stack'  : `oid: ${oid}` };
                                 }
                             break;
 
-                        case 3:                         // VideoLine inputs on CP82
+                        case 3: // VideoLine inputs on CP82
                             if (where === 0) {          // Input Gain Control
-                                return `in.videoInputs.${(val + 1).toString().padStart(2,'0')}.premix.`;
+                                retId = `in.videoInputs.${(val + 1).toString().padStart(2,'0')}.premix.`;
                             }
                             break;
 
-                        case 4:                         // input block
-                            if (where === 0) {          // Input gain block
-                                if (device === 'cp82'){ // Inputs on CP82
-                                    if ( val < 2) {
-                                        return `in.inputs.${(val +1).toString().padStart(2,'0')}.gain.`;
-                                    } else if (val < 4) {
-                                        return `in.lineInputs.${(val -1).toString().padStart(2,'0')}.gain.`;
-                                    } else if (val < 6) {
-                                        return `in.playerInputs.${(val -3).toString().padStart(2,'0')}.gain.`;
+                        case 4: // input block
+                            switch (where) {
+                                case 0 :           // Input gain block
+                                    if (device === 'cp82'){ // Inputs on CP82
+                                        if ( val < 2) {
+                                            retId = `in.inputs.${(val +1).toString().padStart(2,'0')}.gain.`;
+                                        } else if (val < 4) {
+                                            retId = `in.lineInputs.${(val -1).toString().padStart(2,'0')}.gain.`;
+                                        } else if (val < 6) {
+                                            retId = `in.playerInputs.${(val -3).toString().padStart(2,'0')}.gain.`;
+                                        }
+                                    } else if (val <= 11) {        // input 1 - 12
+                                        retId = `in.inputs.${(val + 1).toString().padStart(2,'0')}.gain.`;
                                     }
-                                } else if (val <= 11) {        // input 1 - 12
-                                    return `in.inputs.${(val + 1).toString().padStart(2,'0')}.gain.`;
-                                }
-                                if (val <= 19) {        // aux input 1 - 8
-                                    return `in.auxInputs.${(val - 11).toString().padStart(2,'0')}.gain.`;
-                                }
-                            } else if (where === 1) {   // premix gain block
-                                if (device === 'cp82'){ // Inputs on CP82
-                                    if ( val < 2) {
-                                        return `in.inputs.${(val +1).toString().padStart(2,'0')}.premix.`;
-                                    } else if (val < 4) {
-                                        return `in.lineInputs.${(val -1).toString().padStart(2,'0')}.premix.`;
-                                    } else if (val < 6) {
-                                        return `in.playerInputs.${(val -3).toString().padStart(2,'0')}.premix.`;
+                                    if (val <= 19) {        // aux input 1 - 8
+                                        retId = `in.auxInputs.${(val - 11).toString().padStart(2,'0')}.gain.`;
                                     }
-                                } else if (val <= 11) {        // input 1 - 12
-                                    return `in.inputs.${(val + 1).toString().padStart(2,'0')}.premix.`;
-                                } else if (val <= 19) {        // aux input 1 - 8
-                                    return `in.auxInputs.${(val - 11).toString().padStart(2,'0')}.premix.`;
-                                }
-                            }
-                            throw { 'message': 'no known input',
-                                'stack'  : `oid: ${oid}` };
+                                    break;
 
-                        case 5:                         // virtual return or ext input or program
-                            if (where === 0) {           // program inputs on CP82
-                                return `in.programInputs.${(val +1).toString().padStart(2,'0')}.premix.`;
-                            }
-                            if (where === 1) {          // virtual returns
-                                if (val <= 15) {        // virtual return 1 - 16 (A-P)
-                                    return `in.virtualReturns.${(val + 1).toString().padStart(2,'0')}.premix.`;
-                                }
-                            }
-                            if (where === 2) {          // expansion bus (AT inputs)
-                                if (val <= 47) {        // AT input 1 - 48
-                                    return `in.expansionInputs.${(val + 1).toString().padStart(2,'0')}.premix.`;
-                                }
-                            }
-                            throw { 'message': 'no known input',
-                                'stack'  : `oid: ${oid}` };
+                                case 1 :    // premix gain block
+                                    if (device === 'cp82'){ // Inputs on CP82
+                                        if ( val < 2) {
+                                            retId = `in.inputs.${(val +1).toString().padStart(2,'0')}.premix.`;
+                                        } else if (val < 4) {
+                                            retId = `in.lineInputs.${(val -1).toString().padStart(2,'0')}.premix.`;
+                                        } else if (val < 6) {
+                                            retId = `in.playerInputs.${(val -3).toString().padStart(2,'0')}.premix.`;
+                                        }
+                                    } else if (val <= 11) {        // input 1 - 12
+                                        retId = `in.inputs.${(val + 1).toString().padStart(2,'0')}.premix.`;
+                                    } else if (val <= 19) {        // aux input 1 - 8
+                                        retId = `in.auxInputs.${(val - 11).toString().padStart(2,'0')}.premix.`;
+                                    }
+                                    break;
 
-                        case 6:                         // Output section
-                            if (where === 0) {          // Output attenuation block
-                                if (device === 'cp82') {    // outputs on CP82
-                                    return `out.outputs.${(val -1).toString().padStart(2,'0')}.attenuation.`; // ouput OID starts at 2 on CP82
-                                }
-                                if (val <= 7) {         // output 1 - 8
-                                    return `out.outputs.${(val + 1).toString().padStart(2,'0')}.attenuation.`;
-                                }
-                                if (val <= 15) {        // aux output 1 - 8
-                                    return `out.auxOutputs.${(val - 7).toString().padStart(2,'0')}.attenuation.`;
-                                }
-                                if (val <= 31) {        // expansion output 1-16
-                                    return `out.expansionOutputs.${(val - 15).toString().padStart(2,'0')}.attenuation.`;
-                                }
+                                case 10 :   // input filter block
+                                case 11 :
+                                case 12 :
+                                case 13 :
+                                case 14 :
+                                    this.log.info(`oid2id(): input filter block #${where-9} not yet implemented`);
+                                    break;
+
+                                case 40 :   // input dynamics block 1
+                                    this.log.info(`oid2id(): input dynamics block 1 not yet implemented`);
+                                    break;
+                                case 41 :  // input dynamics block 2
+                                    this.log.info(`oid2id(): input dynamics block 2 not yet implemented`);
+                                    break;
+                                case 45 :  // input delay block
+                                    this.log.info(`oid2id(): input delay block not yet implemented`);
+                                    break;
+                                case 48 :   // input ducker/agc block
+                                    this.log.info(`oid2id(): input ducker/AGC block not yet implemented`);
+                                    break;
+
+                                default:
+                                    throw { 'message': 'no known input','stack'  : `oid: ${oid}` };
                             }
-                            if (where === 1) {          // postmix trim block
-                                if (val <= 7) {         // output 1 - 8
-                                    return `out.outputs.${(val + 1).toString().padStart(2,'0')}.postmix.`;
-                                }
-                                if (val <= 15) {        // aux output 1 - 8
-                                    return `out.auxOutputs.${(val - 7).toString().padStart(2,'0')}.postmix.`;
-                                }
-                                if (val <= 31) {        // expansion output 1-16
-                                    return `out.expansionOutputs.${(val - 15).toString().padStart(2,'0')}.postmix.`;
-                                }
+                            break;
+
+                        case 5: // virtual return or ext input or program
+                            switch (where) {
+                                case  0 :           // program inputs on CP82
+                                    retId = `in.programInputs.${(val +1).toString().padStart(2,'0')}.premix.`;
+                                    break;
+                                case  1 :           // virtual returns
+                                    if (val <= 15) {        // virtual return 1 - 16 (A-P)
+                                        retId = `in.virtualReturns.${(val + 1).toString().padStart(2,'0')}.premix.`;
+                                    }
+                                    break;
+                                case  2 :           // expansion bus (AT inputs)
+                                    if (val <= 47) {        // AT input 1 - 48
+                                        retId = `in.expansionInputs.${(val + 1).toString().padStart(2,'0')}.premix.`;
+                                    }
+                                    break;
+                                case 90 :         // input automixer block
+                                    this.log.info(`oid2id(): input automixer block not yet implemented`);
+                                    break;
+                                default:
+                                    throw { 'message': 'no known input','stack'  : `oid: ${oid}` };
                             }
-                            if (where === 40) {          // limiter block
-                                if (val <= 7) {         // output 1 - 8
-                                    return `out.outputs.${(val + 1).toString().padStart(2,'0')}.limiter.`;
-                                }
-                                if (val <= 15) {        // aux output 1 - 8
-                                    return `out.auxOutputs.${(val - 7).toString().padStart(2,'0')}.limiter.`;
-                                }
-                                if (val <= 31) {        // expansion output 1-16
-                                    return `out.expansionOutputs.${(val - 15).toString().padStart(2,'0')}.limiter.`;
-                                }
+                            break;
+
+                        case 6: // Output section
+                            switch (where) {
+                                case 0 :           // Output attenuation block
+                                    if (device === 'cp82') {    // outputs on CP82
+                                        retId = `out.outputs.${(val -1).toString().padStart(2,'0')}.attenuation.`; // ouput OID starts at 2 on CP82
+                                    } else if (val <= 7) {         // output 1 - 8
+                                        retId = `out.outputs.${(val + 1).toString().padStart(2,'0')}.attenuation.`;
+                                    } else if (val <= 15) {        // aux output 1 - 8
+                                        retId = `out.auxOutputs.${(val - 7).toString().padStart(2,'0')}.attenuation.`;
+                                    } else if (val <= 31) {        // expansion output 1-16
+                                        retId = `out.expansionOutputs.${(val - 15).toString().padStart(2,'0')}.attenuation.`;
+                                    }
+                                    break;
+                                case 1 :           // postmix trim block
+                                    if (val <= 7) {         // output 1 - 8
+                                        retId = `out.outputs.${(val + 1).toString().padStart(2,'0')}.postmix.`;
+                                    } else if (val <= 15) {        // aux output 1 - 8
+                                        retId = `out.auxOutputs.${(val - 7).toString().padStart(2,'0')}.postmix.`;
+                                    } else if (val <= 31) {        // expansion output 1-16
+                                        retId = `out.expansionOutputs.${(val - 15).toString().padStart(2,'0')}.postmix.`;
+                                    }
+                                    break;
+                                case 40 :           // output dynamics block
+                                    if (val <= 7) {         // output 1 - 8
+                                        retId = `out.outputs.${(val + 1).toString().padStart(2,'0')}.dynamics.`;
+                                    } else if (val <= 15) {        // aux output 1 - 8
+                                        retId = `out.auxOutputs.${(val - 7).toString().padStart(2,'0')}.dynamics.`;
+                                    } else if (val <= 31) {        // expansion output 1-16
+                                        retId = `out.expansionOutputs.${(val - 15).toString().padStart(2,'0')}.dynamics.`;
+                                    }
+                                    break;
+                                case 50 :          // output delay blöock
+                                    this.log.info(`oid2id(): output delay block not yet implemented`);
+                                    break;
+                                case 10 :       // output filter block
+                                case 11 :
+                                case 12 :
+                                case 13 :
+                                case 14 :
+                                case 15 :
+                                case 16 :
+                                case 17 :
+                                case 18 :
+                                case 19 :
+                                    this.log.info(`oid2id(): output filter block #${where-9} not yet implemented`);
+                                    break;
+
+                                default:
+                                    throw { 'message': 'no known output', 'stack'  : `oid: ${oid}` };
                             }
-                            throw { 'message': 'no known output', 'stack'  : `oid: ${oid}` };
+                            break;
 
                         default:
                             throw { 'message': 'unknown OID', 'stack'  : `oid: ${oid}` };
@@ -3525,6 +3582,7 @@ class Extron extends utils.Adapter {
         const idType = !dante ? idArray[3]: idArray[5];
         const idNumber = !dante ? Number(idArray[4]) : Number(idArray[6]);
         const idBlock = !dante ? idArray[5] : idArray[7];
+        const idBlockNr = !dante ? idArray[8] : idArray[8];
         let outputType = 'O';
         let outputNumber = 1;
         if (idArray.length >= (!dante?7:9)) {
@@ -3548,10 +3606,15 @@ class Extron extends utils.Adapter {
                             break;
 
                         case 'inputs':
-                            if (idBlock === 'gain') {
-                                retOid = `400${(idNumber - 1).toString().padStart(2,'0')}`;
-                            } else {
-                                retOid = `401${(idNumber - 1).toString().padStart(2,'0')}`;
+                            switch (idBlock) {
+                                case 'gain' :
+                                    retOid = `400${(idNumber - 1).toString().padStart(2,'0')}`;
+                                    break;
+                                case 'filter' :
+                                    this.log.info(`id2oid(): input filter block not yet implemented`);
+                                    break;
+                                default :
+                                    retOid = `401${(idNumber - 1).toString().padStart(2,'0')}`;
                             }
                             break;
 
@@ -3560,35 +3623,62 @@ class Extron extends utils.Adapter {
                             break;
 
                         case 'lineInputs' :
-                            if (idBlock === 'gain') {
-                                retOid = `400${(idNumber +1).toString().padStart(2,'0')}`;         // Line Inputs on CP82
-                            } else {
-                                retOid = `401${(idNumber +1).toString().padStart(2,'0')}`;
+                            switch (idBlock) {
+                                case  'gain' :
+                                    retOid = `400${(idNumber +1).toString().padStart(2,'0')}`;         // Line Inputs on CP82
+                                    break;
+                                case 'filter' :
+                                    this.log.info(`id2oid(): lineInput filter block not yet implemented`);
+                                    break;
+                                default :
+                                    retOid = `401${(idNumber +1).toString().padStart(2,'0')}`;
                             }
                             break;
 
                         case 'playerInputs' :
-                            if (idBlock === 'gain') {
-                                retOid = `400${(idNumber +3).toString().padStart(2,'0')}`;         // player inputs on CP82
-                            } else {
-                                retOid = `401${(idNumber +3).toString().padStart(2,'0')}`;
+                            switch (idBlock) {
+                                case 'gain' :
+                                    retOid = `400${(idNumber +3).toString().padStart(2,'0')}`;         // player inputs on CP82
+                                    break;
+                                case 'filter' :
+                                    this.log.info(`id2oid(): playerInput filter block not yet implemented`);
+                                    break;
+                                default :
+                                    retOid = `401${(idNumber +3).toString().padStart(2,'0')}`;
                             }
                             break;
 
                         case 'auxInputs':
-                            if (idBlock === 'gain') {
-                                retOid = `400${(idNumber + 11).toString().padStart(2,'0')}`;
-                            } else {
-                                retOid = `401${(idNumber + 11).toString().padStart(2,'0')}`;
+                            switch (idBlock) {
+                                case 'gain' :
+                                    retOid = `400${(idNumber + 11).toString().padStart(2,'0')}`;
+                                    break;
+                                case 'filter' :
+                                    this.log.info(`id2oid(): auxInput filter block not yet implemented`);
+                                    break;
+                                default :
+                                    retOid = `401${(idNumber + 11).toString().padStart(2,'0')}`;
                             }
                             break;
 
                         case 'virtualReturns':
-                            retOid = `501${(idNumber - 1).toString().padStart(2,'0')}`;
+                            switch (idBlock) {
+                                case 'filter' :
+                                    this.log.info(`id2oid(): virtualReturn filter block not yet implemented`);
+                                    break;
+                                default:
+                                    retOid = `501${(idNumber - 1).toString().padStart(2,'0')}`;
+                            }
                             break;
 
                         case 'expansionInputs':
-                            retOid = `502${(idNumber - 1).toString().padStart(2,'0')}`;
+                            switch (idBlock) {
+                                case 'filter' :
+                                    this.log.info(`id2oid(): expansionInput filter block not yet implemented`);
+                                    break;
+                                default:
+                                    retOid = `502${(idNumber - 1).toString().padStart(2,'0')}`;
+                            }
                             break;
 
                         case 'outputs' :
@@ -3597,8 +3687,14 @@ class Extron extends utils.Adapter {
                                     retOid = `600${(idNumber - 1).toString().padStart(2,'0')}`;
                                     if (device === 'cp82') retOid = `600${(idNumber +1).toString().padStart(2,'0')}`; // output OID count starts at 2 on CP82
                                     break;
-                                case 'limiter' :
+                                case 'dynamics' :
                                     retOid = `640${(idNumber - 1).toString().padStart(2,'0')}`;
+                                    break;
+                                case 'delay' :
+                                    retOid = `650${(idNumber - 1).toString().padStart(2,'0')}`;
+                                    break;
+                                case 'filter' :
+                                    this.log.info(`id2oid(): output filter block #${idBlockNr} not yet implemented`);
                                     break;
                                 default:
                                     retOid = `601${(idNumber - 1).toString().padStart(2,'0')}`;
@@ -3610,8 +3706,14 @@ class Extron extends utils.Adapter {
                                 case 'attenuation' :
                                     retOid = `600${(idNumber + 7).toString().padStart(2,'0')}`;
                                     break;
-                                case 'limiter' :
+                                case 'dynamics' :
                                     retOid = `640${(idNumber + 7).toString().padStart(2,'0')}`;
+                                    break;
+                                case 'delay' :
+                                    retOid = `650${(idNumber - 1).toString().padStart(2,'0')}`;
+                                    break;
+                                case 'filter' :
+                                    this.log.info(`id2oid(): auxOutput filter block #${idBlockNr} not yet implemented`);
                                     break;
                                 default :
                                     retOid = `601${(idNumber + 7).toString().padStart(2,'0')}`;
@@ -3623,8 +3725,14 @@ class Extron extends utils.Adapter {
                                 case 'attenuation' :
                                     retOid = `600${(idNumber + 15).toString().padStart(2,'0')}`;
                                     break;
-                                case 'limiter' :
+                                case 'dynamics' :
                                     retOid = `640${(idNumber + 15).toString().padStart(2,'0')}`;
+                                    break;
+                                case 'delay' :
+                                    retOid = `650${(idNumber - 1).toString().padStart(2,'0')}`;
+                                    break;
+                                case 'filter' :
+                                    this.log.info(`id2oid(): expansionOutput filter block #${idBlockNr} not yet implemented`);
                                     break;
                                 default:
                                     retOid = `601${(idNumber + 15).toString().padStart(2,'0')}`;
@@ -3861,6 +3969,13 @@ class Extron extends utils.Adapter {
                             case 'threshold':
                                 this.sendDynamicsThreshold(id, Math.abs(Number(state.val) < -800?-800:(Number(state.val)>0)?0:Number(state.val)));
                                 break;
+                            case 'attack' :
+                            case 'knee' :
+                            case 'ratio' :
+                            case 'hold' :
+                            case 'release' :
+                                this.log.info(`onStateChange(): dynamics "${stateName}" not yet implemented`);
+                                break;
 
                             case 'playmode' :
                                 if (device === 'smd202') {
@@ -3934,7 +4049,7 @@ class Extron extends utils.Adapter {
                                             this.log.error(`onStateChange(): groupType ${state.val} not supported`);
                                     }
                                 } else {
-                                    this.setDynamicsType(id, Number(state.val));
+                                    this.getDynamicsType(id);
                                 }
                                 break;
 
@@ -3962,6 +4077,12 @@ class Extron extends utils.Adapter {
 
                             case 'connection' :
                                 if (idArray[1] == 'dante') this.ctrlDanteConnection(device, Number(state.val));
+                                break;
+                            case 'available' :
+                                this.getDanteDevices();
+                                break;
+                            case 'connected' :
+                                this.listDanteConnections();
                                 break;
                             default :
                                 this.log.warn(`onStateChange): stateName "${stateName}" unknown`);
