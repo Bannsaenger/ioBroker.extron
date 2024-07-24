@@ -54,7 +54,7 @@ class Extron extends utils.Adapter {
         this.on('ready', this.onReady.bind(this));
         this.on('stateChange', this.onStateChange.bind(this));
         // this.on('objectChange', this.onObjectChange.bind(this));
-        // this.on('message', this.onMessage.bind(this));
+        this.on('message', this.onMessage.bind(this));
         this.on('unload', this.onUnload.bind(this));
     }
 
@@ -117,73 +117,62 @@ class Extron extends utils.Adapter {
             // Reset the connection indicator during startup
             this.setState('info.connection', false, true);
 
-            // Check whether the device type is already chosen. If not, skip the initialisation process and run in offline mode
-            // only for the messageBox
-
-            // The adapters config (in the instance object everything under the attribute "native") is accessible via
-            // this.config:
-            this.log.info('onReady(): configured host/port: ' + this.config.host + ':' + this.config.port);
-
-
             // read Objects template for object generation
             this.objectsTemplate = JSON.parse(fs.readFileSync(__dirname + '/lib/objects_templates.json', 'utf8'));
             // read devices for device check
             this.devices = JSON.parse(fs.readFileSync(__dirname + '/lib/device_mapping.json', 'utf8'));
 
-            /*
-            * For every state in the system there has to be also an object of type state
-            */
-            await this.setInstanceNameAsync();
-            await this.createDatabaseAsync();
-            await this.createStatesListAsync();
+            // Check whether the device type is already chosen. If not, skip the initialisation process and run in offline mode
+            // only for the messageBox
+            if (this.config.device === '') {
+                this.log.warn(`No device type specified. Running in Offline Mode`);
+            } else {
 
-            // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
-            // this.subscribeStates('testVariable');
-            this.subscribeStates('*');  // subscribe to all states
+                // The adapters config (in the instance object everything under the attribute "native") is accessible via
+                // this.config:
+                this.log.info('onReady(): configured host/port: ' + this.config.host + ':' + this.config.port);
 
-            /*
-                setState examples
-                you will notice that each setState will cause the stateChange event to fire (because of above subscribeStates cmd)
-            */
-            // the variable testVariable is set to true as command (ack=false)
-            //await this.setStateAsync('testVariable', true);
+                /*
+                * For every state in the system there has to be also an object of type state
+                */
+                await this.setInstanceNameAsync();
+                await this.createDatabaseAsync();
+                await this.createStatesListAsync();
 
-            // same thing, but the value is flagged "ack"
-            // ack should be always set to true if the value is received from or acknowledged from the target system
-            //await this.setStateAsync('testVariable', { val: true, ack: true });
+                // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
+                // this.subscribeStates('testVariable');
+                this.subscribeStates('*');  // subscribe to all states
 
-            // same thing, but the state is deleted after 30s (getState will return null afterwards)
-            //await this.setStateAsync('testVariable', { val: true, ack: true, expire: 30 });
+                // Client callbacks
+                switch (this.config.type) {
+                    case 'ssh' :
+                        this.client.on('keyboard-interactive', this.onClientKeyboard.bind(this));
+                        this.client.on('ready', this.onClientReady.bind(this));
+                        //this.client.on('banner', this.onClientBanner.bind(this));
+                        this.client.on('close', this.onClientClose.bind(this));
+                        this.client.on('error', this.onClientError.bind(this));
+                        this.client.on('end', this.onClientEnd.bind(this));
+                        break;
 
-            // Client callbacks
-            switch (this.config.type) {
-                case 'ssh' :
-                    this.client.on('keyboard-interactive', this.onClientKeyboard.bind(this));
-                    this.client.on('ready', this.onClientReady.bind(this));
-                    //this.client.on('banner', this.onClientBanner.bind(this));
-                    this.client.on('close', this.onClientClose.bind(this));
-                    this.client.on('error', this.onClientError.bind(this));
-                    this.client.on('end', this.onClientEnd.bind(this));
-                    break;
+                    case 'telnet' :
+                        this.net.on('connectionAttempt',()=>{this.log.debug(`Telnet: connectionAttempt started`);});
+                        this.net.on('connectionAttemptTimeout',()=>{this.log.warn(`Telnet: connectionAttemptTimeout`);});
+                        this.net.on('connectionAttemptFailed',()=>{this.log.warn(`Telnet: connectionAttemptFailed`);});
+                        this.net.on('timeout',()=>{this.log.warn(`Telnet: connection idle timeout`);});
+                        this.net.on('connect',()=>{this.log.debug(`Telnet: connected`);});
+                        this.net.on('ready', this.onClientReady.bind(this));
+                        this.net.on('error', this.onClientError.bind(this));
+                        this.net.on('end', this.onClientEnd.bind(this));
+                        this.net.on('close', ()=>{
+                            this.log.debug(`Telnet: socket closed`);
+                            this.clientReConnect();
+                        });
+                        break;
+                }
+                this.log.info(`onReady(): Extron took ${Date.now() - startTime}ms to initialize and setup db`);
 
-                case 'telnet' :
-                    this.net.on('connectionAttempt',()=>{this.log.debug(`Telnet: connectionAttempt started`);});
-                    this.net.on('connectionAttemptTimeout',()=>{this.log.warn(`Telnet: connectionAttemptTimeout`);});
-                    this.net.on('connectionAttemptFailed',()=>{this.log.warn(`Telnet: connectionAttemptFailed`);});
-                    this.net.on('timeout',()=>{this.log.warn(`Telnet: connection idle timeout`);});
-                    this.net.on('connect',()=>{this.log.debug(`Telnet: connected`);});
-                    this.net.on('ready', this.onClientReady.bind(this));
-                    this.net.on('error', this.onClientError.bind(this));
-                    this.net.on('end', this.onClientEnd.bind(this));
-                    this.net.on('close', ()=>{
-                        this.log.debug(`Telnet: socket closed`);
-                        this.clientReConnect();
-                    });
-                    break;
+                this.clientConnect();
             }
-            this.log.info(`onReady(): Extron took ${Date.now() - startTime}ms to initialize and setup db`);
-
-            this.clientConnect();
         } catch (err) {
             this.errorHandler(err, 'onReady');
         }
@@ -4158,23 +4147,22 @@ class Extron extends utils.Adapter {
         }
     }
 
-    // If you need to accept messages in your adapter, uncomment the following block and the corresponding line in the constructor.
-    // /**
-    //  * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
-    //  * Using this method requires "common.message" property to be set to true in io-package.json
-    //  * @param {ioBroker.Message} obj
-    //  */
-    // onMessage(obj) {
-    //     if (typeof obj === 'object' && obj.message) {
-    //         if (obj.command === 'send') {
-    //             // e.g. send email or pushover or whatever
-    //             this.log.info('send command');
+    /**
+     * Some message was sent to this instance over message box. Used by email, pushover, text2speech, ...
+     * Using this method requires "common.message" property to be set to true in io-package.json
+     * @param {ioBroker.Message} obj
+     */
+    onMessage(obj) {
+        if (typeof obj === 'object' && obj.message) {
+            if (obj.command === 'send') {
+                // e.g. send email or pushover or whatever
+                this.log.info('send command');
 
-    //             // Send response in callback if required
-    //             if (obj.callback) this.sendTo(obj.from, obj.command, 'Message received', obj.callback);
-    //         }
-    //     }
-    // }
+                // Send response in callback if required
+                if (obj.callback) this.sendTo(obj.from, obj.command, 'Message received', obj.callback);
+            }
+        }
+    }
 
 
 }
