@@ -687,6 +687,23 @@
                 "native": {}
             },
             {
+                "_id": "filter",
+                "type": "folder",
+                "common": {
+                    "name":"filter"
+                },
+                "native":{}
+            },
+            {
+                "_id": "0",
+                "type": "channel",
+                "common": {
+                    "role": "filter.channel",
+                    "name": "filter index (1..9)"
+                },
+                "native": {}
+            },
+            {
                 "_id": "attenuation",
                 "type": "channel",
                 "common": {
@@ -3936,5 +3953,97 @@
                 },
                 "native": {}
             }
+    ],
+    "filter" : [
+        {
+            "_id": "status",
+            "type": "state",
+            "common": {
+                "role": "switch",
+                "name": "if true dynamics is active",
+                "type": "boolean",
+                "read": true,
+                "write": true,
+                "def": false
+            },
+            "native": {}
+        },
+        {
+            "_id": "type",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "filter type",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "def": 0,
+                "states":{"0":"unused", "1":"HP Butterworth","2":"LP Butterworth","3":"Bass","4":"Treble","5":"parametric","6":"notch","7":"HP Linkwitz","8":"LP Linkwitz","9":"LP Bessel", "10":"HP Bessel", "11":"Loudness"},
+                "min":0,
+                "max":11,
+                "step":1
+            },
+            "native": {}
+        },
+        {
+            "_id": "frequency",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "frequence",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "def": 1000
+            },
+            "native": {}
+        },
+        {
+            "_id": "slope",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "slope",
+                "type": "nubmber",
+                "read": true,
+                "write": true,
+                "def": 0,
+                "states":{"0":"6dB/Oct", "1":"12dB/Oct","2":"18dB/Oct","3":"24dB/Oct","4":"30dB/Oct","5":"36dB/Oct","6":"42dB/Oct","7":"48dB/Oct"},
+                "min" :0,
+                "max":7,
+                "step":1
+            },
+            "native": {}
+        },
+        {
+            "_id": "gain",
+            "type": "state",
+            "Common":{
+                "role": "value",
+                "name": "Boost/Cut",
+                "type" : "number",
+                "read": true,
+                "write": true,
+                "def": 0,
+                "min": -240,
+                "max": 240
+            },
+            "native":{}
+        },
+        {
+            "_id": "q-factor",
+            "type": "state",
+            "Common":{
+                "role": "value",
+                "name": "Q-factor",
+                "type" : "number",
+                "read": true,
+                "write": true,
+                "def": 1000,
+                "min": 0,
+                "max": 30000
+            },
+            "native":{}
+        }
     ]
 }

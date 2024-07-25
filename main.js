@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.16 20240724
+ *      iobroker extron (SIS) Adapter V0.2.16 20240725
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -591,7 +591,7 @@ class Extron extends utils.Adapter {
 
                             case 'DSE' :            // dsp block status change
                                 this.log.info(`onStreamData(): Extron got a DSP block status change from OID : "${ext1}" value: "${ext2}"`);
-                                this.setDynamicsStatus(ext1, ext2);
+                                this.setDspBlockStatus(ext1, ext2);
                                 break;
 
                             case 'DST' :            // dynamics threshold change
@@ -601,7 +601,7 @@ class Extron extends utils.Adapter {
 
                             case 'DSY' :            // DSP block type change 0=no dyn, 1=cmp, 2=lim, 3=gate, 4=agc
                                 this.log.info(`onStreamData(): Extron received DSP block change from OID : "${ext1}" value "${ext2}"`);
-                                this.setDynamicsType(ext1, ext2);
+                                this.setDspBlockType(ext1, ext2);
                                 break;
 
                             case 'DSA' :            // dynamics attack
@@ -628,10 +628,13 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron received delay unit change from OID : "${ext1}" value "${ext2}"`);
                                 break;
                             case 'DSF' :            // DSP block frequency change
-                                this.log.info(`onStreamData(): Extron received DSP block frequency change from OID : "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): Extron received filter frequency change from OID : "${ext1}" value "${ext2}"`);
                                 break;
                             case 'DSO' :            // DSP block slope 0=6dB/O, 1=12dB/O ... 7=48dB/O
-                                this.log.info(`onStreamData(): Extron received DSP block slope change from OID : "${ext1}" value "${6+(Number(ext2)*6)}dB/O"`);
+                                this.log.info(`onStreamData(): Extron received filter slope change from OID : "${ext1}" value "${6+(Number(ext2)*6)}dB/O"`);
+                                break;
+                            case 'DSQ' :
+                                this.log.info(`onStreamData(): Extron received filter Q-factor change from OID : "${ext1}" value "${Number(ext2)/1000}"`);
                                 break;
                             case 'DSV' :            // unsolicited volume/meter level
                                 break;
@@ -1433,7 +1436,7 @@ class Extron extends utils.Adapter {
                                 case 'type' :
                                     if (idType ==='groups') {
                                         this.getGroupType(grpId);
-                                    } else this.getDynamicsType(id);
+                                    } else this.getDspBlockType(id);
                                     break;
 
                                 case 'level' :
@@ -1484,7 +1487,7 @@ class Extron extends utils.Adapter {
                                     if (dynamics) {
                                         this.log.info(`getDeviceStatus(): "${baseId}.type": ${dynamics.val}`);
                                         if ( Number(dynamics.val) != 0) {
-                                            this.getDynamicsStatus(id);
+                                            this.getDspBlockStatus(id);
                                         } else this.log.info(`getDeviceStatus(): "${baseId}" not configured`);
                                     }
                                     break;
@@ -1821,6 +1824,13 @@ class Extron extends utils.Adapter {
         try {
             const mixPoint = this.oid2id(oid);
             const idArray = mixPoint.split('.');
+            // extron.[n].[fld].[type].[number].[block]
+            //   0     1    2     3       4        5
+            // extron.[n].in.auxInputs.01.mixPoints.A01.gain
+            // extron.[n].out.outputs.01.filter.1.gain
+            // extron.[n].dante.available
+            // extron.[n].dante.[deviceName].[fld].[type].[number].[block]
+            //   0     1    2       3          4     5       6        7
             let idType ='';
             let idBlock = '';
             let device = this.devices[this.config.device].short;
@@ -2096,7 +2106,7 @@ class Extron extends utils.Adapter {
      * @param {string} baseId
      * cmd = Y[oid]AU
      */
-    getDynamicsType(baseId) {
+    getDspBlockType(baseId) {
         try {
             const oid = this.id2oid(`${baseId}.status`);
             if (oid) {
@@ -2113,7 +2123,7 @@ class Extron extends utils.Adapter {
      * @param {number} value
      * cmd = Y[oid]*[value]AU
      */
-    sendDynamicsType(baseId, value) {
+    sendDspBlockType(baseId, value) {
         try {
             const oid = this.id2oid(baseId);
             if (oid) {
@@ -2129,7 +2139,7 @@ class Extron extends utils.Adapter {
      * @param {string} oid
      * @param {string | number} value
      */
-    setDynamicsType(oid, value) {
+    setDspBlockType(oid, value) {
         try {
             const channel = this.oid2id(oid);
             this.setState(`${channel}type`, Number(value), true);
@@ -2143,7 +2153,7 @@ class Extron extends utils.Adapter {
      * @param {string} oid
      * @param {string | number} value
      */
-    setDynamicsStatus(oid, value) {
+    setDspBlockStatus(oid, value) {
         try {
             const channel = this.oid2id(oid);
             this.setState(`${channel}status`, Number(value)>0?true:false, true);
@@ -2157,7 +2167,7 @@ class Extron extends utils.Adapter {
      * @param {string} baseId
      * cmd = E[oid]AU
      */
-    getDynamicsStatus(baseId) {
+    getDspBlockStatus(baseId) {
         try {
             const oid = this.id2oid(`${baseId}.status`);
             if (oid) {
@@ -2169,12 +2179,12 @@ class Extron extends utils.Adapter {
     }
 
     /**
-     * send Dynamics status to device
+     * send DSP Block status to device
      * @param {string} baseId
      * @param {string | any} value
      * cmd = E[oid]*[0/1]AU
      */
-    sendDynamicsStatus(baseId, value) {
+    sendDspBlockStatus(baseId, value) {
         try {
             const oid = this.id2oid(baseId);
             if (oid) {
@@ -3457,7 +3467,12 @@ class Extron extends utils.Adapter {
                                 case 12 :
                                 case 13 :
                                 case 14 :
-                                    this.log.info(`oid2id(): input filter block #${where-9} not yet implemented`);
+                                    if (val <= 11) {        // input 1 - 12
+                                        retId = `in.inputs.${(val + 1).toString().padStart(2,'0')}.${where-9}.`;
+                                    }
+                                    if (val <= 19) {        // aux input 1 - 8
+                                        retId = `in.auxInputs.${(val - 11).toString().padStart(2,'0')}.${where-9}.`;
+                                    }
                                     break;
 
                                 case 40 :   // input dynamics block 1
@@ -3545,7 +3560,13 @@ class Extron extends utils.Adapter {
                                 case 17 :
                                 case 18 :
                                 case 19 :
-                                    this.log.info(`oid2id(): output filter block #${where-9} not yet implemented`);
+                                    if (val <= 7) {         // output 1 - 8
+                                        retId = `out.outputs.${(val + 1).toString().padStart(2,'0')}.filter.${where-9}.`;
+                                    } else if (val <= 15) {        // aux output 1 - 8
+                                        retId = `out.auxOutputs.${(val - 7).toString().padStart(2,'0')}.filter.${where-9}.`;
+                                    } else if (val <= 31) {        // expansion output 1-16
+                                        retId = `out.expansionOutputs.${(val - 15).toString().padStart(2,'0')}.filter.${where-9}.`;
+                                    }
                                     break;
 
                                 default:
@@ -3578,6 +3599,7 @@ class Extron extends utils.Adapter {
         // extron.[n].[fld].[type].[number].[block]
         //   0     1    2     3       4        5
         // extron.[n].in.auxInputs.01.mixPoints.A01
+        // extron.[n].out.outputs.01.filter.[n].
         // extron.[n].dante.available
         // extron.[n].dante.[deviceName].[fld].[type].[number].[block]
         //   0     1    2       3          4     5       6        7
@@ -3585,7 +3607,7 @@ class Extron extends utils.Adapter {
         const idType = !dante ? idArray[3]: idArray[5];
         const idNumber = !dante ? Number(idArray[4]) : Number(idArray[6]);
         const idBlock = !dante ? idArray[5] : idArray[7];
-        const idBlockNr = !dante ? idArray[8] : idArray[8];
+        const idBlockNr = !dante ? idArray[6] : idArray[8];
         let outputType = 'O';
         let outputNumber = 1;
         if (idArray.length >= (!dante?7:9)) {
@@ -3614,7 +3636,7 @@ class Extron extends utils.Adapter {
                                     retOid = `400${(idNumber - 1).toString().padStart(2,'0')}`;
                                     break;
                                 case 'filter' :
-                                    this.log.info(`id2oid(): input filter block not yet implemented`);
+                                    retOid = `4${idBlockNr+9}${(idNumber - 1).toString().padStart(2,'0')}`;
                                     break;
                                 default :
                                     retOid = `401${(idNumber - 1).toString().padStart(2,'0')}`;
@@ -3631,7 +3653,7 @@ class Extron extends utils.Adapter {
                                     retOid = `400${(idNumber +1).toString().padStart(2,'0')}`;         // Line Inputs on CP82
                                     break;
                                 case 'filter' :
-                                    this.log.info(`id2oid(): lineInput filter block not yet implemented`);
+                                    retOid = `4${idBlockNr+9}${(idNumber +1).toString().padStart(2,'0')}`;
                                     break;
                                 default :
                                     retOid = `401${(idNumber +1).toString().padStart(2,'0')}`;
@@ -3644,7 +3666,7 @@ class Extron extends utils.Adapter {
                                     retOid = `400${(idNumber +3).toString().padStart(2,'0')}`;         // player inputs on CP82
                                     break;
                                 case 'filter' :
-                                    this.log.info(`id2oid(): playerInput filter block not yet implemented`);
+                                    retOid = `4${idBlockNr+9}${(idNumber +3).toString().padStart(2,'0')}`;
                                     break;
                                 default :
                                     retOid = `401${(idNumber +3).toString().padStart(2,'0')}`;
@@ -3654,13 +3676,13 @@ class Extron extends utils.Adapter {
                         case 'auxInputs':
                             switch (idBlock) {
                                 case 'gain' :
-                                    retOid = `400${(idNumber + 11).toString().padStart(2,'0')}`;
+                                    retOid = `400${(idNumber +11).toString().padStart(2,'0')}`;
                                     break;
                                 case 'filter' :
-                                    this.log.info(`id2oid(): auxInput filter block not yet implemented`);
+                                    retOid = `4${idBlockNr+9}${(idNumber +11).toString().padStart(2,'0')}`;
                                     break;
                                 default :
-                                    retOid = `401${(idNumber + 11).toString().padStart(2,'0')}`;
+                                    retOid = `401${(idNumber +11).toString().padStart(2,'0')}`;
                             }
                             break;
 
@@ -3691,51 +3713,51 @@ class Extron extends utils.Adapter {
                                     if (device === 'cp82') retOid = `600${(idNumber +1).toString().padStart(2,'0')}`; // output OID count starts at 2 on CP82
                                     break;
                                 case 'dynamics' :
-                                    retOid = `640${(idNumber - 1).toString().padStart(2,'0')}`;
+                                    retOid = `640${(idNumber -1).toString().padStart(2,'0')}`;
                                     break;
                                 case 'delay' :
-                                    retOid = `650${(idNumber - 1).toString().padStart(2,'0')}`;
+                                    retOid = `650${(idNumber -1).toString().padStart(2,'0')}`;
                                     break;
                                 case 'filter' :
-                                    this.log.info(`id2oid(): output filter block #${idBlockNr} not yet implemented`);
+                                    retOid = `6${idBlockNr +9}${(idNumber -1).toString().padStart(2,'0')}`;
                                     break;
                                 default:
-                                    retOid = `601${(idNumber - 1).toString().padStart(2,'0')}`;
+                                    retOid = `601${(idNumber -1).toString().padStart(2,'0')}`;
                             }
                             break;
 
                         case 'auxOutputs' :
                             switch (idBlock) {
                                 case 'attenuation' :
-                                    retOid = `600${(idNumber + 7).toString().padStart(2,'0')}`;
+                                    retOid = `600${(idNumber +7).toString().padStart(2,'0')}`;
                                     break;
                                 case 'dynamics' :
-                                    retOid = `640${(idNumber + 7).toString().padStart(2,'0')}`;
+                                    retOid = `640${(idNumber +7).toString().padStart(2,'0')}`;
                                     break;
                                 case 'delay' :
-                                    retOid = `650${(idNumber - 1).toString().padStart(2,'0')}`;
+                                    retOid = `650${(idNumber +7).toString().padStart(2,'0')}`;
                                     break;
                                 case 'filter' :
-                                    this.log.info(`id2oid(): auxOutput filter block #${idBlockNr} not yet implemented`);
+                                    retOid = `6${idBlockNr+9}${(idNumber +7).toString().padStart(2,'0')}`;
                                     break;
                                 default :
-                                    retOid = `601${(idNumber + 7).toString().padStart(2,'0')}`;
+                                    retOid = `601${(idNumber +7).toString().padStart(2,'0')}`;
                             }
                             break;
 
                         case 'expansionOutputs' :
                             switch (idBlock) {
                                 case 'attenuation' :
-                                    retOid = `600${(idNumber + 15).toString().padStart(2,'0')}`;
+                                    retOid = `600${(idNumber +15).toString().padStart(2,'0')}`;
                                     break;
                                 case 'dynamics' :
-                                    retOid = `640${(idNumber + 15).toString().padStart(2,'0')}`;
+                                    retOid = `640${(idNumber +15).toString().padStart(2,'0')}`;
                                     break;
                                 case 'delay' :
-                                    retOid = `650${(idNumber - 1).toString().padStart(2,'0')}`;
+                                    retOid = `650${(idNumber +15).toString().padStart(2,'0')}`;
                                     break;
                                 case 'filter' :
-                                    this.log.info(`id2oid(): expansionOutput filter block #${idBlockNr} not yet implemented`);
+                                    retOid = `6${idBlockNr+9}${(idNumber +15).toString().padStart(2,'0')}`;
                                     break;
                                 default:
                                     retOid = `601${(idNumber + 15).toString().padStart(2,'0')}`;
@@ -3967,7 +3989,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'status' :
-                                this.sendDynamicsStatus(id, state.val);
+                                this.sendDspBlockStatus(id, state.val);
                                 break;
                             case 'threshold':
                                 this.sendDynamicsThreshold(id, Math.abs(Number(state.val) < -800?-800:(Number(state.val)>0)?0:Number(state.val)));
@@ -3978,6 +4000,13 @@ class Extron extends utils.Adapter {
                             case 'hold' :
                             case 'release' :
                                 this.log.info(`onStateChange(): dynamics "${stateName}" not yet implemented`);
+                                break;
+
+                            case 'frequency':
+                            case 'gain' :
+                            case 'slope' :
+                            case 'q-factor' :
+                                this.log.info(`onStateChange(): filter "${stateName}" not yet implemented`);
                                 break;
 
                             case 'playmode' :
@@ -4052,7 +4081,7 @@ class Extron extends utils.Adapter {
                                             this.log.error(`onStateChange(): groupType ${state.val} not supported`);
                                     }
                                 } else {
-                                    this.getDynamicsType(id);
+                                    this.getDspBlockType(id);
                                 }
                                 break;
 
