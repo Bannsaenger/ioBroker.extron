@@ -4016,7 +4016,7 @@
             "native": {}
         },
         {
-            "_id": "gain",
+            "_id": "cutboost",
             "type": "state",
             "Common":{
                 "role": "value",
@@ -4031,7 +4031,7 @@
             "native":{}
         },
         {
-            "_id": "q-factor",
+            "_id": "qfactor",
             "type": "state",
             "Common":{
                 "role": "value",

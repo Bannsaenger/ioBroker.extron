@@ -1499,6 +1499,13 @@ class Extron extends utils.Adapter {
                                     this.log.info(`getDeviceStatus(): dynamics "${stateName}" not yet implemented`);
                                     break;
 
+                                case 'slope':
+                                case 'cutboost':
+                                case 'frequency':
+                                case 'qfactor':
+                                    this.log.info(`getDeviceStatus(): filter "${stateName}" not yet implemented`);
+                                    break;
+
                                 case 'name' :
                                     if (idType ==='groups') {
                                         this.getGroupName(grpId);
