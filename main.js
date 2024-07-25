@@ -567,30 +567,42 @@ class Extron extends utils.Adapter {
                                 this.setState('device.name', ext2, true);
                                 break;
 
+                            case 'DSZ':
+                                this.log.info(`onStreamData(): Phantom power status change from OID: "${ext1}" value: ${ext2}`);
+                                break;
+
                             case 'DSM':             // received a mute command
                             case 'DSG':             // received a gain level
                                 this.log.info(`onStreamData(): Extron got mute/gain ${command} from OID: "${ext1}" value: ${ext2}`);
                                 this.setGain(command, ext1, ext2);
                                 break;
 
-                            case 'DSD':             //received a set source command
-                                this.log.info(`onStreamData(): Extron got source ${command} from OID: "${ext1}" value: "${ext2}"`);
-                                this.setSource(ext1, ext2);
+                            case 'DSD':
+                                if (ext1.startsWith('65')) {    // delay value
+                                    this.log.info(`onStreamData(): Extron received delay value change from OID : "${ext1}" value "${ext2}samples"`);
+                                } else {              // input source control
+                                    this.log.info(`onStreamData(): Extron got source ${command} from OID: "${ext1}" value: "${ext2}"`);
+                                    this.setSource(ext1, ext2);
+                                }
                                 break;
 
-                            case 'DSE' :            // dsp block status change
+                            case 'DSE' :            // DSP block status change
                                 this.log.info(`onStreamData(): Extron got a DSP block status change from OID : "${ext1}" value: "${ext2}"`);
                                 this.setDspBlockStatus(ext1, ext2);
                                 break;
 
-                            case 'DST' :            // dynamics threshold change
-                                this.log.info(`onStreamData(): Extron got a threshold change from OID : "${ext1}" value: "${ext2}"`);
-                                this.setDynamicsThreshold(ext1, ext2);
-                                break;
-
-                            case 'DSY' :            // DSP block type change 0=no dyn, 1=cmp, 2=lim, 3=gate, 4=agc
+                            case 'DSY' :            // DSP block type change 0=no, 1=cmp, 2=lim, 3=gate, 4=agc
                                 this.log.info(`onStreamData(): Extron received DSP block change from OID : "${ext1}" value "${ext2}"`);
                                 this.setDspBlockType(ext1, ext2);
+                                break;
+
+                            case 'DST' :
+                                if (ext1.startsWith('65')) {    // delay temperature change
+                                    this.log.info(`onStreamData(): Extron got a delay ref temparature change from OID : "${ext1}" value: "${ext2}°F"`);
+                                } else {           // dynamics threshold change
+                                    this.log.info(`onStreamData(): Extron got a threshold change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.setDynamicsThreshold(ext1, ext2);
+                                }
                                 break;
 
                             case 'DSA' :            // dynamics attack
@@ -601,8 +613,13 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron received ratio change from OID : "${ext1}" value "${ext2}"`);
                                 break;
 
-                            case 'DSH' :            // dynamics hold
-                                this.log.info(`onStreamData(): Extron received hold time change from OID : "${ext1}" value "${ext2}"`);
+                            case 'DSH' :
+                                if (ext1.startsWith('400')) {    // digital input gain level
+                                    this.log.info(`onStreamData(): Extron got mute/gain ${command} from OID: "${ext1}" value: ${ext2}`);
+                                    this.setGain(command, ext1, ext2);
+                                } else {           // dynamics hold
+                                    this.log.info(`onStreamData(): Extron received hold time change from OID : "${ext1}" value "${ext2}"`);
+                                }
                                 break;
 
                             case 'DSL' :            // dynamics release
@@ -616,13 +633,14 @@ class Extron extends utils.Adapter {
                             case 'DSU' :            // delay unit change 0=samples, 1=ms, 2=fuß, 3=m
                                 this.log.info(`onStreamData(): Extron received delay unit change from OID : "${ext1}" value "${ext2}"`);
                                 break;
-                            case 'DSF' :            // DSP block frequency change
+
+                            case 'DSF' :            // filter frequency change
                                 this.log.info(`onStreamData(): Extron received filter frequency change from OID : "${ext1}" value "${ext2}"`);
                                 break;
-                            case 'DSO' :            // DSP block slope 0=6dB/O, 1=12dB/O ... 7=48dB/O
+                            case 'DSO' :            // filter slope 0=6dB/O, 1=12dB/O ... 7=48dB/O
                                 this.log.info(`onStreamData(): Extron received filter slope change from OID : "${ext1}" value "${6+(Number(ext2)*6)}dB/O"`);
                                 break;
-                            case 'DSQ' :
+                            case 'DSQ' :            // filtr q-factor change
                                 this.log.info(`onStreamData(): Extron received filter Q-factor change from OID : "${ext1}" value "${Number(ext2)/1000}"`);
                                 break;
                             case 'DSV' :            // unsolicited volume/meter level
@@ -1359,6 +1377,7 @@ class Extron extends utils.Adapter {
                     const dante = (idArray[2] == 'dante' && !['available','connections'].includes(idArray[3]));
                     const idType = !dante ?idArray[2]: idArray[4];
                     const grpId = Number(!dante ?idArray[3]: idArray[5]);
+                    let source = {};
 
                     if (typeof baseId !== 'undefined' && baseId !== null) {
                         // @ts-ignore
@@ -1409,7 +1428,7 @@ class Extron extends utils.Adapter {
                             default :
                                 this.log.warn(`getDeviceStatus(): idType "${idType}" unknown`);
                         } */
-                        if (! ['device','info'].includes(idArray[2])) { // sections doesn't need to be handled here
+                        if (! ['device','info'].includes(idArray[2])) { // sections don't need to be handled here
                             switch (stateName) {
                                 case 'mute' :
                                     if (device === 'smd202') this.getMute();
@@ -1431,9 +1450,13 @@ class Extron extends utils.Adapter {
                                 case 'level' :
                                     if (device === 'smd202') this.getVol();
                                     else if (idType ==='groups') this.getGroupLevel(grpId);
-                                    else this.getGainLevel(id);
+                                    else {
+                                        if ((source = await this.getStateAsync(baseId+'.source')) && (source.val > 0)) {
+                                            this.getDigGainLevel(id);
+                                        } else this.getGainLevel(id);
+                                    }
                                     break;
-                                case 'level_db' :   // doesn't need to be handled as already covere by level
+                                case 'level_db' :   // doesn't need to be handled as already covered by level
                                     break;
 
                                 case 'playmode' :
@@ -1594,6 +1617,7 @@ class Extron extends utils.Adapter {
      * dev,  lin, log (-1000 .. 120, 0 .. 1000, -100 .. 12)
      * devGain, linGain, logGain (-180 .. 800, 0 .. 1000, -18 .. 80)
      * devAux, linAux, logAux (-180 .. 240, 0.. 1000, -18 .. 24)
+     * devDig, linDig, logDig (-180 .. 240, 0.. 1000, -18 .. 24)
      * devTrim, linTrim, logTrim (-120 .. 120, 0 .. 1000, -12 .. 12)
      * devAtt, linAtt, logAtt (-1000 .. 0, 0 .. 1000, -100 .. 0)
      * devAxi, linAxi, logAxi (0 .. 420, 0 ..1000, 0.. 42) only 3dB steps allowed
@@ -1673,6 +1697,7 @@ class Extron extends utils.Adapter {
                     break;
 
                 case 'linAux':   //linear value from database 0 .. 1000 for AuxInput
+                case 'linDig':   //linear value from database 0 .. 1000 for input with digital source
                     value = value > 1000 ? 1000 : value;
                     value = value < 0 ? 0 : value;
 
@@ -1682,7 +1707,9 @@ class Extron extends utils.Adapter {
                     break;
 
                 case 'logAux':      // value from database -18.0 .. 24.0 for input
+                case 'logDig':      // value from database -18.0 .. 24.0 for digital input
                 case 'devAux':      // value from device -180 .. 240 for input
+                case 'devDig':      // value from device -180 .. 240 for input with digital source
                     if (type === 'logAux') value = value * 10;
                     value = value > 240 ? 240 : value;
                     value = value < -180 ? -180 : value;
@@ -1818,8 +1845,8 @@ class Extron extends utils.Adapter {
      */
     setGain(cmd, oid, value) {
         try {
-            const mixPoint = this.oid2id(oid);
-            const idArray = mixPoint.split('.');
+            const id = this.oid2id(oid);
+            const idArray = id.split('.');
             // extron.[n].[fld].[type].[number].[block]
             //   0     1    2     3       4        5
             // extron.[n].in.auxInputs.01.mixPoints.A01.gain
@@ -1840,7 +1867,7 @@ class Extron extends utils.Adapter {
             }
             let calcMode ='dev';
             if (cmd === 'DSM') {
-                this.setState(`${mixPoint}mute`, Number(value) >0 ? true : false, true);
+                this.setState(`${id}mute`, Number(value) >0 ? true : false, true);
             } else {
                 switch (idBlock) {
                     case 'gain' :
@@ -1849,6 +1876,7 @@ class Extron extends utils.Adapter {
                         if (device === 'sme211') calcMode = 'devAux';
                         if (device.startsWith('AXI'))calcMode = 'devAxi';
                         if (device.startsWith('NetPA'))calcMode = 'devXpa';
+                        if (cmd === 'DSH') calcMode = 'devDig';
                         break;
 
                     case 'postmix' :
@@ -1862,8 +1890,8 @@ class Extron extends utils.Adapter {
 
                 const faderVal = this.calculateFaderValue(value.toString(), calcMode);
                 if (faderVal) {
-                    this.setState(`${mixPoint}level_db`, Number(faderVal.logValue), true);
-                    this.setState(`${mixPoint}level`, Number(faderVal.linValue), true);
+                    this.setState(`${id}level_db`, Number(faderVal.logValue), true);
+                    this.setState(`${id}level`, Number(faderVal.linValue), true);
                 }
             }
         } catch (err) {
@@ -1906,13 +1934,14 @@ class Extron extends utils.Adapter {
 
     /**
      * Send the gain level to the device
-     * @param {string} baseId
+     * @param {string} id
      * @param {string | any} value
      * cmd = G[oid]*[value]AU
+     * cmd = H[oid]*[value]AU on inputs with digital source
      */
-    sendGainLevel(baseId, value) {
+    sendGainLevel(id, value) {
         try {
-            let oid = this.id2oid(baseId);
+            let oid = this.id2oid(id);
             const device = this.devices[this.config.device].short;
             if (oid) {
                 let sendData = `WG${oid}*${value.devValue}AU\r`;
@@ -1942,18 +1971,72 @@ class Extron extends utils.Adapter {
     }
 
     /**
-     * get the gain level from device
-     * @param {string} baseId
-     * cmd = G[oid]AU
+     * Send the gain level to the device
+     * @param {string} id
+     * @param {string | any} value
+     * cmd = H[oid]*[value]AU on inputs with digital source
      */
-    getGainLevel(baseId) {
+    sendDigGainLevel(id, value) {
         try {
-            const oid = this.id2oid(baseId);
+            let oid = this.id2oid(id);
+            const device = this.devices[this.config.device].short;
+            if (oid) {
+                let sendData = `WH${oid}*${value.devValue}AU\r`;
+                this.streamSend(sendData);
+                if ( device === 'sme211') { // on SME211 we have stereo controls
+                    switch (Number(oid)) {
+                        case 40000 :
+                            oid = '40001';
+                            break;
+                        case 40001 :
+                            oid = '40000';
+                            break;
+                        case 40002 :
+                            oid = '40003';
+                            break;
+                        case 40003 :
+                            oid = '40002';
+                            break;
+                    }
+                    sendData = `WH${oid}*${value.devValue}AU\r`;
+                    this.streamSend(sendData);
+                }
+            }
+        } catch (err) {
+            this.errorHandler(err, 'sendDigGainLevel');
+        }
+    }
+
+    /**
+     * get the gain level from device
+     * @param {string} id
+     * cmd = G[oid]AU
+     * cmd = H[oid]AU on inputs with digital source
+     */
+    getGainLevel(id) {
+        try {
+            const oid = this.id2oid(id);
             if (oid) {
                 this.streamSend(`WG${oid}AU\r`);
             }
         } catch (err) {
             this.errorHandler(err, 'getGainLevel');
+        }
+    }
+
+    /**
+     * get the gain level from device
+     * @param {string} id
+     * cmd = H[oid]AU on inputs with digital source
+     */
+    getDigGainLevel(id) {
+        try {
+            const oid = this.id2oid(id);
+            if (oid) {
+                this.streamSend(`WH${oid}AU\r`);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'getDigGainLevel');
         }
     }
 
@@ -3882,7 +3965,8 @@ class Extron extends utils.Adapter {
                     this.log.info(`onStateChange(): Extron state ${id} changed: ${state.val} (ack = ${state.ack})`);
                     // extron.[n].[idType].[grpId].[number].[block]
                     //   0     1    2     3       4        5
-                    // extron.[n].in.auxInputs.01.mixPoints.A01
+                    // extron.[n].in.Inputs.01.preMix
+                    // extron.[n].in.auxInputs.01.mixPoints.A01.gain.level
                     // extron.[n].out.outputs.01.attenuation.level
                     // extron.[n].groups.[n].level
                     // extron.[n].dante.available
@@ -3901,6 +3985,7 @@ class Extron extends utils.Adapter {
                     let calcMode ='lin';
                     let elapsed = 0;
                     let member = '';
+                    let source = {};
                     if (typeof(baseId) !== 'undefined' && baseId !== null) {
                         switch (stateName) {
                             case 'mute' :
@@ -3930,8 +4015,12 @@ class Extron extends utils.Adapter {
                                     switch (idBlock) {						// or if value is near 0
                                         case 'gain' :
                                             calcMode = 'linGain';
-                                            if (idType === 'auxInputs') calcMode = 'linAux';
-                                            if (device === 'sme211') calcMode = 'linAux';
+                                            if (idType === 'auxInputs') {calcMode = 'linAux';}
+                                            else if (device === 'sme211') {calcMode = 'linAux';}
+                                            else {
+                                                source  = await this.getStateAsync(baseId +'.source');
+                                                if (source.val > 0) calcMode = 'linDig';
+                                            }
                                             break;
 
                                         case 'premix' :
@@ -3951,7 +4040,11 @@ class Extron extends utils.Adapter {
                                         this.sendVol(this.calculateFaderValue(`${state.val}`,'linAtt'));
                                     } else if (!dante ?idArray[2] : idArray[4] === 'groups') {
                                         this.sendGroupLevel(idGrp, Number(state.val));
-                                    } else this.sendGainLevel(id,this.calculateFaderValue(`${state.val}`,calcMode));
+                                    } else {
+                                        if (calcMode === 'linDig') {
+                                            this.sendDigGainLevel(id,this.calculateFaderValue(`${state.val}`,calcMode));
+                                        } else this.sendGainLevel(id,this.calculateFaderValue(`${state.val}`,calcMode));
+                                    }
                                 }
                                 else{
                                     this.log.debug(`onStateChange(): processing for ${id} = ${state.val} skipped due to statedelay`);
@@ -3962,8 +4055,12 @@ class Extron extends utils.Adapter {
                                 switch (idBlock) {
                                     case 'gain' :
                                         calcMode = 'logGain';
-                                        if (idType === 'auxInputs') calcMode = 'logAux';
-                                        if (idType === 'lineInputs') calcMode = 'logAux';
+                                        if (idType === 'auxInputs') {calcMode = 'logAux';}
+                                        else if (idType === 'lineInputs') {calcMode = 'logAux';}
+                                        else {
+                                            source  = await this.getStateAsync(baseId +'.source');
+                                            if (source.val > 0) calcMode = 'logDig';
+                                        }
                                         break;
 
                                     case 'premix' :
@@ -3981,7 +4078,11 @@ class Extron extends utils.Adapter {
                                     this.sendVol(this.calculateFaderValue(`${state.val}`,'logAtt'));
                                 } else if (!dante ? idArray[2]: idArray[4] === 'groups') {
                                     this.sendGroupLevel(idGrp, Number(state.val));
-                                } else this.sendGainLevel(id,this.calculateFaderValue(`${state.val}`,calcMode));
+                                } else {
+                                    if (calcMode === 'logDig') {
+                                        this.sendDigGainLevel(id,this.calculateFaderValue(`${state.val}`,calcMode));
+                                    } else this.sendGainLevel(id,this.calculateFaderValue(`${state.val}`,calcMode));
+                                }
                                 break;
 
                             case 'status' :
