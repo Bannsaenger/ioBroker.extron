@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.16 20240726
+ *      iobroker extron (SIS) Adapter V0.2.16 20240729
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -503,6 +503,9 @@ class Extron extends utils.Adapter {
                         switch (command) {
                             case 'VER':             // received a Version (answer to status query)
                                 switch (ext1) {
+                                    case '00' :
+                                        this.log.debug(`onStreamData(): Extron got detailed firmware version: "${ext2}"`);
+                                        break;
                                     case '01' :
                                         this.log.debug(`onStreamData(): Extron got firmware version: "${ext2}"`);
                                         if (!this.versionSet) {
@@ -511,9 +514,6 @@ class Extron extends utils.Adapter {
                                             this.setState('device.version', ext2, true);
                                             this.log.info(`onStreamData(): Extron set device.version: "${ext2}"`);
                                         }
-                                        break;
-                                    case '00' :
-                                        this.log.debug(`onStreamData(): Extron got detailed firmware version: "${ext2}"`);
                                         break;
                                     case '14' :
                                         this.log.debug(`onStreamData(): Extron got embedded OS taype and version: "${ext2}"`);
@@ -568,46 +568,94 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'DSD':
-                                if (ext1.startsWith('65')) {    // delay value
-                                    this.log.info(`onStreamData(): Extron received delay value change from OID : "${ext1}" value "${ext2}samples"`);
-                                } else if (ext1.startsWith('4000')) { // input source control
+                                if (ext1.startsWith('400')) { // input source control
                                     this.log.info(`onStreamData(): Extron got source ${command} from OID: "${ext1}" value: "${ext2}"`);
                                     this.setSource(ext1, ext2);
-                                } else if (ext1.startsWith('590')) { // input automixer section
+                                } else if (ext1.startsWith('450')) {     // input delay value change
+                                    this.log.info(`onStreamData(): Extron received delay value change from OID : "${ext1}" value "${ext2}samples"`);
+                                } if (ext1.startsWith('590')) {         // input automixer group change
                                     this.log.info(`onStreamData(): Extron got automix group change from OID: "${ext1}" value: "${ext2}"`);
+                                } else if (ext1.startsWith('650')) {    // output delay value change
+                                    this.log.info(`onStreamData(): Extron received delay value change from OID : "${ext1}" value "${ext2}samples"`);
                                 } else
                                     this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
                                 break;
 
-                            case 'DSE' :            // DSP block status change
-                                this.log.info(`onStreamData(): Extron got a DSP block status change from OID : "${ext1}" value: "${ext2}"`);
-                                this.setDspBlockStatus(ext1, ext2);
+                            case 'DSE' :            // DSP block bypass change
+                                if (ext1.startsWith('41')) { // input filter block
+                                    this.log.info(`onStreamData(): Extron got input filter block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.setDspBlockStatus(ext1, ext2);
+                                } else if (ext1.startsWith('44')) { // input dynamics block
+                                    this.log.info(`onStreamData(): Extron got input dynamics block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.setDspBlockStatus(ext1, ext2);
+                                } else if (ext1.startsWith('450')) { // input delay block
+                                    this.log.info(`onStreamData(): Extron got input delay block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.setDspBlockStatus(ext1, ext2);
+                                } else if (ext1.startsWith('460')) { // input aec block
+                                    this.log.info(`onStreamData(): Extron got input aec block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.setDspBlockStatus(ext1, ext2);
+                                } else if (ext1.startsWith('480')) { // input ducker block
+                                    this.log.info(`onStreamData(): Extron got input ducker block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.setDspBlockStatus(ext1, ext2);
+                                } else if (ext1.startsWith('51')) { // output filter block
+                                    this.log.info(`onStreamData(): Extron got output filter block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.setDspBlockStatus(ext1, ext2);
+                                } else if (ext1.startsWith('52')) { // output feedback suppressor filter block
+                                    this.log.info(`onStreamData(): Extron got output feedback suppressor filter block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.setDspBlockStatus(ext1, ext2);
+                                } else if (ext1.startsWith('530')) { // output feedback suppressor block
+                                    this.log.info(`onStreamData(): Extron got output feedback suppressor block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.setDspBlockStatus(ext1, ext2);
+                                } else if (ext1.startsWith('540')) { // output dynamics filter block
+                                    this.log.info(`onStreamData(): Extron got output dynamics block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.setDspBlockStatus(ext1, ext2);
+                                } else if (ext1.startsWith('550')) { // output delay block
+                                    this.log.info(`onStreamData(): Extron got output delay block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.setDspBlockStatus(ext1, ext2);
+                                } else if (ext1.startsWith('56')) { // input ducker source block
+                                    this.log.info(`onStreamData(): Extron got input ducker source enabled change from OID : "${ext1}" value: "${ext2}"`);
+                                } else if (ext1.startsWith('57')) { // input ducker source block
+                                    this.log.info(`onStreamData(): Extron got input ducker source enabled block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                } else if (ext1.startsWith('590')) { // input automix block
+                                    this.log.info(`onStreamData(): Extron got input automix block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                } else if (ext1.startsWith('61')) { // output filter block
+                                    this.log.info(`onStreamData(): Extron got output filter block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                } else if (ext1.startsWith('640')) { // output dynamics block
+                                    this.log.info(`onStreamData(): Extron got output dynamics block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                } else if (ext1.startsWith('650')) { // output delay block
+                                    this.log.info(`onStreamData(): Extron got output delay block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                } else
+                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
                                 break;
 
                             case 'DSF' :            // filter frequency change
                                 this.log.info(`onStreamData(): Extron received filter frequency change from OID : "${ext1}" value "${ext2}"`);
                                 break;
 
-                            case 'DSG':             // received a gain level
+                            case 'DSG':             // received a gain level change
                                 this.log.info(`onStreamData(): Extron got mute/gain ${command} from OID: "${ext1}" value: ${ext2}`);
                                 this.setGain(command, ext1, ext2);
                                 break;
 
                             case 'DSH' :
-                                if (ext1.startsWith('400')) {    // digital input gain level
+                                if (ext1.startsWith('400')) {    // digital input gain level change
                                     this.log.info(`onStreamData(): Extron got gain ${command} from OID: "${ext1}" value: ${ext2}`);
                                     this.setGain(command, ext1, ext2);
-                                } else if (ext1.startsWith('44')) {           // dynamics hold
+                                } else if (ext1.startsWith('440')) {           // input dynamics hold time change
+                                    this.log.info(`onStreamData(): Extron received hold time change from OID : "${ext1}" value "${ext2}"`);
+                                } else if (ext1.startsWith('540')) {           // input dynamics hold time change
+                                    this.log.info(`onStreamData(): Extron received hold time change from OID : "${ext1}" value "${ext2}"`);
+                                } else if (ext1.startsWith('640')) {           // output dynamics hold time change
                                     this.log.info(`onStreamData(): Extron received hold time change from OID : "${ext1}" value "${ext2}"`);
                                 } else
                                     this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
                                 break;
                             case 'DSJ' :
-                                if (ext1.startsWith('400')) {    // digital input gain level
+                                if (ext1.startsWith('400')) {    // input config change
                                     this.log.info(`onStreamData(): Extron got input config change from OID: "${ext1}" value: ${ext2}`);
-                                } else if (ext1.startsWith('590')) {    // input DSP block section
+                                } else if (ext1.startsWith('590')) {    // input DSP config change
                                     this.log.info(`onStreamData(): Extron got DSP block config change from OID: "${ext1}" value: ${ext2}`);
-                                } else if (ext1.startsWith('600')) {    // output section
+                                } else if (ext1.startsWith('600')) {    // output config change
                                     this.log.info(`onStreamData(): Extron got output config change from OID: "${ext1}" value: ${ext2}`);
                                 } else
                                     this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
@@ -627,10 +675,10 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'DSN':
-                                if (ext1.startsWith('460')) {    // digital input gain level
-                                    this.log.info(`onStreamData(): Extron got input config change from OID: "${ext1}" value: ${ext2}`);
-                                } else if (ext1.startsWith('590')) {    // input DSP block section
-                                    this.log.info(`onStreamData(): Extron got DSP block config change from OID: "${ext1}" value: ${ext2}`);
+                                if (ext1.startsWith('460')) {    // digital input AEC config change
+                                    this.log.info(`onStreamData(): Extron got input AEC config change from OID: "${ext1}" value: ${ext2}`);
+                                } else if (ext1.startsWith('590')) {    // input automix config change
+                                    this.log.info(`onStreamData(): Extron got input automix config change from OID: "${ext1}" value: ${ext2}`);
                                 } else this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
                                 break;
 
@@ -638,12 +686,14 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron received filter slope change from OID : "${ext1}" value "${6+(Number(ext2)*6)}dB/O"`);
                                 break;
                             case 'DSP':
-                                if (ext1.startsWith('590')) { // input automixer section
-                                    this.log.info(`onStreamData(): Extron got automix last mic change from OID: "${ext1}" value: "${ext2}"`);
-                                } else if (ext1.startsWith('400')) { // input block
+                                if (ext1.startsWith('2'))  {   // mixpoint automixer status change
+                                    this.log.info(`onStreamData(): Extron received mixpoint automixer status change from OID : "${ext1}" value "${ext2}"`);
+                                } else if (ext1.startsWith('400')) { // input polarity change
                                     this.log.info(`onStreamData(): Extron got input polarity change change from OID: "${ext1}" value: "${ext2}"`);
-                                } else if (ext1.startsWith('2'))  {   // mixpoint block
-                                    this.log.info(`onStreamData(): Extron received automixer status change from OID : "${ext1}" value "${ext2}"`);
+                                } else if (ext1.startsWith('590')) { // input automixer last mic change
+                                    this.log.info(`onStreamData(): Extron got automix last mic change from OID: "${ext1}" value: "${ext2}"`);
+                                } else  if (ext1.startsWith('600')) { // output polarity change
+                                    this.log.info(`onStreamData(): Extron got output polarity change change from OID: "${ext1}" value: "${ext2}"`);
                                 } else this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
                                 break;
                             case 'DSQ' :            // filtr q-factor change
@@ -654,11 +704,13 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'DST' :
-                                if (ext1.startsWith('65')) {    // delay reference temperature change
-                                    this.log.info(`onStreamData(): Extron got a delay ref temparature change from OID : "${ext1}" value: "${ext2}°F"`);
-                                } else if (ext1.startsWith('44')) {  // dynamics threshold change
+                                if (ext1.startsWith('44')) {  // input dynamics threshold change
                                     this.log.info(`onStreamData(): Extron got a threshold change from OID : "${ext1}" value: "${ext2}"`);
                                     this.setDynamicsThreshold(ext1, ext2);
+                                } else if (ext1.startsWith('450')) {    // input delay reference temperature change
+                                    this.log.info(`onStreamData(): Extron got a delay ref temperature change from OID : "${ext1}" value: "${ext2}°F"`);
+                                } else if (ext1.startsWith('650')) {    // output delay reference temperature change
+                                    this.log.info(`onStreamData(): Extron got a delay ref temperature change from OID : "${ext1}" value: "${ext2}°F"`);
                                 } else
                                     this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
                                 break;
@@ -670,17 +722,30 @@ class Extron extends utils.Adapter {
                             case 'DSV' :            // unsolicited volume/meter level
                                 break;
 
-                            case 'DSY' :            // DSP block type change 0=no, 1=cmp, 2=lim, 3=gate, 4=agc
-                                this.log.info(`onStreamData(): Extron received DSP block change from OID : "${ext1}" value "${ext2}"`);
+                            case 'DSW' :            // AGC target window
+                                if (ext1.startsWith('44')) { // input dynamics block
+                                    this.log.info(`onStreamData(): Extron got input AGC window change from OID : "${ext1}" value: "${ext2}"`);
+                                } else if (ext1.startsWith('540')) { // virtual return dynamics block
+                                    this.log.info(`onStreamData(): Extron got virtual return AGC window change from OID : "${ext1}" value: "${ext2}"`);
+                                } else if (ext1.startsWith('640')) { // output dynamics block
+                                    this.log.info(`onStreamData(): Extron got output AGC window change from OID : "${ext1}" value: "${ext2}"`);
+                                } else
+                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
+                                break;
+
+                            case 'DSY' :            // DSP block type change
+                                // dyn 0=no, 1=cmp, 2=lim, 3=gate, 4=agc
+                                // filter 0=no, 1= HP Butterworth, 2 = LP Butterworth, 3= Bass/Treble, 4= pra. EQ, 5= notvh EQ, 6=HP Bessel, 7= LP Bessel, 8= HP Linkwitz, 9= LP Linkwitz, 10 = Loudness
+                                this.log.info(`onStreamData(): Extron received DSP block type change from OID : "${ext1}" value "${ext2}"`);
                                 this.setDspBlockType(ext1, ext2);
                                 break;
 
                             case 'DSZ':
-                                if (ext1.startsWith('400')) {
-                                    this.log.info(`onStreamData(): Phantom power status change from OID: "${ext1}" value: ${ext2}`);
-                                } else if (ext1.startsWith('2')) {
+                                if (ext1.startsWith('2')) { // mixPoint processing bypass change
                                     this.log.info(`onStreamData(): processing bypass status change from OID: "${ext1}" value: ${ext2}`);
-                                } else if (ext1.startsWith('590')) {
+                                } else if (ext1.startsWith('400')) {    // input phantom power change
+                                    this.log.info(`onStreamData(): Phantom power status change from OID: "${ext1}" value: ${ext2}`);
+                                } else if (ext1.startsWith('590')) {    // input automixer status change
                                     this.log.info(`onStreamData(): automixer status change from OID: "${ext1}" value: ${ext2}`);
                                 } else
                                     this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
@@ -4060,7 +4125,7 @@ class Extron extends utils.Adapter {
                                             else if (device === 'sme211') {calcMode = 'linAux';}
                                             else {
                                                 source  = await this.getStateAsync(baseId +'.source');
-                                                if (source.val > 0) calcMode = 'linDig';
+                                                if (source.val > 0) calcMode = 'linDig';    // input configured to digital source
                                             }
                                             break;
 
