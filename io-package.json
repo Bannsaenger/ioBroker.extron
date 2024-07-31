@@ -250,7 +250,11 @@
         "keywords": [
             "extron"
         ],
-        "licenseInformation": "CC-BY-NC-4.0",
+        "licenseInformation": {
+            "link": "https://github.com/Bannsaenger/ioBroker.extron/blob/master/LICENSE",
+            "type": "limited",
+            "license": "CC-BY-NC-4.0"
+        },
         "platform": "Javascript/Node.js",
         "main": "main.js",
         "icon": "extron.png",
