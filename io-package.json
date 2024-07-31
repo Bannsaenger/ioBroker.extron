@@ -250,7 +250,7 @@
         "keywords": [
             "extron"
         ],
-        "license": "CC-BY-NC-4.0",
+        "licenseInformation": "CC-BY-NC-4.0",
         "platform": "Javascript/Node.js",
         "main": "main.js",
         "icon": "extron.png",
