@@ -1,0 +1,298 @@
+{
+    "i18n": true,
+    "type": "tabs",
+    "items": {
+        "_common": {
+            "type": "panel",
+            "label": "common",
+            "items": {
+                "device": {
+                    "type": "selectSendTo",
+                    "disabled": "originalData.device !== ''",
+                    "command": "getDeviceTypes",
+                    "default": "",                    
+                    "validator": "data.device !== ''",
+                    "validatorErrorText": "errSelectDevice",
+                    "validatorNoSaveOnError": true,
+                    "manual": false,
+                    "noTranslation": false,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "label": "lblSelectDevice",
+                    "help": "hlpSelectDevice"
+                },
+                "_deviceHintPreselect": {
+                    "hidden": "data.device !== ''",
+                    "type": "staticText",
+                    "text": "hintSelectDevice",
+                    "style": {
+                        "height": "80px",
+                        "backgroundColor": "#a83232",
+                        "borderRadius": "10px",
+                        "fontSize": "18px",
+                        "color": "#ffffff",
+                        "textAlign": "center",
+                        "marginTop": "5px"
+                    },
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6
+                },
+                "_deviceHintSelected": {
+                    "hidden": "data.device === ''",
+                    "type": "staticText",
+                    "text": "hintSelectDevice",
+                    "style": {
+                        "height": "80px",
+                        "borderRadius": "10px",
+                        "fontSize": "18px",
+                        "textAlign": "center",
+                        "marginTop": "5px"
+                    },
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6
+                },
+                "host": {
+                    "type": "text",
+                    "maxLength": 255,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "label": "lblHost",
+                    "help": "hlpHost"
+                },
+                "type": {
+                    "type": "select",
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "newLine": true,
+                    "options": [
+                        {"label": "plain (telnet)", "value": "telnet"},
+                        {"label": "Secure Shell (ssh)", "value": "ssh"}
+                    ],
+                    "label": "lblType"
+                },
+                "port": {
+                    "type": "number",
+                    "min": 1,
+                    "max": 65565,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "label": "lblPort",
+                    "help": "hlpPort",
+                    "onChange": {
+                        "alsoDependsOn": ["type"],
+                        "calculateFunc": "data.type === 'telnet' ? 22 : 22023",
+                        "ignoreOwnChanges": true
+                    }
+                },
+                "user": {
+                    "type": "text",
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "label": "lblUser"
+                },
+                "password": {
+                    "type": "password",
+                    "maxLength": 32,
+                    "visible": false,
+                    "repeat": false,
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "label": "lblPassword"
+                },
+                "pollDelay": {
+                    "type": "number",
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "min": 1000,
+                    "max": 100000,
+                    "step": 100,
+                    "label": "lblPollDelay",
+                    "help": "hlpPollDelay"
+                },
+                "reconnectDelay": {
+                    "type": "number",
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "min": 3000,
+                    "max": 300000,
+                    "step": 100,
+                    "label": "lblReconnectDelay",
+                    "help": "hlpReconnectDelay"
+                },
+                "answerTimeout": {
+                    "type": "number",
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "min": 100,
+                    "max": 500,
+                    "step": 10,
+                    "label": "lblAnswerTimeout",
+                    "help": "hlpAnswerTimeout"
+                },
+                "inactivityTimeout": {
+                    "type": "number",
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "min": 10000,
+                    "max": 100000,
+                    "step": 100,
+                    "label": "lblInactivityTimeout",
+                    "help": "hlpInactivityTimeout"
+                },
+                "stateDelay": {
+                    "type": "number",
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "min": 0,
+                    "max": 100000,
+                    "step": 1,
+                    "label": "lblStateDelay",
+                    "help": "hlpStateDelay"
+                },
+                "pushDeviceStatus": {
+                    "type": "select",
+                    "sm": 12,
+                    "md": 6,
+                    "lg": 6,
+                    "options": [
+                        {
+                            "label": {
+                                "en": "yes: Push device status",
+                                "de": "ja: Geräte Status senden",
+                                "ru": "да: состояние нажима",
+                                "pt": "sim: Empurre o status do dispositivo",
+                                "nl": "ja: status van duwinrichting",
+                                "fr": "oui: État du dispositif de poussée",
+                                "it": "sì: Spingere lo stato del dispositivo",
+                                "es": "sí: Empujar el estado del dispositivo",
+                                "pl": "tak: Status urządzenia push",
+                                "uk": "так: статус пристрою Push",
+                                "zh-cn": "是: 按下设备状态"
+                            }, 
+                            "value": true
+                        },
+                        {
+                            "label": {
+                                "en": "no: Get device status",
+                                "de": "nein: Gerätestatus abfragen",
+                                "ru": "нет: Получить статус устройства",
+                                "pt": "não: Obter status do dispositivo",
+                                "nl": "nee: apparaatstatus ophalen",
+                                "fr": "non: obtenir l'état du périphérique",
+                                "it": "no: Ottieni lo stato del dispositivo",
+                                "es": "no: Obtener el estado del dispositivo",
+                                "pl": "nie: Pobierz status urządzenia",
+                                "uk": "немає: Отримати статус пристрою",
+                                "zh-cn": "否: 获取设备状态"
+                            }, 
+                            "value": false
+                        }
+                    ],
+                    "label": "lblPushDeviceStatus",
+                    "help": "hlpPushDeviceStatus"
+                }
+            }
+        },
+        "_dante": {
+            "type": "panel",
+            "label": "dante",
+            "disabled": "1 != 1",
+            "items": {
+                "_getRemoteDevices": {
+                    "type": "sendTo",
+                    "label": "lblGetRemoteDevices",
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "style": {"fontSize": 20},
+                    "command": "getRemoteDevices",
+                    "variant": "outlined",
+                    "icon": "info",
+                    "showProcess": true,
+                    "useNative": true
+                },
+                "remoteDevices": {
+                    "type": "table",
+                    "sm": 12,
+                    "md": 12,
+                    "lg": 12,
+                    "items": [
+                        {
+                            "attr": "deviceActive",
+                            "type": "checkbox",
+                            "width": "10%",
+                            "title": "ttlActive",
+                            "tooltip": "ttpActive",
+                            "filter": false,
+                            "sort": true
+                        },
+                        {
+                            "attr": "danteName",
+                            "type": "text",
+                            "width": "20%",
+                            "title": "ttlDanteName",
+                            "tooltip": "ttpDanteName",
+                            "readOnly": true,
+                            "noClearButton": true,
+                            "disabled": "1 === 1",
+                            "noDelete": false,
+                            "filter": true,
+                            "sort": true
+                        },
+                        {
+                            "attr": "remoteDeviceType",
+                            "type": "selectSendTo",
+                            "width": "30%",
+                            "title": "ttlRemoteDeviceType",
+                            "tooltip": "ttpRemoteDeviceType",
+                            "readOnly": true,
+                            "noClearButton": true,
+                            "filter": true,
+                            "sort": true,
+                            "disabled": "1 === 1",
+                            "command": "getRemoteDeviceTypes",
+                            "default": "",                    
+                            "manual": false
+                        },
+                        {
+                            "attr": "friendlyName",
+                            "type": "text",
+                            "width": "20%",
+                            "title": "ttlFriendlyName",
+                            "tooltip": "ttpFriendlyName",
+                            "readOnly": false,
+                            "filter": true,
+                            "sort": true
+                        },
+                        {
+                            "attr": "_deleteRemoteDeviceDBObjects",
+                            "type": "sendTo",
+                            "width": "20%",
+                            "label": "lblDeleteRemoteDeviceDBObjects",
+                            "tooltip": "ttpDeleteRemoteDeviceDBObjects",
+                            "disabled": "!!data.deviceActive",
+                            "variant": "outlined",
+                            "command": "deleteRemoteDeviceDBObjects",
+                            "jsonData": "{\"selectedDevice\": \"${data.danteName}\"}",
+                            "useNative": true
+                        }
+                    ],
+                    "noDelete": true
+                }
+            }
+        }
+    }
+}

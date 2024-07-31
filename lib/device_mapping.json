@@ -2,6 +2,20 @@
     "DTP2_CrossPoint_82" : {
         "name" : "DTP2 CrossPoint 82",
         "short" : "cp82",
+        "description": {
+            "en": "8x2 Presentation Matrix Switcher (DTP2 CrossPoint 82)",
+            "de": "8x2 Präsentationskreuzschiene (DTP2 CrossPoint 82)",
+            "ru": "8x2 Presentation Matrix Switcher (DTP2 CrossPoint 82)",
+            "pt": "8x2 Presentation Matrix Switcher (DTP2 CrossPoint 82)",
+            "nl": "8x2 Presentatiematrixwisselaar (DTP2 CrossPoint 82)",
+            "fr": "Interrupteur de matrice de présentation 8x2 (DTP2 CrossPoint 82)",
+            "it": "8x2 Presentazione Matrix Switcher (DTP2 CrossPoint 82)",
+            "es": "8x2 Presentación Interruptor de matriz (DTP2 CrossPoint 82)",
+            "pl": "8x2 Prezentacja Matrix Switcher (DTP2 CrossPoint 82)",
+            "uk": "8x2 Презентація Matrix Switcher (DTP2 CrossPoint 82)",
+            "zh-cn": "8x2 演示矩阵切换器(DTP2 CrossPoint 82)"
+        },
+        "connectionType": "network",
         "objects" : [
             "common",
             "cp82"
@@ -57,6 +71,20 @@
     "SMD202" : {
         "name" : "SMD 202",
         "short" : "smd202",
+        "description": {
+            "en": "H.264 Streaming Media Player and Decoder (SMD 202)",
+            "de": "H.264-Player und Dekodierer (SMD 202)",
+            "ru": "H.264 потоковый медиаплеер и декодер (SMD 202)",
+            "pt": "H.264 Streaming Media Player e Decoder (SMD 202)",
+            "nl": "H.264 Streaming Media Player en Decoder (SMD 202)",
+            "fr": "H.264 Lecteur multimédia et décoder (SMD 202)",
+            "it": "H.264 Streaming Media Player e Decoder (SMD 202)",
+            "es": "H.264 Streaming Media Player and Decoder (SMD 202)",
+            "pl": "H.264 Streaming Media Player and Decode (SMD 202)",
+            "uk": "H.264 Streaming Media Player та Decoder (SMD 202)",
+            "zh-cn": "H.264 流媒体播放器与解码器(SMD 202)"
+        },
+        "connectionType": "network",
         "objects" : [
             "common",
             "smd202"
@@ -65,6 +93,20 @@
     "SME211" : {
         "name" : "SME 211",
         "short" : "sme211",
+        "description": {
+            "en": "Streaming Media Encoder (SME 211)",
+            "de": "Kodierer für Medien-Streaming (SME 211)",
+            "ru": "Streaming Media Encoder (SME 211)",
+            "pt": "Streaming Media Encoder (SME 211)",
+            "nl": "Streaming Media Encoder (SME 211)",
+            "fr": "Encodeur multimédia en streaming (SME 211)",
+            "it": "Streaming Media Encoder (SME 211)",
+            "es": "Streaming Media Encoder (SME 211)",
+            "pl": "Enkoder mediów strumieniowych (SME 211)",
+            "uk": "Потокове медіа Encoder (SME 211)",
+            "zh-cn": "流媒体编码器(SME 211)"
+        },
+        "connectionType": "network",
         "objects" : [
             "common",
             "sme211"
@@ -92,6 +134,20 @@
     "DMP128Plus_AT" : {
         "name" : "DMP 128 Plus AT",
         "short" : "dmp128",
+        "description": {
+            "en": "12x8 ProDSP Processor w/Dante (DMP 128 Plus AT)",
+            "de": "12x8 Matrix-Prozessor mit ProDSP und Dante (DMP 128 Plus AT)",
+            "ru": "12x8 ProDSP Processor w/Dante (DMP 128 Plus AT)",
+            "pt": "Processador 12x8 ProDSP w/Dante (DMP 128 Plus AT)",
+            "nl": "12x8 ProDSP Processor w/Dante (DMP 128 Plus AT)",
+            "fr": "Processeur ProDSP 12x8 avec Dante (DMP 128 Plus AT)",
+            "it": "12x8 ProDSP Processor w/Dante (DMP 128 Plus AT)",
+            "es": "Procesador ProDSP 12x8 w/Dante (DMP 128 Plus AT)",
+            "pl": "12x8 Procesor ProDSP w / Dante (DMP 128 Plus AT)",
+            "uk": "12x8 ProDSP Процесор w/Dante (DMP 128 Plus AT)",
+            "zh-cn": "12x8 ProDSP 处理器 w/Dante(DMP 128 Plus AT)"
+        },
+        "connectionType": "network",
         "objects" : [
             "common",
             "dmp128",
@@ -170,6 +226,20 @@
     "DMP128Plus_C_V_AT" : {
         "name" : "DMP 128 Plus C V AT",
         "short" : "dmp128",
+        "description": {
+            "en": "12x8 ProDSP Processor w/AEC, VoIP, and Dante (DMP 128 Plus C V AT)",
+            "de": "12x8 Matrix-Prozessoren mit ProDSP, AEC, VoIP und Dante (DMP 128 Plus C V AT)",
+            "ru": "12x8 ProDSP Processor w/AEC, VoIP и Dante (DMP 128 Plus C V AT)",
+            "pt": "Processador ProDSP 12x8 w/AEC, VoIP e Dante (DMP 128 Plus C V AT)",
+            "nl": "12x8 ProDSP Processor w/AEC, VoIP en Dante (DMP 128 Plus C V AT)",
+            "fr": "Processeur ProDSP 12x8 avec AEC, VoIP et Dante (DMP 128 Plus C V AT)",
+            "it": "12x8 ProDSP Processor w/AEC, VoIP e Dante (DMP 128 Plus C V AT)",
+            "es": "12x8 ProDSP Processor w/AEC, VoIP y Dante (DMP 128 Plus C V AT)",
+            "pl": "12x8 Procesor ProDSP w / AEC, VoIP i Dante (DMP 128 Plus C V AT)",
+            "uk": "12x8 ProDSP Процесор w/AEC, VoIP та Dante (DMP 128 Plus C V AT)",
+            "zh-cn": "12x8 ProDSP 处理器 w/AEC, VoIP,和但丁(DMP 128 Plus C V AT)"
+        },
+        "connectionType": "network",
         "objects" : [
             "common",
             "dmp128",
@@ -248,6 +318,20 @@
     "DMP64Plus_AT" : {
         "name" : "DMP 64 Plus AT",
         "short" : "dmp64",
+        "description": {
+            "en": "6x4 Digital Matrix Processor w/ AEC and Dante (DMP 64 Plus C AT)",
+            "de": "Digitaler 6x4 Matrix-Prozessor mit AEC und Dante (DMP 64 Plus C AT)",
+            "ru": "6x4 Digital Matrix Processor w/ AEC и Dante (DMP 64 Plus C AT)",
+            "pt": "Processador Digital de Matriz 6x4 w / AEC e Dante (DMP 64 Plus C AT)",
+            "nl": "6x4 Digital Matrix Processor w/AEC en Dante (DMP 64 Plus C AT)",
+            "fr": "Processeur de matrice numérique 6x4 avec AEC et Dante (DMP 64 Plus C AT)",
+            "it": "6x4 Digital Matrix Processor w/ AEC e Dante (DMP 64 Plus C AT)",
+            "es": "Procesador de matriz digital 6x4 w/ AEC y Dante (DMP 64 Plus C AT)",
+            "pl": "6x4 Cyfrowy procesor macierzy w / AEC i Dante (DMP 64 Plus C AT)",
+            "uk": "6x4 цифровий процесор матриці w / AEC і Dante (DMP 64 Plus C AT)",
+            "zh-cn": "6x4 数字矩阵处理器 w/ AEC和但丁(DMP 64 Plus C AT)"
+        },
+        "connectionType": "network",
         "objects" : [
             "common",
             "dmp128",
@@ -326,6 +410,20 @@
     "XMP240_C_AT" : {
         "name" : "XMP 240 C AT",
         "short" : "xmp240cat",
+        "description": {
+            "en": "Dante Audio Matrix Processor with AEC (XMP 240 C AT)",
+            "de": "Matrixprozessor mit 24 AEC-Kanälen und Dante (XMP 240 C AT)",
+            "ru": "Dante Audio Matrix Processor с AEC (XMP 240 C AT)",
+            "pt": "Processador de matriz de áudio Dante com AEC (XMP 240 C AT)",
+            "nl": "Dante Audio Matrix Processor met AEC (XMP 240 C AT)",
+            "fr": "Processeur audio de matrice Dante avec AEC (XMP 240 C AT)",
+            "it": "Processore Dante Audio Matrix con AEC (XMP 240 C AT)",
+            "es": "Procesador de matriz de audio con AEC (XMP 240 C AT)",
+            "pl": "Dante Audio Matrix Processor z AEC (XMP 240 C AT)",
+            "uk": "Dante Audio Matrix процесор з AEC (XMP 240 C AT)",
+            "zh-cn": "带有AEC(XMP 240 C AT)的但丁音频矩阵处理器"
+        },
+        "connectionType": "network",
         "objects" : [
             "common",
             "xmp240",
@@ -369,9 +467,23 @@
             }
         }   
     },
-    "NetPAU_1002" :{
+    "NetPA_U_1002" :{
         "name" : "NetPA U 1002",
         "short" : "npa1002",
+        "description": {
+            "en": "100 watt 2 channel low impedance amplifier with DSP and Dante (NetPA U 1002)",
+            "de": "Verstärker mit zwei Kanälen mit Dante und DSP 100 W je Kanal (NetPA U 1002)",
+            "ru": "100-ваттный 2-канальный усилитель с DSP и Dante (NetPA U 1002)",
+            "pt": "100 watt 2 canal amplificador de baixa impedância com DSP e Dante (NetPA U 1002)",
+            "nl": "100 watt 2 kanaal lage impedantieversterker met DSP en Dante (NetPA U 1002)",
+            "fr": "Amplificateur à faible impédance de 100 watts 2 canaux avec DSP et Dante (NetPA U 1002)",
+            "it": "Amplificatore a bassa impedenza da 100 watt 2 con DSP e Dante (NetPA U 1002)",
+            "es": "Amplificador de baja impedancia de 100 watt 2 canal con DSP y Dante (NetPA U 1002)",
+            "pl": "100 W 2 kanałowy wzmacniacz niskiego impedancji z DSP i Dante (NetPA U 1002)",
+            "uk": "100 Вт 2 канал низький опір підсилювач з DSP і Dante (NetPA U 1002)",
+            "zh-cn": "100瓦2信道低阻放大器,配有DSP和但丁(NetPA U 1002)"
+        },
+        "connectionType": "dante",
         "objects" : [
             "common",
             "netpa"
@@ -422,6 +534,20 @@
     "NetPA_U_1004":{
         "name" : "NetPA U 1004",
         "short" : "npa1004",
+        "description": {
+            "en": "100 watt 4 channel low impedance amplifier with DSP and Dante (NetPA U 1004)",
+            "de": "Verstärker mit vier Kanälen mit Dante und DSP 100 W je Kanal (NetPA U 1004)",
+            "ru": "100 Вт 4-канальный усилитель малой мощности с DSP и Dante (NetPA U 1004)",
+            "pt": "100 watt 4 canal amplificador de baixa impedância com DSP e Dante (NetPA U 1004)",
+            "nl": "100 watt 4 kanaals lage impedantieversterker met DSP en Dante (NetPA U 1004)",
+            "fr": "Amplificateur à faible impédance de 100 watts 4 canaux avec DSP et Dante (NetPA U 1004)",
+            "it": "Amplificatore a bassa impedenza da 100 watt 4 con DSP e Dante (NetPA U 1004)",
+            "es": "100 watt 4 canal amplificador de baja impedancia con DSP y Dante (NetPA U 1004)",
+            "pl": "100 W 4 kanałowy wzmacniacz niskiego impedancji z DSP i Dante (NetPA U 1004)",
+            "uk": "100 Вт 4 канал низький опір підсилювач з DSP і Dante (NetPA U 1004)",
+            "zh-cn": "100瓦4信道低阻放大器,配有DSP和但丁(NetPA U 1004)"
+        },
+        "connectionType": "dante",
         "objects" : [
             "common",
             "netpa"
@@ -469,9 +595,87 @@
             }
         }
     },
-    "NetPAU_8001" :{
+    "NetPA_U_2002":{
+        "name" : "NetPA U 2002",
+        "short" : "npa2002",
+        "description": {
+            "en": "200 watt 2 channel low impedance amplifier with DSP and Dante (NetPA U 2002)",
+            "de": "Verstärker mit zwei Kanälen mit Dante und DSP 200 W je Kanal (NetPA U 2002)",
+            "ru": "200 Вт 2-канальный усилитель малой мощности с DSP и Dante (NetPA U 2002)",
+            "pt": "200 watts 2 canal amplificador de baixa impedância com DSP e Dante (NetPA U 2002)",
+            "nl": "200 watt 2 kanaals lage impedantieversterker met DSP en Dante (NetPA U 2002)",
+            "fr": "Amplificateur à faible impédance de 200 watts 2 avec DSP et Dante (NetPA U 2002)",
+            "it": "amplificatore a bassa impedenza da 200 watt 2 canali con DSP e Dante (NetPA U 2002)",
+            "es": "Amplificador de baja impedancia de 200 watt 2 canal con DSP y Dante (NetPA U 2002)",
+            "pl": "200 W 2 kanałowy wzmacniacz niskiego impedancji z DSP i Dante (NetPA U 2002)",
+            "uk": "200 Вт 2 канал низький підсилювач імпульсу з DSP і Dante (NetPA U 2002)",
+            "zh-cn": "200瓦2信道低阻放大器,配有DSP和但丁(NetPA U 2002)"
+        },
+        "connectionType": "dante",
+        "objects" : [
+            "common",
+            "netpa"
+        ],
+        "in" : {
+            "inputs" : {
+                "name" : "Inputs",
+                "short" : "I",
+                "amount" : 4
+            },
+            "expansionInputs" : {
+                "name" : "Expansion Bus (AT Inputs)",
+                "short" : "D",
+                "amount" : 2
+            }
+        },
+        "mp" : {
+            "mixPoints" : {
+                "name" : "Mixpoints",
+                "short" : "MP"
+            }
+        },
+        "out" : {
+            "outputs" : {
+                "name" : "Output",
+                "short" : "O",
+                "amount" : 2
+            },
+            "ampOutputs" : {
+                "name" : "Amp Output",
+                "short" : "A",
+                "amount" : 2
+            },
+            "expansionOutputs" : {
+                "name" : "Expansion Output",
+                "short" : "E",
+                "amount" : 2
+            }
+        },
+        "grp" : {
+            "groups" : {
+                "name" : "Groups",
+                "short" : "GRP",
+                "amount" : 32
+            }
+        }
+    },
+    "NetPA_U_8001" :{
         "name" : "NetPA U 8001",
         "short" : "npa8001",
+        "description": {
+            "en": "800W Mono Subwoofer Amplifier with Dante and DSP (NetPA U 8001)",
+            "de": "Mono Subwoofer Verstärker mit Dante und DSP 800 W (NetPA U 8001)",
+            "ru": "800W Mono Subwoofer Amplifier with Dante and DSP (NetPA U 8001)",
+            "pt": "Amplificador de subwoofer mono 800W com Dante e DSP (NetPA U 8001)",
+            "nl": "800W Mono Subwoofer Versterker met Dante en DSP (NetPA U 8001)",
+            "fr": "Amplificateur mono subwoofer 800W avec Dante et DSP (NetPA U 8001)",
+            "it": "Amplificatore mono subwoofer da 800W con Dante e DSP (NetPA U 8001)",
+            "es": "Amplificador de 800W Mono Subwoofer con Dante y DSP (NetPA U 8001)",
+            "pl": "Wzmacniacz 800W Mono Subwoofera z Dante i DSP (NetPA U 8001)",
+            "uk": "КСНУМКСВ Моно Сабвуфер підсилювач з Dante і DSP (NetPA U 8001)",
+            "zh-cn": "800W Mono Subwoofer 带有但丁和DSP的放大器(NetPA U 8001)"
+        },
+        "connectionType": "dante",
         "objects" : [
             "common",
             "netpa"
@@ -522,6 +726,20 @@
     "AXI44_AT":{
         "name" : "AXI 44 AT",
         "short" : "axi44",
+        "description": {
+            "en": "Audio expansion interface with Dante DDM AES67 4 inputs 4 outputs (AXI 44 AT)",
+            "de": "Dante-Audiointerface mit 4 Eingängen, 4 Ausgängen, DDM und AES67 (AXI 44 AT)",
+            "ru": "Интерфейс расширения аудио с Dante DDM AES67 4 входных 4 выхода (AXI 44 AT)",
+            "pt": "Interface de expansão de áudio com Dante DDM AES67 4 entradas 4 saídas (AXI 44 AT)",
+            "nl": "Audio-uitbreidingsinterface met Dante DDM AES67 4 ingangen 4 uitgangen (AXI 44 AT)",
+            "fr": "Interface d'extension audio avec Dante DDM AES67 4 entrées 4 sorties (AXI 44 AT)",
+            "it": "Interfaccia di espansione audio con Dante DDM AES67 4 ingressi 4 uscite (AXI 44 AT)",
+            "es": "Interfaz de expansión de audio con Dante DDM AES67 4 entradas 4 salidas (AXI 44 AT)",
+            "pl": "Interfejs rozszerzający dźwięk z Dante DDM AES67 4 wejścia 4 wyjścia (AXI 44 AT)",
+            "uk": "Інтерфейс розширення аудіо з Dante DDM AES67 4 входи 4 (AXI 44 AT)",
+            "zh-cn": "与但丁DDM AES67的音频扩展接口 4 投入 4 产出 (AXI 44 AT)"
+        },
+        "connectionType": "dante",
         "objects" : [
             "common",
             "axi"
@@ -542,8 +760,22 @@
         }
     },
     "AXI22_AT":{
-        "name" : "AXI 44 AT",
-        "short" : "axi44",
+        "name" : "AXI 22 AT",
+        "short" : "22",
+        "description": {
+            "en": "Audio expansion interface with Dante DDM AES67 2 inputs 2 outputs (AXI 22 AT)",
+            "de": "Dante-Audiointerface mit 2 Eingängen, 2 Ausgängen, DDM und AES67 (AXI 22 AT)",
+            "ru": "Интерфейс расширения аудио с Dante DDM AES67 2 входные 2 выхода (AXI 22 AT)",
+            "pt": "Interface de expansão de áudio com Dante DDM AES67 2 entradas 2 saídas (AXI 22 AT)",
+            "nl": "Audio-uitbreidingsinterface met Dante DDM AES67 2 ingangen 2 uitgangen (AXI 22 AT)",
+            "fr": "Interface d'extension audio avec Dante DDM AES67 2 entrées 2 sorties (AXI 22 AT)",
+            "it": "Interfaccia di espansione audio con Dante DDM AES67 2 ingressi 2 uscite (AXI 22 AT)",
+            "es": "Interfaz de expansión de audio con Dante DDM AES67 2 entradas 2 salidas (AXI 22 AT)",
+            "pl": "Interfejs rozszerzający dźwięk z wejściem Dante DDM AES67 2 (AXI 22 AT)",
+            "uk": "Інтерфейс розширення аудіо з Dante DDM AES67 2 входи 2 (AXI 22 AT)",
+            "zh-cn": "与但丁DDM AES67的音频扩展接口 2 输入 2 输出 (AXI 22 AT)"
+        },
+        "connectionType": "dante",
         "objects" : [
             "common",
             "axi"
@@ -566,6 +798,20 @@
     "AXI02_AT":{
         "name" : "AXI 02 AT",
         "short" : "axi02",
+        "description": {
+            "en": "Audio expansion interface with Dante DDM AES67 2 outputs (AXI 02 AT)",
+            "de": "Dante-Audiointerface mit 2 Ausgängen, DDM und AES67 (AXI 02 AT)",
+            "ru": "Интерфейс расширения аудио с Dante DDM AES67 2 выходами (AXI 02 AT)",
+            "pt": "Interface de expansão de áudio com saídas Dante DDM AES67 2 (AXI 02 AT)",
+            "nl": "Audio-uitbreidingsinterface met Dante DDM AES67 2 uitgangen (AXI 02 AT)",
+            "fr": "Interface d'extension audio avec sorties Dante DDM AES67 2 (AXI 02 AT)",
+            "it": "Interfaccia di espansione audio con uscite Dante DDM AES67 2 (AXI 02 AT)",
+            "es": "Interfaz de expansión de audio con Dante DDM AES67 2 salidas (AXI 02 AT)",
+            "pl": "Interfejs rozszerzający dźwięk z wyjściami Dante DDM AES67 2 (AXI 02 AT)",
+            "uk": "Інтерфейс розширення аудіо з Dante DDM AES67 2 виходів (AXI 02 AT)",
+            "zh-cn": "与但丁DDM AES67 2 输出的音频扩展接口(AXI 02 AT)"
+        },
+        "connectionType": "dante",
         "objects" : [
             "common",
             "axi"

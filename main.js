@@ -2525,7 +2525,6 @@ class Extron extends utils.Adapter {
         this.grpCmdBuf[group].push(cmd); // push command to buffer
     }
 
-
     /**
      * send group command buffer
      * @param {number} group
@@ -2536,7 +2535,6 @@ class Extron extends utils.Adapter {
             this.streamSend(this.grpCmdBuf[group].shift());
         }
     }
-
 
     /**
      * get all member OID's of a given group from device
@@ -4159,15 +4157,88 @@ class Extron extends utils.Adapter {
      * Using this method requires "common.message" property to be set to true in io-package.json
      * @param {ioBroker.Message} obj
      */
-    onMessage(obj) {
-        if (typeof obj === 'object' && obj.message) {
-            if (obj.command === 'send') {
-                // e.g. send email or pushover or whatever
-                this.log.info('send command');
+    async onMessage(obj) {
+        try {
+            //this.log.debug(`onMessage: ${JSON.stringify(obj)}`);
+            if (typeof obj === 'object' && obj.command) {
+                const sendBack = [];
+                const sysConfig = await this.getForeignObjectAsync('system.config');
+                const sysLang = sysConfig.common.language;
+                let canDanteAnswer = 'no';
+                // eslint-disable-next-line prefer-const
+                let localRemoteDevices = structuredClone(this.config.remoteDevices);
+                const newRemoteDevice = {
+                    'deviceActive': false,
+                    'danteName': 'Device' + Math.floor(Math.random() * 10),
+                    'remoteDeviceType': 'NetPA_U_1004',
+                    'friendlyName': 'Das Ding' + Math.floor(Math.random() * 100)
+                };
+                this.log.debug(`get command: ${JSON.stringify(obj.command)}`);
+                switch (obj.command) {
 
-                // Send response in callback if required
-                if (obj.callback) this.sendTo(obj.from, obj.command, 'Message received', obj.callback);
+                    case 'getDeviceTypes':
+                        this.log.debug(`onMessage getDeviceTypes: ${JSON.stringify(obj)}`);
+                        for (const deviceKey in this.devices) {
+                            if (this.devices[deviceKey].connectionType === 'network') {     // only direct connected devices
+                                sendBack.push({'label': this.devices[deviceKey].description[sysLang] || this.devices[deviceKey].description.en, 'value': deviceKey});
+                            }
+                        }
+                        this.log.debug(`send back getDeviceTypes: (lang: ${sysLang}) `);
+                        this.sendTo(obj.from, obj.command, sendBack, obj.callback);
+                        break;
+
+                    case 'getRemoteDeviceTypes':
+                        this.log.debug(`onMessage getRemoteDeviceTypes: ${JSON.stringify(obj)}`);
+                        for (const deviceKey in this.devices) {
+                            if (this.devices[deviceKey].connectionType === 'dante') {       // only via Dante connected devices
+                                sendBack.push({'label': this.devices[deviceKey].description[sysLang] || this.devices[deviceKey].description.en, 'value': deviceKey});
+                            }
+                        }
+                        this.log.debug(`send back getRemoteDeviceTypes: (lang: ${sysLang}) `);
+                        this.sendTo(obj.from, obj.command, sendBack, obj.callback);
+                        break;
+
+                    case 'canDante':
+                        // to enable the dante panel. not functional for now
+                        this.log.debug(`onMessage canDante: ${JSON.stringify(obj)}`);
+                        canDanteAnswer = 'no';
+                        if (obj.message.selectedDevice !== '') {
+                            if (this.devices[obj.message.selectedDevice].objects.includes('danterelay')) {
+                                canDanteAnswer = 'yes';
+                            }
+                        }
+                        this.sendTo(obj.from, obj.command, canDanteAnswer, obj.callback);
+                        break;
+
+                    case 'getRemoteDevices':
+                        this.log.debug(`onMessage getRemoteDevices: ${JSON.stringify(obj)}`);
+                        // mix native and newly discovered devices
+                        // @ts-ignore
+                        if (localRemoteDevices.some(item => item.danteName === newRemoteDevice.danteName)) {
+                            // We found at least one object that we're looking for!
+                            // @ts-ignore
+                            this.log.debug(`Value already in remoteDevices: ${newRemoteDevice.danteName}`);
+                        } else {
+                            // @ts-ignore
+                            this.log.debug(`Pushing value : ${newRemoteDevice.danteName} to remoteDevices`);
+                            localRemoteDevices.push(newRemoteDevice);
+                        }
+                        this.sendTo(obj.from, obj.command, {'native': {'remoteDevices': localRemoteDevices}}, obj.callback);
+                        break;
+
+                    case 'deleteRemoteDeviceDBObjects':
+                        this.log.debug(`onMessage deleteRemoteDeviceDBObjects: ${JSON.stringify(obj)}`);
+                        // delete database of the remoteDevice and delete itself from the config object
+                        if (obj.message.selectedDevice !== '') {
+                            localRemoteDevices.splice(localRemoteDevices.findIndex(item => item.danteName === obj.message.selectedDevice), 1);
+                        }
+                        this.log.debug(`slice: ${obj.message.selectedDevice} and send back: ${JSON.stringify(localRemoteDevices)}`);
+                        this.sendTo(obj.from, obj.command, {'native': {'remoteDevices': localRemoteDevices}}, obj.callback);
+                        break;
+                }
             }
+        } catch (err) {
+            this.errorHandler(err, 'onMessage');
         }
     }
 
