@@ -48,6 +48,7 @@ If you are a non commercial organisation or use it for private use you can get a
 * (Bannsaenger) updated to adapter-dev and release script
 * (Bannsaenger) updated dependencies
 * (Bannsaenger) introducing jsonConfig
+* (mschlgl) add more DSP SIS commands
 
 ### 0.2.16 (2024-07-09)
 * (mschlgl) enhanced network reconnect functionality, added DANTE remote commands, additional devices
