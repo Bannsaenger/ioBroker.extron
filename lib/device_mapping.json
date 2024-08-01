@@ -157,22 +157,26 @@
             "inputs" : {
                 "name" : "Inputs",
                 "short" : "I",
-                "amount" : 12
+                "amount" : 12,
+                "dspfunc": ["dsp_flt","dsp_aec","dsp_dyn","dsp_dyn","dsp_dly","dsp_dck","dsp_amx"]
             },
             "auxInputs" : {
                 "name" : "Aux Inputs",
                 "short" : "X",
-                "amount" : 8
+                "amount" : 8,
+                "dspfunc": ["dsp_flt","dsp_dyn","dsp_duck","dsp_amx"]
             },
             "virtualReturns" : {
                 "name" : "Virtual Returns",
                 "short" : "R",
-                "amount" : 16
+                "amount" : 16,
+                "dspfunc":["dsp_flt","dsp_dyn","dsp_dly"]
             },
             "expansionInputs" : {
                 "name" : "Expansion Bus (AT Inputs)",
                 "short" : "D",
-                "amount" : 48
+                "amount" : 48,
+                "dspfunc":["dsp_amx"]
             }
         },
         "mp" : {
@@ -185,12 +189,14 @@
             "outputs" : {
                 "name" : "Output",
                 "short" : "O",
-                "amount" : 8
+                "amount" : 8,
+                "dspfunc":["dsp_dly","dsp_flt","dsp_dyn"]
             },
             "auxOutputs" : {
                 "name" : "Aux Output",
                 "short" : "A",
-                "amount" : 8
+                "amount" : 8,
+                "dspfunc":["dsp_flt","dsp_dyn"]
             },
             "virtualSendBus" : {
                 "name" : "virtual SendBus",
@@ -200,7 +206,8 @@
             "expansionOutputs" : {
                 "name" : "Expansion Output",
                 "short" : "E",
-                "amount" : 16
+                "amount" : 16,
+                "dspfunc":["dsp_dly","dsp_flt","dsp_dyn"]
             }
         },
         "ply" : {

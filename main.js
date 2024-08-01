@@ -1,6 +1,6 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.16 20240729
+ *      iobroker extron (SIS) Adapter V0.2.16 20240801
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
@@ -1350,6 +1350,19 @@ class Extron extends utils.Adapter {
                                 for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].outputs) {
                                     await this.setObjectAsync(actOutput + '.' + element._id, element);
                                 }
+                                /**
+                                if (this.devices[this.config.device].out[outputs].dspfunc) {    // if we have DSP blocks on the output
+                                    for (const dspfunc of this.devices[this.config.device].out[outputs].dspfunc) {
+                                        if (dspfunc == 'dsp_flt') {
+                                            //
+                                        } else {
+                                            for (const element of this.objectsTemplate[dspfunc]) {
+                                                const element_id = actOutput+'.'+element._id;
+                                                await this.setObjectAsync(element_id, element);
+                                            }
+                                        }
+                                    }
+                                }**/
                                 break;
 
                             case 'auxOutputs' :
