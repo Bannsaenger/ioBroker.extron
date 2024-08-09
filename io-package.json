@@ -8,19 +8,6 @@
             "0.2.14"
         ],
         "news": {
-            "0.2.16": {
-                "en": "enhanced network reconnect functionality, added DANTE remote commands, additional devices",
-                "de": "Netzwerk wiederverbindnung verbessert, DANTE Fernsteuerbefehle und zusätzliche gerätetypen hinzugefügt",
-                "ru": "расширенная функция повторного подключения к сети, добавлены удаленные команды DANTE, дополнительные устройства",
-                "pt": "funcionalidade aprimorada de reconexão de rede, comandos remotos DANTE adicionados, dispositivos adicionais",
-                "nl": "verbeterde functionaliteit voor het opnieuw verbinden van netwerken, toegevoegde DANTE-afstandsbedieningsopdrachten, extra apparaten",
-                "fr": "fonctionnalité de reconnexion réseau améliorée, commandes à distance DANTE ajoutées, appareils supplémentaires",
-                "it": "funzionalità di riconnessione alla rete migliorata, aggiunti comandi remoti DANTE, dispositivi aggiuntivi",
-                "es": "funcionalidad mejorada de reconexión de red, comandos remotos DANTE agregados, dispositivos adicionales",
-                "pl": "ulepszona funkcjonalność ponownego łączenia sieci, dodane zdalne polecenia DANTE, dodatkowe urządzenia",
-                "uk": "розширена функція повторного підключення до мережі, додані віддалені команди DANTE, додаткові пристрої",
-                "zh-cn": "增强的网络重新连接功能、添加 DANTE 远程命令、附加设备"
-            },
             "0.2.15": {
                 "en": "fixed typo in io-package.json",
                 "de": "tippfehler in io-package.json korrigiert",
@@ -111,110 +98,6 @@
                 "pl": "SMD202: dodano polecenie wyłączenia napisów przy uruchomieniu",
                 "uk": "SMD202: додано команду вимкнення субтитрів під час запуску",
                 "zh-cn": "SMD202：添加了启动时禁用字幕命令"
-            },
-            "0.2.8": {
-                "en": "onStreamData command debug msg added",
-                "de": "onSTreamData debug-Meldung für command hinzugefügt",
-                "ru": "Добавлено сообщение отладки команды onStreamData",
-                "pt": "Mensagem de depuração do comando onStreamData adicionada",
-                "nl": "onStreamData-opdracht debug-bericht toegevoegd",
-                "fr": "Msg de débogage de la commande onStreamData ajouté",
-                "it": "Aggiunto messaggio di debug del comando onStreamData",
-                "es": "Se agregó el mensaje de depuración del comando onStreamData",
-                "pl": "Dodano komunikat debugowania polecenia onStreamData",
-                "uk": "Додано повідомлення про налагодження команди onStreamData",
-                "zh-cn": "添加了 onStreamData 命令调试消息"
-            },
-            "0.2.7": {
-                "en": "SMD202 preset list handling update",
-                "de": "Verarbeitung der SMD202 Preset-Liste überarbeitet",
-                "ru": "Обновление обработки списка предустановок SMD202",
-                "pt": "Atualização de manipulação de lista predefinida SMD202",
-                "nl": "Update voor verwerking van SMD202-voorinstellingenlijst",
-                "fr": "Mise à jour de la gestion de la liste de préréglages SMD202",
-                "it": "Aggiornamento della gestione dell'elenco delle preimpostazioni SMD202",
-                "es": "Actualización de manejo de lista preestablecida SMD202",
-                "pl": "Aktualizacja obsługi listy ustawień wstępnych SMD202",
-                "uk": "Оновлення обробки списку попередніх налаштувань SMD202",
-                "zh-cn": "SMD202预设列表处理更新"
-            },
-            "0.2.6": {
-                "en": "added SMD202 preset list handling oin startup",
-                "de": "Verarbeitung der SMD202 Preset-Liste beim Adapterstart hinzugefügt",
-                "ru": "добавлена ​​обработка списка предустановок SMD202 при запуске",
-                "pt": "adicionado gerenciamento de lista predefinida SMD202 na inicialização",
-                "nl": "SMD202-presetlijst toegevoegd voor afhandeling bij opstarten",
-                "fr": "ajout de la liste de préréglages SMD202 pour la gestion du démarrage",
-                "it": "aggiunto elenco preimpostato SMD202 per la gestione dell'avvio",
-                "es": "Se agregó el manejo de la lista preestablecida SMD202 en el inicio.",
-                "pl": "dodano listę presetów SMD202 obsługującą uruchamianie",
-                "uk": "додано обробку попередньо встановленого списку SMD202 під час запуску",
-                "zh-cn": "添加了 SMD202 预设列表处理启动"
-            },
-            "0.2.5": {
-                "en": "added SMD202 preset list handling",
-                "de": "Verarbeitung der SMD202 Preset-Liste hinzugefügt",
-                "ru": "добавлена ​​обработка списка предустановок SMD202",
-                "pt": "adicionado manipulação de lista predefinida SMD202",
-                "nl": "verwerking van SMD202-voorkeuzelijsten toegevoegd",
-                "fr": "ajout de la gestion de la liste de préréglages SMD202",
-                "it": "aggiunta la gestione dell'elenco dei preset SMD202",
-                "es": "Se agregó manejo de lista preestablecida SMD202.",
-                "pl": "dodano obsługę listy presetów SMD202",
-                "uk": "додано обробку попередньо встановленого списку SMD202",
-                "zh-cn": "添加了 SMD202 预设列表处理"
-            },
-            "0.2.4": {
-                "en": "corrected typo in object_templates",
-                "de": "Tippfehler in Datei object_templates korrigiert",
-                "ru": "исправлена ​​опечатка в object_templates",
-                "pt": "erro de digitação corrigido em object_templates",
-                "nl": "typfout in object_templates gecorrigeerd",
-                "fr": "faute de frappe corrigée dans object_templates",
-                "it": "corretto errore di battitura in object_templates",
-                "es": "error tipográfico corregido en object_templates",
-                "pl": "poprawiona literówka w object_templates",
-                "uk": "виправлено помилку в object_templates",
-                "zh-cn": "更正了 object_templates 中的拼写错误"
-            },
-            "0.2.3": {
-                "en": "fixed DMP 128 file handling",
-                "de": "Dateiverwaltung für DMP!128 korrigiert",
-                "ru": "исправлена ​​обработка файлов DMP 128",
-                "pt": "manipulação fixa de arquivos DMP 128",
-                "nl": "vaste DMP 128-bestandsafhandeling",
-                "fr": "correction de la gestion des fichiers DMP 128",
-                "it": "corretta la gestione dei file DMP 128",
-                "es": "Se corrigió el manejo de archivos DMP 128.",
-                "pl": "naprawiono obsługę plików DMP 128",
-                "uk": "виправлено обробку файлів DMP 128",
-                "zh-cn": "修复了 DMP 128 文件处理"
-            },
-            "0.2.2": {
-                "en": "fixed SMD202 loopmode command",
-                "de": "Fehler im Befehl loopmode für den SMD202 behoben",
-                "ru": "исправлена ​​команда режима петли SMD202",
-                "pt": "comando loopmode SMD202 fixo",
-                "nl": "vaste SMD202 loopmode-opdracht",
-                "fr": "commande de mode boucle SMD202 fixe",
-                "it": "corretto il comando loopmode SMD202",
-                "es": "comando de modo de bucle SMD202 fijo",
-                "pl": "naprawiono polecenie trybu pętli SMD202",
-                "uk": "виправлена ​​команда SMD202 loopmode",
-                "zh-cn": "修复SMD202循环模式命令"
-            },
-            "0.2.1": {
-                "en": "fixed log messages, improved group control timing issues",
-                "de": "Protokollnachrichten verbessert, Zeitprobleme bei Gruppenkonfiguration behoben",
-                "ru": "исправлены сообщения журнала, улучшены проблемы с синхронизацией группового контроля",
-                "pt": "mensagens de log corrigidas, problemas aprimorados de tempo de controle de grupo",
-                "nl": "vaste logberichten, verbeterde timingproblemen met groepscontrole",
-                "fr": "messages de journal corrigés, problèmes de synchronisation de contrôle de groupe améliorés",
-                "it": "messaggi di registro corretti, problemi di temporizzazione del controllo di gruppo migliorati",
-                "es": "mensajes de registro fijos, problemas de tiempo de control de grupo mejorados",
-                "pl": "poprawione komunikaty dziennika, poprawione problemy z synchronizacją kontroli grupowej",
-                "uk": "виправлені повідомлення журналу, покращені проблеми з часом керування групою",
-                "zh-cn": "修复了日志消息，改进了组控制计时问题"
             }
         },
         "titleLang": {
@@ -256,7 +139,6 @@
             "license": "CC-BY-NC-4.0"
         },
         "platform": "Javascript/Node.js",
-        "main": "main.js",
         "icon": "extron.png",
         "enabled": false,
         "extIcon": "https://raw.githubusercontent.com/Bannsaenger/ioBroker.extron/master/admin/extron.png",
@@ -268,11 +150,10 @@
         "dataSource": "push",
         "tier": 3,
         "compact": true,
-        "materialize": true,
         "messagebox": true,
         "dependencies": [
             {
-                "js-controller": ">=4.0.15"
+                "js-controller": ">=5.0.19"
             }
         ],
         "globalDependencies": [
