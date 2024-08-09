@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "extron",
-        "version": "0.2.16",
+        "version": "0.2.15",
         "blockedVersions": [
             "0.2.11",
             "0.2.12",
