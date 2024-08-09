@@ -198,14 +198,6 @@
                     "def": -100.0
                 },
                 "native": {}
-            },    
-            {
-                "_id": "mixPoints",
-                "type": "folder",
-                "common": {
-                    "name": "Matrix of patchable junction points"
-                },
-                "native": {}
             }
         ],
         "auxInputs": [
@@ -500,6 +492,14 @@
         ],
         "mixPoints": [
             {
+                "_id": "mixPoints",
+                "type": "folder",
+                "common": {
+                    "name": "Matrix of patchable junction points"
+                },
+                "native": {}
+            },
+            {
                 "_id": "mute",
                 "type": "state",
                 "common": {
@@ -662,48 +662,6 @@
                 "native": {}
             },
             {
-                "_id": "dynamics",
-                "type": "channel",
-                "common": {
-                    "role": "output.channel",
-                    "name": "Common output parameters"
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "type of dyn insert",
-                    "type": "number",
-                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
-                    "read": true,
-                    "write": true,
-                    "min":0,
-                    "max":4,
-                    "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "filter",
-                "type": "folder",
-                "common": {
-                    "name":"filter"
-                },
-                "native":{}
-            },
-            {
-                "_id": "0",
-                "type": "channel",
-                "common": {
-                    "role": "filter.channel",
-                    "name": "filter index (1..9)"
-                },
-                "native": {}
-            },
-            {
                 "_id": "attenuation",
                 "type": "channel",
                 "common": {
@@ -805,31 +763,6 @@
                     "min": -12.0,
                     "max": 12.0,
                     "def": -12.0
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics",
-                "type": "channel",
-                "common": {
-                    "role": "output.channel",
-                    "name": "Common output parameters"
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "type of dyn insert",
-                    "type": "number",
-                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
-                    "read": true,
-                    "write": true,
-                    "min":0,
-                    "max":4,
-                    "def": 0
                 },
                 "native": {}
             },
@@ -950,31 +883,6 @@
                     "min": -12.0,
                     "max": 12.0,
                     "def": -12.0
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics",
-                "type": "channel",
-                "common": {
-                    "role": "output.channel",
-                    "name": "Common output parameters"
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "type of dyn insert",
-                    "type": "number",
-                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
-                    "read": true,
-                    "write": true,
-                    "min":0,
-                    "max":4,
-                    "def": 0
                 },
                 "native": {}
             },
@@ -1418,31 +1326,6 @@
                 "native": {}
             },
             {
-                "_id": "dynamics",
-                "type": "channel",
-                "common": {
-                    "role": "output.channel",
-                    "name": "Common output parameters"
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "type of dyn insert",
-                    "type": "number",
-                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
-                    "read": true,
-                    "write": true,
-                    "min":0,
-                    "max":4,
-                    "def": 0
-                },
-                "native": {}
-            },
-            {
                 "_id": "attenuation",
                 "type": "channel",
                 "common": {
@@ -1544,31 +1427,6 @@
                     "min": -12.0,
                     "max": 12.0,
                     "def": -12.0
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics",
-                "type": "channel",
-                "common": {
-                    "role": "output.channel",
-                    "name": "Common output parameters"
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "type of dyn insert",
-                    "type": "number",
-                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
-                    "read": true,
-                    "write": true,
-                    "min":0,
-                    "max":4,
-                    "def": 0
                 },
                 "native": {}
             },
@@ -3112,31 +2970,6 @@
                 "native": {}
             },
             {
-                "_id": "dynamics",
-                "type": "channel",
-                "common": {
-                    "role": "output.channel",
-                    "name": "Common output parameters"
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "type of dyn insert",
-                    "type": "number",
-                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
-                    "read": true,
-                    "write": true,
-                    "min":0,
-                    "max":4,
-                    "def": 0
-                },
-                "native": {}
-            },
-            {
                 "_id": "attenuation",
                 "type": "channel",
                 "common": {
@@ -3238,31 +3071,6 @@
                     "min": -12.0,
                     "max": 12.0,
                     "def": -12.0
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics",
-                "type": "channel",
-                "common": {
-                    "role": "output.channel",
-                    "name": "Common output parameters"
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "type of dyn insert",
-                    "type": "number",
-                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
-                    "read": true,
-                    "write": true,
-                    "min":0,
-                    "max":4,
-                    "def": 0
                 },
                 "native": {}
             },
@@ -3383,133 +3191,6 @@
                     "min": -12.0,
                     "max": 12.0,
                     "def": -12.0
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics",
-                "type": "channel",
-                "common": {
-                    "role": "output.channel",
-                    "name": "Common output parameters"
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.type",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "type of dyn insert",
-                    "type": "number",
-                    "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
-                    "read": true,
-                    "write": true,
-                    "min":0,
-                    "max":4,
-                    "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.status",
-                "type": "state",
-                "common": {
-                    "role": "switch",
-                    "name": "if true dynamics is active",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": false
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.threshold",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "threshold from -80 to 0db in 0.1 db steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": -800,
-                    "max": 0,
-                    "def": -300
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.attack",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "attack time from 0 to 200ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 2000,
-                    "def": 5
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.hold",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "hold time from 0 to 500ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 5000,
-                    "def": 1000
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.release",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "release time from 10 to 1000ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 10,
-                    "max": 5000,
-                    "def": 10000
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.ratio",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "rratio from 1:1 to 100:1 in 0.1 steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 1,
-                    "max": 1000,
-                    "def": 100
-                },
-                "native": {}
-            },
-            {
-                "_id": "dynamics.knee",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "if true soft knee",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "def": 0,
-                    "states":{"0":"hard knee", "1":"soft knee"}
                 },
                 "native": {}
             },
@@ -3717,6 +3398,77 @@
             }
         ]
     },
+    "mixPoints": [
+            {
+                "_id": "mute",
+                "type": "state",
+                "common": {
+                    "role": "media.mute",
+                    "name": "If true the mixpoint is disabled (DSM)",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Level linear from 0 to 1000 (0 dB is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Level logarithmic from -100 to 12 in 0.1 dB steps (DSG)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 12.0,
+                    "def": -100.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "automix",
+                "type": "state",
+                "common": {
+                    "role": "media.mute",
+                    "name": "If true the automixer is bypassed (DSP)",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "processing",
+                "type": "state",
+                "common": {
+                    "role": "media.mute",
+                    "name": "If true the DSp processing is bypassed (DSZ)",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": false
+                },
+                "native": {}
+            }
+        ],
     "userflash" : {
         "filesystem" : {
             "_id": "fs",
@@ -3850,117 +3602,159 @@
               "native": {}
         }
     ],
-    "dynamics": [
-            {
-                "_id": "dynamics.status",
-                "type": "state",
-                "common": {
-                    "role": "switch",
-                    "name": "if true dynamics is active",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": false
-                },
-                "native": {}
+    "dsp_dyn": [
+        {
+            "_id": "dynamics",
+            "type": "channel",
+            "common": {
+                "role": "output.channel",
+                "name": "Common output parameters"
             },
-            {
-                "_id": "dynamics.threshold",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "threshold from -80 to 0db in 0.1 db steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": -800,
-                    "max": 0,
-                    "def": -300
-                },
-                "native": {}
+            "native": {}
+        },
+        {
+            "_id": "dynamics.type",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "type of dyn insert (DSY)",
+                "type": "number",
+                "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
+                "read": true,
+                "write": true,
+                "min":0,
+                "max":4,
+                "def": 0
             },
-            {
-                "_id": "dynamics.attack",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "attack time from 0 to 200ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 2000,
-                    "def": 5
-                },
-                "native": {}
+            "native": {}
+        },
+        {
+            "_id": "dynamics.status",
+            "type": "state",
+            "common": {
+                "role": "switch",
+                "name": "if true dynamics is active (DSE)",
+                "type": "boolean",
+                "read": true,
+                "write": true,
+                "def": false
             },
-            {
-                "_id": "dynamics.hold",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "hold time from 0 to 500ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 5000,
-                    "def": 1000
-                },
-                "native": {}
+            "native": {}
+        },
+        {
+            "_id": "dynamics.threshold",
+            "type": "state",
+            "common": {
+                "role": "level.volume",
+                "name": "threshold from -80 to 0db in 0.1 db steps (DST)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "min": -800,
+                "max": 0,
+                "def": -300
             },
-            {
-                "_id": "dynamics.release",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "release time from 10 to 1000ms in 0.1ms steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 10,
-                    "max": 5000,
-                    "def": 10000
-                },
-                "native": {}
+            "native": {}
+        },
+        {
+            "_id": "dynamics.attack",
+            "type": "state",
+            "common": {
+                "role": "level.volume",
+                "name": "attack time from 0 to 200ms in 0.1ms steps (DSA)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "min": 0,
+                "max": 2000,
+                "def": 5
             },
-            {
-                "_id": "dynamics.ratio",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "rratio from 1:1 to 100:1 in 0.1 steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 1,
-                    "max": 1000,
-                    "def": 100
-                },
-                "native": {}
+            "native": {}
+        },
+        {
+            "_id": "dynamics.hold",
+            "type": "state",
+            "common": {
+                "role": "level.volume",
+                "name": "hold time from 0 to 500ms in 0.1ms steps (DSH)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "min": 0,
+                "max": 5000,
+                "def": 1000
             },
-            {
-                "_id": "dynamics.knee",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "if true soft knee",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "def": 0,
-                    "states":{"0":"hard knee", "1":"soft knee"}
-                },
-                "native": {}
-            }
+            "native": {}
+        },
+        {
+            "_id": "dynamics.release",
+            "type": "state",
+            "common": {
+                "role": "level.volume",
+                "name": "release time from 10 to 1000ms in 0.1ms steps (DSL)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "min": 10,
+                "max": 5000,
+                "def": 10000
+            },
+            "native": {}
+        },
+        {
+            "_id": "dynamics.ratio",
+            "type": "state",
+            "common": {
+                "role": "level.volume",
+                "name": "rratio from 1:1 to 100:1 in 0.1 steps (DSR)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "min": 1,
+                "max": 1000,
+                "def": 100
+            },
+            "native": {}
+        },
+        {
+            "_id": "dynamics.knee",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "if true soft knee (DSK)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "def": 0,
+                "states":{"0":"hard knee", "1":"soft knee"}
+            },
+            "native": {}
+        }
     ],
-    "filter" : [
+    "dsp_flt" : [
+        {
+            "_id": "filter",
+            "type": "folder",
+            "common": {
+                "name":"filter"
+            },
+            "native":{}
+        },
+        {
+            "_id": "0",
+            "type": "channel",
+            "common": {
+                "role": "filter.channel",
+                "name": "filter index (1..9)"
+            },
+            "native": {}
+        },
         {
             "_id": "status",
             "type": "state",
             "common": {
                 "role": "switch",
-                "name": "if true dynamics is active",
+                "name": "if true dynamics is active (DSE)",
                 "type": "boolean",
                 "read": true,
                 "write": true,
@@ -3973,7 +3767,7 @@
             "type": "state",
             "common": {
                 "role": "value",
-                "name": "filter type",
+                "name": "filter type (DSY)",
                 "type": "number",
                 "read": true,
                 "write": true,
@@ -3990,7 +3784,7 @@
             "type": "state",
             "common": {
                 "role": "value",
-                "name": "frequence",
+                "name": "frequence (DSF)",
                 "type": "number",
                 "read": true,
                 "write": true,
@@ -4003,8 +3797,8 @@
             "type": "state",
             "common": {
                 "role": "value",
-                "name": "slope",
-                "type": "nubmber",
+                "name": "slope (DSO)",
+                "type": "number",
                 "read": true,
                 "write": true,
                 "def": 0,
@@ -4020,7 +3814,7 @@
             "type": "state",
             "Common":{
                 "role": "value",
-                "name": "Boost/Cut",
+                "name": "Boost/Cut (DSG)",
                 "type" : "number",
                 "read": true,
                 "write": true,
@@ -4035,7 +3829,7 @@
             "type": "state",
             "Common":{
                 "role": "value",
-                "name": "Q-factor",
+                "name": "Q-factor (DSQ)",
                 "type" : "number",
                 "read": true,
                 "write": true,
@@ -4044,6 +3838,188 @@
                 "max": 30000
             },
             "native":{}
+        }
+    ],
+    "dsp_dly":[
+        {
+            "_id": "delay.status",
+            "type": "state",
+            "common": {
+                "role": "switch",
+                "name": "if true delay is active (DSE)",
+                "type": "boolean",
+                "read": true,
+                "write": true,
+                "def": false
+            },
+            "native": {}
+        },
+        {
+            "_id": "delay.time",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "delay time (samples) (DSD)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "def": 0,
+                "min": 0,
+                "max": 9600
+            },
+            "native": {}
+        },
+        {
+            "_id": "delay.unit",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "delay unit (0=samples, 1=ms, 2=ft, 3=m) (DSU)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "def": 0,
+                "min": 0,
+                "max": 3,
+                "states":{"0":"samples", "1":"ms", "2":"ft","3":"m"}
+            },
+            "native": {}
+        },
+        {
+            "_id": "delay.tempunit",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "delay temperature unit (0=°F, 1=°C) (DSU)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "def": 0,
+                "min": 0,
+                "max": 1,
+                "states":{"0":"°F", "1":"°C"}
+            },
+            "native": {}
+        },
+        {
+            "_id": "delay.temp",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "delay reference temperature 0.1 steps (DST)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "def": 70,
+                "min": 0,
+                "max": 1500
+            },
+            "native": {}
+        }
+    ],
+    "dsp_aec":[
+        {
+            "_id": "aec.status",
+            "type": "state",
+            "common": {
+                "role": "switch",
+                "name": "if true AEC is active (DSE)",
+                "type": "boolean",
+                "read": true,
+                "write": true,
+                "def": false
+            },
+            "native": {}
+        }
+    ],
+    "dsp_dck":[
+        {
+            "_id": "ducker.status",
+            "type": "state",
+            "common": {
+                "role": "switch",
+                "name": "if true dynamics is active (DSE)",
+                "type": "boolean",
+                "read": true,
+                "write": true,
+                "def": false
+            },
+            "native": {}
+        },
+        {
+            "_id": "ducker.threshold",
+            "type": "state",
+            "common": {
+                "role": "level.volume",
+                "name": "threshold from -80 to 0db in 0.1 db steps (DST)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "min": -800,
+                "max": 0,
+                "def": -300
+            },
+            "native": {}
+        },
+        {
+            "_id": "ducker.attack",
+            "type": "state",
+            "common": {
+                "role": "level.volume",
+                "name": "attack time from 0 to 200ms in 0.1ms steps (DSA)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "min": 0,
+                "max": 2000,
+                "def": 5
+            },
+            "native": {}
+        },
+        {
+            "_id": "ducker.hold",
+            "type": "state",
+            "common": {
+                "role": "level.volume",
+                "name": "hold time from 0 to 500ms in 0.1ms steps (DSH)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "min": 0,
+                "max": 5000,
+                "def": 1000
+            },
+            "native": {}
+        },
+        {
+            "_id": "ducker.release",
+            "type": "state",
+            "common": {
+                "role": "level.volume",
+                "name": "release time from 10 to 1000ms in 0.1ms steps (DSL)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "min": 10,
+                "max": 5000,
+                "def": 10000
+            },
+            "native": {}
+        }
+    ],
+    "dsp_amx":[
+        {
+            "_id": "automix.status",
+            "type": "state",
+            "common": {
+                "role": "switch",
+                "name": "if true automixer is active (DSE)",
+                "type": "boolean",
+                "read": true,
+                "write": true,
+                "def": false
+            },
+            "native": {}
         }
     ]
 }
