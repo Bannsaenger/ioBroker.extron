@@ -31,6 +31,10 @@
         ]
     },
     "parserOptions": {
-        "ecmaVersion": 2018
+        "ecmaVersion": 2018,
+        "files": [
+            "**/*.js", 
+            "**/*.jsx"
+        ]
     }
 }
