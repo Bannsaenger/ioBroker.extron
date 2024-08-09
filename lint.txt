@@ -1,0 +1,4 @@
+
+> iobroker.extron@0.2.15 lint
+> eslint --ignore-pattern words.js,.dev-server/* .
+

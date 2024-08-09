@@ -4063,6 +4063,7 @@ class Extron extends utils.Adapter {
             this.log.debug('onUnload(): calling callback()');
             callback();
         } catch (e) {
+            // @ts-ignore
             callback();
         }
     }
