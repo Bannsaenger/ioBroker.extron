@@ -161,17 +161,17 @@
                 "admin": ">=5.3.2"
             }
         ],
-        "protectedNative": [
-            "user",
-            "pass"
-        ],
-        "encryptedNative": [
-            "pass"
-        ],
         "adminUI": {
             "config": "json"
         }
     },
+    "protectedNative": [
+        "user",
+        "pass"
+    ],
+    "encryptedNative": [
+        "pass"
+    ],
     "native": {
         "host": "127.0.0.1",
         "type": "telnet",
