@@ -1,11 +1,12 @@
 /**
  *
- *      iobroker extron (SIS) Adapter V0.2.16 20240801
+ *      iobroker extron (SIS) Adapter
  *
  *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
  *
  *      CC-NC-BY 4.0 License
  *
+ *      last edit 20240812 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -85,8 +86,8 @@ class Extron extends utils.Adapter {
         this.stream = undefined;        // placeholder for the stream
         this.streamAvailable = true;    // if false wait for continue event
         this.stateList = [];            // will be filled with all existing states
-        //this.maxPollCount = typeof this.config.maxPollCount != 'undefined'?this.config.maxPollCount:10; // set maxPollCount if undefined set 10
-        this.maxPollCount = 10;
+        this.maxPollCount = typeof this.config.maxPollCount != 'undefined'?this.config.maxPollCount:10; // set maxPollCount if undefined set 10
+        //this.maxPollCount = 10;
         this.pollCount = 0;             // count sent status query
         this.playerLoaded = [false, false, false, false, false, false, false,false];    // remember which player has a file assigned
         this.auxOutEnabled = [false, false, false, false, false, false, false,false];   // remember which aux output is enabled

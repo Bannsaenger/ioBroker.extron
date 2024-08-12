@@ -180,6 +180,7 @@
         "user": "admin",
         "pass": "",
         "pollDelay": 10000,
+        "maxPollCount": 10,
         "reconnectDelay": 30000,
         "answerTimeout": 500,
         "inactivityTimeout": 100000,
