@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20240816 mschlgl
+ *      last edit 20240819 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -92,6 +92,7 @@ class Extron extends utils.Adapter {
         this.playerLoaded = [false, false, false, false, false, false, false,false];    // remember which player has a file assigned
         this.auxOutEnabled = [false, false, false, false, false, false, false,false];   // remember which aux output is enabled
         this.groupTypes = new Array(65);    // prepare array to hold the type of groups
+        this.groupTypes.fill(0);
         this.groupMembers = new Array(65);  // prepare array to hold actual group members
         this.groupMembers.fill([]);
         this.grpDelPnd = new Array(65); // prepare array to flag group deletions pending
@@ -285,7 +286,7 @@ class Extron extends utils.Adapter {
             // @ts-ignore
             this.log.info('onClientReady(): Extron connected');
             // @ts-ignore
-            this.setState('info.connection', true, true);
+            // this.setState('info.connection', true, true);
             this.timers.timeoutQueryStatus = setTimeout(this.queryStatus.bind(this), this.config.pollDelay);    // start polling the device
         } catch (err) {
             this.errorHandler(err, 'onClientReady');
@@ -365,7 +366,7 @@ class Extron extends utils.Adapter {
         try {
             if (this.streamAvailable) {
                 this.log.info(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.fileSend?'file data':this.decodeBufferToLog(data)}"`);
-                this.setState('info.connection', true, true);
+                //this.setState('info.connection', true, true);
                 this.streamAvailable = this.stream.write(data);
             } else {
                 const bufSize = this.sendBuffer.push(data);
@@ -397,7 +398,7 @@ class Extron extends utils.Adapter {
                 if (data.includes(this.devices[this.config.device].name)) {
                     this.isDeviceChecked = true;
                     this.log.info(`onStreamData(): Device ${this.devices[this.config.device].name} verified`);
-                    this.setState('info.connection', true, true);
+                    // this.setState('info.connection', true, true);
                     if (this.config.type === 'ssh') {
                         if (!this.isVerboseMode) {          // enter the verbose mode
                             this.switchMode();
@@ -488,12 +489,11 @@ class Extron extends utils.Adapter {
                     }
                 } else
                 {   // lookup the command
-                    //const matchArray = answer.match(/([A-Z][a-z]+[A-Z]|\w{3})(\d*)\*?,? ?(.*)/i);
-                    // const matchArray = answer.match(/{?(dante|[A-Z][a-z]+[A-Z]|\w{3})@?([\w-]*|\d*)}?,?\*? ?(.*)/i); // extended to detect DANTE remote responses
-                    const matchArray = answer.match(/({(dante)@(.*)})?([A-Z][a-z]+[A-Z]|\w{3})([\w-]*|\d*),?\*? ?(.*)/i); // extended to detect DANTE remote responses
+                    // const matchArray = answer.match(/([A-Z][a-z]+[A-Z]|\w{3})(\d*)\*?,? ?(.*)/i);    // initial separation detecting eg. "DsG60000*-10"
+                    const matchArray = answer.match(/({(dante)@(.*)})?([A-Z][a-z]+[A-Z]|\w{3})([\w-]*|\d*),?\*? ?(.*)/i); // extended to detect DANTE remote responses eg. "{dante@AXI44-92efe7}DsG60000*-10"
                     if (matchArray) {       // if any match
                         const command = matchArray[4].toUpperCase();
-                        const dante = (matchArray[2].toUpperCase() == 'DANTE');
+                        const dante = matchArray[2]?(matchArray[2] == 'dante'): false;
                         const danteDevice = matchArray[3];
                         const ext1 = matchArray[5] ? matchArray[5] : '';
                         const ext2 = matchArray[6] ? matchArray[6] : '';
@@ -575,9 +575,9 @@ class Extron extends utils.Adapter {
                                 if (ext1.startsWith('400')) { // input source control
                                     this.log.info(`onStreamData(): Extron got source ${command} from OID: "${ext1}" value: "${ext2}"`);
                                     this.setSource(ext1, ext2);
-                                } else if (ext1.startsWith('450')) {     // input delay value change
+                                } else if (ext1.startsWith('450')) {    // input delay value change
                                     this.log.info(`onStreamData(): Extron received delay value change from OID : "${ext1}" value "${ext2}samples"`);
-                                } if (ext1.startsWith('590')) {         // input automixer group change
+                                } else if (ext1.startsWith('590')) {    // input automixer group change
                                     this.log.info(`onStreamData(): Extron got automix group change from OID: "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('650')) {    // output delay value change
                                     this.log.info(`onStreamData(): Extron received delay value change from OID : "${ext1}" value "${ext2}samples"`);
@@ -698,7 +698,7 @@ class Extron extends utils.Adapter {
                                     this.log.info(`onStreamData(): Extron got input polarity change change from OID: "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('590')) { // input automixer last mic change
                                     this.log.info(`onStreamData(): Extron got automix last mic change from OID: "${ext1}" value: "${ext2}"`);
-                                } else  if (ext1.startsWith('600')) { // output polarity change
+                                } else if (ext1.startsWith('600')) { // output polarity change
                                     this.log.info(`onStreamData(): Extron got output polarity change change from OID: "${ext1}" value: "${ext2}"`);
                                 } else this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
                                 break;
@@ -717,6 +717,16 @@ class Extron extends utils.Adapter {
                                     this.setDynamicsThreshold(ext1, ext2);
                                 } else if (ext1.startsWith('450')) {    // input delay reference temperature change
                                     this.log.info(`onStreamData(): Extron got a delay ref temperature change from OID : "${ext1}" value: "${ext2}°F"`);
+                                } else if (ext1.startsWith('480')) {    // input dynamics threshold change
+                                    this.log.info(`onStreamData(): Extron got a threshold change from OID : "${ext1}" value: "${ext2}°F"`);
+                                } else if (ext1.startsWith('540')) {    // input dynamics threshold change
+                                    this.log.info(`onStreamData(): Extron got a threshold change from OID : "${ext1}" value: "${ext2}°F"`);
+                                } else if (ext1.startsWith('550')) {    // input delay reference temperature change
+                                    this.log.info(`onStreamData(): Extron got a delay ref temperature change from OID : "${ext1}" value: "${ext2}°F"`);
+                                } else if (ext1.startsWith('590')) {    // input dynamics threshold change
+                                    this.log.info(`onStreamData(): Extron got a threshold change from OID : "${ext1}" value: "${ext2}°F"`);
+                                } else if (ext1.startsWith('640')) {    // output dynamics block
+                                    this.log.info(`onStreamData(): Extron got output dynamics threshold change from OID : "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('650')) {    // output delay reference temperature change
                                     this.log.info(`onStreamData(): Extron got a delay ref temperature change from OID : "${ext1}" value: "${ext2}°F"`);
                                 } else
@@ -1577,8 +1587,8 @@ class Extron extends utils.Adapter {
                                     if (device === 'smd202') this.getVol();
                                     else if (idType ==='groups') this.getGroupLevel(grpId);
                                     else {
-                                        if ((source = await this.getStateAsync(baseId+'.source')) && (source.val > 0)) {
-                                            this.getDigGainLevel(id);
+                                        if (id.includes('.inputs.') && (source = await this.getStateAsync(baseId +'.source')) && (source.val > 0)) {
+                                            this.getDigGainLevel(id);   // if analog input assigned to a digital source
                                         } else this.getGainLevel(id);
                                     }
                                     break;
@@ -1608,7 +1618,7 @@ class Extron extends utils.Adapter {
                                 case 'freespace':
                                 case 'upl':
                                 case 'deleted':
-                                    break;
+                                    break;  // will be handled when processing 'dir' state
 
                                 case 'loopmode' :
                                     this.getLoopVideo();
@@ -2854,6 +2864,7 @@ class Extron extends utils.Adapter {
         const cmd = `WD${group}GRPM\r`;
         if (this.grpDelPnd[group] == false) {
             try {
+                if (this.groupTypes[group] == 0) this.getGroupType(group);
                 this.streamSend(cmd); // send command
             }
             catch (err) {
@@ -2879,7 +2890,7 @@ class Extron extends utils.Adapter {
                 cmd = `WD${group}*${level}GRPM\r`;
                 break;
             case 21 :   // meter group
-                this.log.info(`setGroupLevel(): meter groups not supported`);
+                this.log.info(`sendGroupLevel(): meter groups not supported`);
                 break;
             default:
                 this.log.error(`sendGroupLevel() groupType "${this.groupTypes[group]}" for group "${group}" not supported`);
@@ -2915,7 +2926,7 @@ class Extron extends utils.Adapter {
                     this.log.info(`setGroupLevel(): meter groups not supported`);
                     break;
                 default:
-                    this.log.warn(`setGroupLevel() groupType ${this.groupTypes[group]} on group "${group}"not supported`);
+                    this.log.warn(`setGroupLevel() groupType ${this.groupTypes[group]} on group "${group}" not supported`);
 
             }
         } catch (err) {
@@ -2934,7 +2945,7 @@ class Extron extends utils.Adapter {
                 this.streamSend(cmd); // send command
             }
             catch (err) {
-                this.errorHandler(err, 'getGroupLevel');
+                this.errorHandler(err, 'getGroupType');
             }
         } else {
             this.queueGrpCmd(group,cmd); // push command to buffer
@@ -3647,8 +3658,7 @@ class Extron extends utils.Adapter {
                                         }
                                     } else if (val <= 11) {        // input 1 - 12
                                         retId = `in.inputs.${(val + 1).toString().padStart(2,'0')}.gain.`;
-                                    }
-                                    if (val <= 19) {        // aux input 1 - 8
+                                    } else  if (val <= 19) {        // aux input 1 - 8
                                         retId = `in.auxInputs.${(val - 11).toString().padStart(2,'0')}.gain.`;
                                     }
                                     break;
@@ -3676,8 +3686,7 @@ class Extron extends utils.Adapter {
                                 case 14 :
                                     if (val <= 11) {        // input 1 - 12
                                         retId = `in.inputs.${(val + 1).toString().padStart(2,'0')}.${where-9}.`;
-                                    }
-                                    if (val <= 19) {        // aux input 1 - 8
+                                    } else if (val <= 19) {        // aux input 1 - 8
                                         retId = `in.auxInputs.${(val - 11).toString().padStart(2,'0')}.${where-9}.`;
                                     }
                                     break;

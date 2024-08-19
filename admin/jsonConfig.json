@@ -97,7 +97,7 @@
                     "lg": 6,
                     "label": "lblUser"
                 },
-                "password": {
+                "pass": {
                     "type": "password",
                     "maxLength": 32,
                     "visible": false,
