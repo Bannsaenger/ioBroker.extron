@@ -133,7 +133,7 @@
     },
     "DMP128Plus_AT" : {
         "name" : "DMP 128 Plus AT",
-        "short" : "dmp128",
+        "short" : "dmp",
         "description": {
             "en": "12x8 ProDSP Processor w/Dante (DMP 128 Plus AT)",
             "de": "12x8 Matrix-Prozessor mit ProDSP und Dante (DMP 128 Plus AT)",
@@ -249,7 +249,7 @@
         "connectionType": "network",
         "objects" : [
             "common",
-            "dmp128",
+            "dmp",
             "danterelay"
         ],
         "in" : {
@@ -341,7 +341,7 @@
         "connectionType": "network",
         "objects" : [
             "common",
-            "dmp128",
+            "dmp",
             "danterelay"
         ],
         "in" : {
@@ -433,7 +433,7 @@
         "connectionType": "network",
         "objects" : [
             "common",
-            "xmp240",
+            "xmp",
             "danterelay"
         ],
         "in" : {

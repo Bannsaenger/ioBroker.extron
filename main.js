@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20240819 mschlgl
+ *      last edit 20240829 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -120,7 +120,7 @@ class Extron extends utils.Adapter {
             this.setState('info.connection', false, true);
 
             // read Objects template for object generation
-            this.objectsTemplate = JSON.parse(fs.readFileSync(__dirname + '/lib/objects_templates.json', 'utf8'));
+            this.objectTemplates = JSON.parse(fs.readFileSync(__dirname + '/lib/object_templates.json', 'utf8'));
             // read devices for device check
             this.devices = JSON.parse(fs.readFileSync(__dirname + '/lib/device_mapping.json', 'utf8'));
 
@@ -359,18 +359,17 @@ class Extron extends utils.Adapter {
      * @param {string | void} device
      */
     streamSend(data, device = '') {
-        if (device !== '' &&  (this.devices[this.config.device].name.includes('Plus')||this.devices[this.config.device].name.includes('XMP') )) { // DANTE control only on DMP plus / XMP series
+        if (device !== '') if ((this.devices[this.config.device].name.includes('Plus')||this.devices[this.config.device].name.includes('XMP') )) { // DANTE control only on DMP plus / XMP series
             data = data.replace('\r','|');
             data = `{dante@${device}:${data}}\r`;
         }
         try {
             if (this.streamAvailable) {
-                this.log.info(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.fileSend?'file data':this.decodeBufferToLog(data)}"`);
-                //this.setState('info.connection', true, true);
+                if (data != 'Q') this.log.info(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.fileSend?'file data':this.decodeBufferToLog(data)}"`);
                 this.streamAvailable = this.stream.write(data);
             } else {
                 const bufSize = this.sendBuffer.push(data);
-                this.setState('info.connection', false, true);
+                this.setState(`${device != ''?device+'.':''}info.connection`, false, true);
                 this.log.warn(`streamSend(): Extron push data to the send buffer: "${this.fileSend?'file data':this.decodeBufferToLog(data)}" new buffersize:${bufSize}`);
             }
         } catch (err) {
@@ -397,7 +396,7 @@ class Extron extends utils.Adapter {
             if (!this.isDeviceChecked) {        // the first data has to be the banner with device info
                 if (data.includes(this.devices[this.config.device].name)) {
                     this.isDeviceChecked = true;
-                    this.log.info(`onStreamData(): Device ${this.devices[this.config.device].name} verified`);
+                    this.log.info(`onStreamData(): Device "${this.devices[this.config.device].name}" verified`);
                     // this.setState('info.connection', true, true);
                     if (this.config.type === 'ssh') {
                         if (!this.isVerboseMode) {          // enter the verbose mode
@@ -433,7 +432,7 @@ class Extron extends utils.Adapter {
             // check for DANTE control / setup messages returning a list of DANTE device names separated by \r\n
             if  (data.match(/(Expr[al]) ([\w-]*[\s\S]*)\r\n/im)) {
                 data = data.replace(/[\n]/gm,'*');      // change device list separator from "\n" to "*"
-                data = data.replace('\r*', '\r\n');     // restore end of message
+                data = data.replace('*\r*', '\r\n');     // restore end of message
                 this.log.debug(`onStreamData(): received DANTE control message: "${this.decodeBufferToLog(data)}"`);
             }
 
@@ -579,6 +578,9 @@ class Extron extends utils.Adapter {
                                     this.log.info(`onStreamData(): Extron received delay value change from OID : "${ext1}" value "${ext2}samples"`);
                                 } else if (ext1.startsWith('590')) {    // input automixer group change
                                     this.log.info(`onStreamData(): Extron got automix group change from OID: "${ext1}" value: "${ext2}"`);
+                                } else if (ext1.startsWith('600')) {    // aux output target change
+                                    this.log.info(`onStreamData(): Extron got aux output target change from OID: "${ext1}" value: "${ext2}"`);
+                                    this.setSource(ext1, ext2);
                                 } else if (ext1.startsWith('650')) {    // output delay value change
                                     this.log.info(`onStreamData(): Extron received delay value change from OID : "${ext1}" value "${ext2}samples"`);
                                 } else
@@ -1161,49 +1163,47 @@ class Extron extends utils.Adapter {
      */
     async createDatabaseAsync() {
         const device = this.devices[this.config.device].short;
-        this.log.debug(`createDatabaseAsync(): start`);
+        this.log.info(`createDatabaseAsync(): start`);
         try {
             // create the common section
-            for (const element of this.objectsTemplate.common) {
+            for (const element of this.objectTemplates.common) {
                 await this.setObjectAsync(element._id, element);
             }
             this.log.debug(`createDatabaseAsync(): create common section`);
 
             // add deviceName to database
-            const deviceObj = this.objectsTemplate.common[0];
+            const deviceObj = this.objectTemplates.common[0];
             deviceObj.common.name = this.devices[this.config.device].name;
             await this.setObjectAsync('device', deviceObj);
             this.log.debug(`createDatabaseAsync(): set deviceName`);
 
             // if cp82 or sme211 : create video inputs and outputs
             if ((device === 'cp82') || (device === 'sme211')) {
-                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].connections) {
+                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].connections) {
                     await this.setObjectAsync(element._id, element);
                 }
             }
             // if smd202 : create video player
             if (device === 'smd202') {
-                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].players) {
+                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].players) {
                     await this.setObjectAsync(element._id, element);
                 }
-                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].outputs) {
+                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].outputs) {
                     await this.setObjectAsync(element._id, element);
                 }
             }
             // if we have a user filesystem on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].fs) {
-                await this.setObjectAsync(this.objectsTemplate.userflash.filesystem._id, this.objectsTemplate.userflash.filesystem);
-                await this.setObjectAsync(this.objectsTemplate.userflash.directory._id, this.objectsTemplate.userflash.directory);
-                await this.setObjectAsync(this.objectsTemplate.userflash.upload._id, this.objectsTemplate.userflash.upload);
-                await this.setObjectAsync(this.objectsTemplate.userflash.freespace._id, this.objectsTemplate.userflash.freespace);
-                await this.setObjectAsync(this.objectsTemplate.userflash.filecount._id, this.objectsTemplate.userflash.filecount);
-                await this.setObjectAsync(this.objectsTemplate.userflash.files._id, this.objectsTemplate.userflash.files);
+                this.log.info(`createDatabaseAsync(): set user fileSystem`);
+                for (const element of this.objectTemplates.userflash) {
+                    await this.setObjectAsync(element._id, element);
+                }
                 this.setState('fs.dir',false,true); // reset directory request flag
-                this.log.debug(`createDatabaseAsync(): set user fileSystem`);
             }
             // if we have inputs on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].in) {
                 // at this point the device has inputs
+                this.log.info(`createDatabaseAsync(): set inputs`);
                 await this.setObjectAsync('in', {
                     'type': 'folder',
                     'common': {
@@ -1224,54 +1224,54 @@ class Extron extends utils.Adapter {
                     for (let i = 1; i <= this.devices[this.config.device].in[inputs].amount; i++) {
                         const actInput = `in.${inputs}.${i.toString().padStart(2,'0')}`;
                         // create the input folder
-                        await this.setObjectAsync(actInput, this.objectsTemplate[this.devices[this.config.device].objects[1]].input);
+                        await this.setObjectAsync(actInput, this.objectTemplates[this.devices[this.config.device].objects[1]].input);
                         // and the common structure of an input depending on type
                         switch (inputs) {
 
                             case 'inputs' :
-                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].inputs) {
+                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].inputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'lineInputs' :
-                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].lineInputs) {
+                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].lineInputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'playerInputs' :
-                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].playerInputs) {
+                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].playerInputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'programInputs' :
-                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].programInputs) {
+                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].programInputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'videoInputs' :
-                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].videoInputs) {
+                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].videoInputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'auxInputs' :
-                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].auxInputs) {
+                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].auxInputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'virtualReturns' :
-                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].virtualReturns) {
+                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].virtualReturns) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'expansionInputs' :
-                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].expansionInputs) {
+                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].expansionInputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
@@ -1280,6 +1280,7 @@ class Extron extends utils.Adapter {
                         // now the mixpoints are created
                         if (this.devices[this.config.device] && this.devices[this.config.device].mp) {      // if we have mixpoints
                             if (inputs != 'videoInputs') {
+                                // this.log.debug(`createDatabaseAsync(): set mixpoints`);
                                 for (const outType of Object.keys(this.devices[this.config.device].out)) {
                                     for (let j = 1; j <= this.devices[this.config.device].out[outType].amount; j++) {
                                         if (i === j && outType === 'virtualSendBus') {
@@ -1287,14 +1288,14 @@ class Extron extends utils.Adapter {
                                         }
                                         const actMixPoint = actInput + '.mixPoints.' + this.devices[this.config.device].out[outType].short + j.toString().padStart(2,'0');
                                         await this.setObjectAsync(actMixPoint, {
-                                            'type': 'folder',
+                                            'type': 'channel',
                                             'common': {
-                                                'role': 'mixpoint',
-                                                'name': `Mixpoint ${outType} number ${j}`
+                                                'role': 'input.channel',
+                                                'name': `Mixpoint ${outType} ${j}`
                                             },
                                             'native': {}
                                         });
-                                        for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].mixPoints) {
+                                        for (const element of this.objectTemplates.mixPoints) {
                                             await this.setObjectAsync(actMixPoint + '.' + element._id, element);
                                         }
                                     }
@@ -1303,12 +1304,11 @@ class Extron extends utils.Adapter {
                         }
                     }
                 }
-                this.log.debug(`createDatabaseAsync(): set inputs`);
             }
             // if we have players on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].ply) {
                 // at this point the device has players
-                await this.setObjectAsync('ply', {
+                this.log.info(`createDatabaseAsync(): set players`);await this.setObjectAsync('ply', {
                     'type': 'folder',
                     'common': {
                         'name': 'All players'
@@ -1328,18 +1328,18 @@ class Extron extends utils.Adapter {
                     for (let i = 1; i <= this.devices[this.config.device].ply[players].amount; i++) {
                         const actPlayer = `ply.${players}.${i}`;
                         // create the player folder
-                        await this.setObjectAsync(actPlayer, this.objectsTemplate[this.devices[this.config.device].objects[1]].player);
+                        await this.setObjectAsync(actPlayer, this.objectTemplates[this.devices[this.config.device].objects[1]].player);
                         // and the common structure of a player
-                        for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].players) {
+                        for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].players) {
                             await this.setObjectAsync(actPlayer + '.' + element._id, element);
                         }
                     }
                 }
-                this.log.debug(`createDatabaseAsync(): set players`);
             }
             // if we have outputs on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].out) {
                 // at this point the device has outputs
+                this.log.info(`createDatabaseAsync(): set outputs`);
                 await this.setObjectAsync('out', {
                     'type': 'folder',
                     'common': {
@@ -1360,11 +1360,11 @@ class Extron extends utils.Adapter {
                     for (let i = 1; i <= this.devices[this.config.device].out[outputs].amount; i++) {
                         const actOutput = `out.${outputs}.${i.toString().padStart(2,'0')}`;
                         // create the output folder
-                        await this.setObjectAsync(actOutput, this.objectsTemplate[this.devices[this.config.device].objects[1]].output);
+                        await this.setObjectAsync(actOutput, this.objectTemplates[this.devices[this.config.device].objects[1]].output);
                         // and the common structure of a output
                         switch (outputs) {
                             case 'outputs' :
-                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].outputs) {
+                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].outputs) {
                                     await this.setObjectAsync(actOutput + '.' + element._id, element);
                                 }
                                 /**
@@ -1373,7 +1373,7 @@ class Extron extends utils.Adapter {
                                         if (dspfunc == 'dsp_flt') {
                                             //
                                         } else {
-                                            for (const element of this.objectsTemplate[dspfunc]) {
+                                            for (const element of this.objectTemplates[dspfunc]) {
                                                 const element_id = actOutput+'.'+element._id;
                                                 await this.setObjectAsync(element_id, element);
                                             }
@@ -1383,23 +1383,23 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'auxOutputs' :
-                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].auxOutputs) {
+                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].auxOutputs) {
                                     await this.setObjectAsync(actOutput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'expansionOutputs' :
-                                for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].expansionOutputs) {
+                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].expansionOutputs) {
                                     await this.setObjectAsync(actOutput + '.' + element._id, element);
                                 }
                                 break;
                         }
                     }
                 }
-                this.log.debug(`createDatabaseAsync(): set outputs`);
             }
             // if we have groups on the device
             if (this.devices[this.config.device] && this.devices[this.config.device].grp) {
+                this.log.info(`createDatabaseAsync(): set groups`);
                 await this.setObjectAsync('groups', {
                     'type': 'folder',
                     'common': {
@@ -1411,25 +1411,24 @@ class Extron extends utils.Adapter {
                 for (let i = 1; i <= this.devices[this.config.device].grp.groups.amount; i++) {
                     const actGroup = `groups.${i.toString().padStart(2,'0')}`;
                     // create the group folder
-                    await this.setObjectAsync(actGroup, this.objectsTemplate[this.devices[this.config.device].objects[1]].group);
+                    await this.setObjectAsync(actGroup, this.objectTemplates[this.devices[this.config.device].objects[1]].group);
                     // and the common structure of a group
-                    for (const element of this.objectsTemplate[this.devices[this.config.device].objects[1]].groups) {
+                    for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].groups) {
                         await this.setObjectAsync(actGroup + '.' + element._id, element);
                     }
                 }
-                this.log.debug(`createDatabaseAsync(): set groups`);
             }
             // if we have a DANTE relay device
             if (this.devices[this.config.device] && this.devices[this.config.device].objects.includes('danterelay')) {
-                for (const element of this.objectsTemplate.danterelay) {
+                this.log.info(`createDatabaseAsync(): create dante relay`);
+                for (const element of this.objectTemplates.danterelay) {
                     await this.setObjectAsync(element._id, element);
                 }
-                this.log.debug(`createDatabaseAsync(): create dante relay`);
             }
         } catch (err) {
             this.errorHandler(err, 'createDatabase');
         }
-        this.log.debug(`createDatabaseAsync(): completed`);
+        this.log.info(`createDatabaseAsync(): completed`);
     }
 
     /**
@@ -1440,18 +1439,18 @@ class Extron extends utils.Adapter {
     async createDanteDeviceAsync(deviceName, deviceType) {
         this.log.debug(`createDanteDevice(): setting up database for "${deviceName}" as "${deviceType}"`);
         // create the common section
-        for (const element of this.objectsTemplate.common) {
+        for (const element of this.objectTemplates.common) {
             element._id = `dante.${deviceName}.${element._id}`;
             await this.setObjectAsync(element._id, element);
         }
         // add deviceName to database
-        const deviceObj = this.objectsTemplate.common[0];
+        const deviceObj = this.objectTemplates.common[0];
         deviceObj.common.name = deviceName;
         deviceObj._id = `dante.${deviceName}.${deviceObj._id}`;
         await this.setObjectAsync(deviceObj._id, deviceObj);
         this.log.debug(`createDanteDevice(): set deviceName`);
         /*
-        for (const element of this.objectsTemplate[deviceType]) {
+        for (const element of this.objectTemplates[deviceType]) {
             elemnt._id = `dante.${deviceName}.${element._id}`;
             await this.setObjectAsync(element._id, element);
         }
@@ -1587,7 +1586,7 @@ class Extron extends utils.Adapter {
                                     if (device === 'smd202') this.getVol();
                                     else if (idType ==='groups') this.getGroupLevel(grpId);
                                     else {
-                                        if (id.includes('.inputs.') && (source = await this.getStateAsync(baseId +'.source')) && (source.val > 0)) {
+                                        if (id.match(/\.inputs\.\d+\.gain\./) && (source = await this.getStateAsync(baseId +'.source')) && (source.val > 0)) {
                                             this.getDigGainLevel(id);   // if analog input assigned to a digital source
                                         } else this.getGainLevel(id);
                                     }
@@ -1635,7 +1634,7 @@ class Extron extends utils.Adapter {
                                 case 'status' :
                                     dynamics = await this.getStateAsync(`${baseId}.type`);
                                     if (dynamics) {
-                                        this.log.info(`getDeviceStatus(): "${baseId}.type": ${dynamics.val}`);
+                                        //this.log.info(`getDeviceStatus(): "${baseId}.type": ${dynamics.val}`);
                                         if ( Number(dynamics.val) != 0) {
                                             this.getDspBlockStatus(id);
                                         } else this.log.info(`getDeviceStatus(): "${baseId}" not configured`);
@@ -1645,7 +1644,7 @@ class Extron extends utils.Adapter {
                                 case 'threshold':
                                     dynamics = await this.getStateAsync(`${baseId}.type`);
                                     if (dynamics) {
-                                        this.log.info(`getDeviceStatus(): dynamics for ${baseId}: ${dynamics.val}`);
+                                        //this.log.info(`getDeviceStatus(): dynamics for ${baseId}: ${dynamics.val}`);
                                         if (Number(dynamics.val) != 0) {
                                             this.getDynamicsThreshold(id);
                                         } else this.log.info(`getDeviceStatus(): "${baseId}" not configured`);
@@ -1665,6 +1664,11 @@ class Extron extends utils.Adapter {
                                 case 'frequency':
                                 case 'qfactor':
                                     this.log.info(`getDeviceStatus(): filter "${stateName}" not yet implemented`);
+                                    break;
+
+                                case 'automix':
+                                case 'processing':
+                                    // this.log.info(`getDeviceStatus(): mixpoint "${stateName}" not yet implemented`);
                                     break;
 
                                 case 'name' :
@@ -2701,9 +2705,10 @@ class Extron extends utils.Adapter {
             let i = 0;
             userFileList.sort();    // sort list alphabetically to resemble DSP configurator display
             this.log.info(`setUserFile(): deleting file objects...`);
-            await this.delObjectAsync(this.objectsTemplate.userflash.files._id,{recursive:true}); // delete files recursively
+            const files = this.objectTemplates.userflash.find((element)=>{return element._id === 'fs.files';});
+            await this.delObjectAsync(files._id,{recursive:true}); // delete files recursively
             this.log.info(`setUserFile(): create files folder object...`);
-            await this.setObjectAsync(this.objectsTemplate.userflash.files._id, this.objectsTemplate.userflash.files);
+            await this.setObjectAsync(files._id, files);
             for (const userFile of userFileList) {                              // check each line
                 if (userFile.match(/(\d+\b Bytes Left)/g)) {
                     this.fileList.freeSpace = Number(userFile.match(/\d+/g));
@@ -2719,16 +2724,16 @@ class Extron extends utils.Adapter {
                     i++;
                     this.fileList.files[i] = this.file;         // add to filelist array
                     this.log.info(`setUserFile(): creating file object for: ${this.file.fileName}`);
-                    await this.setObjectAsync(`fs.files.${i}`, this.objectsTemplate.userflash.file.channel);
-                    await this.setObjectAsync(`fs.files.${i}.filename`, this.objectsTemplate.userflash.file.filename);
+                    await this.setObjectAsync(`fs.files.${i}`, this.objectTemplates.file.channel);
+                    await this.setObjectAsync(`fs.files.${i}.filename`, this.objectTemplates.file.filename);
                     this.setState(`fs.files.${i}.filename`, this.file.fileName, true);
-                    this.log.debug(`setUserFile(): Object "fs.files.${i}.filename ${this.file.fileName}" updated`);
+                    this.log.debug(`setUserFiles(): Object "fs.files.${i}.filename ${this.file.fileName}" updated`);
                 }
             }
             this.setState(`fs.filecount`, i, true);
             this.setState('fs.freespace',this.fileList.freeSpace,true);
             this.setState('fs.dir',false,true);
-            this.log.debug(`setUserFile(): Extron userFlash filelist updated: ${userFileList.join('; ')}`);
+            this.log.debug(`setUserFiles(): Extron userFlash filelist updated: ${userFileList.join('; ')}`);
         } catch (err) {
             this.requestDir = false;
             this.errorHandler(err, 'setUserFiles');
@@ -4158,8 +4163,8 @@ class Extron extends utils.Adapter {
                                             if (idType === 'auxInputs') {calcMode = 'linAux';}
                                             else if (device === 'sme211') {calcMode = 'linAux';}
                                             else {
-                                                source  = await this.getStateAsync(baseId +'.source');
-                                                if (source.val > 0) calcMode = 'linDig';    // input configured to digital source
+                                                if (id.match(/\.inputs\.\d+\.gain\./) && (source = await this.getStateAsync(baseId +'.source')) && (source.val > 0))
+                                                    calcMode = 'linDig';    // input configured to digital source
                                             }
                                             break;
 
@@ -4199,8 +4204,8 @@ class Extron extends utils.Adapter {
                                         if (idType === 'auxInputs') {calcMode = 'logAux';}
                                         else if (idType === 'lineInputs') {calcMode = 'logAux';}
                                         else {
-                                            source  = await this.getStateAsync(baseId +'.source');
-                                            if (source.val > 0) calcMode = 'logDig';
+                                            if (id.match(/\.inputs\.\d+\.gain\./) && (source = await this.getStateAsync(baseId +'.source')) && (source.val > 0))
+                                                calcMode = 'logDig';    // input configured to digital source
                                         }
                                         break;
 

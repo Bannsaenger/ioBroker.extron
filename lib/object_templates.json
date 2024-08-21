@@ -57,7 +57,7 @@
             "native": {}
         }
     ],
-    "dmp128": {
+    "dmp": {
         "input": {
             "_id": "0",
             "type": "folder",
@@ -198,7 +198,15 @@
                     "def": -100.0
                 },
                 "native": {}
-            }
+            },
+            {
+                "_id": "mixPoints",
+                "type": "folder",
+                "common": {
+                    "name": "Matrix of patchable junction points"
+                },
+                "native": {}
+            }            
         ],
         "auxInputs": [
             {
@@ -332,7 +340,7 @@
                     "def": -100.0
                 },
                 "native": {}
-            },    
+            },
             {
                 "_id": "mixPoints",
                 "type": "folder",
@@ -486,59 +494,6 @@
                 "type": "folder",
                 "common": {
                     "name": "Matrix of patchable junction points"
-                },
-                "native": {}
-            }
-        ],
-        "mixPoints": [
-            {
-                "_id": "mixPoints",
-                "type": "folder",
-                "common": {
-                    "name": "Matrix of patchable junction points"
-                },
-                "native": {}
-            },
-            {
-                "_id": "mute",
-                "type": "state",
-                "common": {
-                    "role": "media.mute",
-                    "name": "If true the mixpoint is disabled",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": true
-                },
-                "native": {}
-            },
-            {
-                "_id": "level",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "Level linear from 0 to 1000 (0 dB is 764)",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 1000,
-                    "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "Level logarithmic from -100 to 12 in 0.1 dB steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": -100.0,
-                    "max": 12.0,
-                    "def": -100.0
                 },
                 "native": {}
             }
@@ -774,49 +729,6 @@
                     "name": "Common output parameters"
                 },
                 "native": {}
-            },       
-            {
-                "_id": "attenuation.mute",
-                "type": "state",
-                "common": {
-                    "role": "media.mute",
-                    "name": "If true the output at postmix gain is muted",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": true
-                },
-                "native": {}
-            },
-            {
-                "_id": "attenuation.level",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "Output attenuation linear from 0 to 1000",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 1000,
-                    "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "attenuation.level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "Output attenuation logarithmic from -100 to 0 in 0.1 db steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": -100.0,
-                    "max": 0.0,
-                    "def": -100.0
-                },
-                "native": {}
             },
             {
                 "_id": "attenuation.source",
@@ -829,7 +741,8 @@
                     "write": true,
                     "min": 0,
                     "max": 16,
-                    "def": 0
+                    "def": 0,
+                    "states" : {"0":"disabled", "1":"USB1L", "2":"USB1R", "3":"USB2L", "4":"USB2R", "5":"USB3L", "6":"USB3R", "7":"USB4L", "8":"USB4R","9":"VoIp #1", "10":"VoIp #2", "11":"VoIp #3", "12":"VoIp #4", "13":"VoIp #5", "14":"VoIp #6", "15":"VoIp #7", "16":"VoIp #8"}
                 },
                 "native": {}
             }    
@@ -1063,7 +976,7 @@
             }
         ]
     },
-    "xmp240": {
+    "xmp": {
         "input": {
             "_id": "0",
             "type": "folder",
@@ -1072,6 +985,148 @@
             },
             "native": {}
         },
+        "inputs": [
+            {
+                "_id": "name",
+                "type": "state",
+                "common": {
+                    "role": "text",
+                    "name": "input name",
+                    "type": "string",
+                    "read": true,
+                    "write": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.mute",
+                "type": "state",
+                "common": {
+                    "role": "media.mute",
+                    "name": "If true the input is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain linear from 0 to 1000 (0 db is 236)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Gain logarithmic from -18 to 80 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -18.0,
+                    "max": 80.0,
+                    "def": -18.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "gain.source",
+                "type": "state",
+                "common": {
+                    "role": "value",
+                    "name": "selects the input source",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min" : 0,
+                    "max" : 48,
+                    "def": 0,
+                    "states" :   {"0":"Analog", "1":"AT#1", "2":"AT#2", "3":"AT#3", "4":"AT#4", "5":"AT#5", "6":"AT#6", "7":"AT#7", "8":"AT#8", "9":"AT#9", "10":"AT#10", "11":"AT#11", "12":"AT#12", "13":"AT#13", "14":"AT#14", "15":"AT#15", "16":"AT#16", "17":"AT#17", "18":"AT#18", "19":"AT#19", "20":"AT#20", "21":"AT#21", "22":"AT#22", "23":"AT#23", "24":"AT#24", "25":"AT#25", "26":"AT#26", "27":"AT#27", "28":"AT#28", "29":"AT#29", "30":"AT#30", "31":"AT#31", "32":"AT#32", "33":"AT#33", "34":"AT#34", "35":"AT#35", "36":"AT#36", "37":"AT#37", "38":"AT#38", "39":"AT#39", "40":"AT#40", "41":"AT#41", "42":"AT#42", "43":"AT#43", "44":"AT#44", "45":"AT#45", "46":"AT#46", "47":"AT#47", "48":"AT#48"}
+                },
+                "native": {}
+            },        
+            {
+                "_id": "premix",
+                "type": "channel",
+                "common": {
+                    "role": "input.channel",
+                    "name": "Common input parameters"
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.mute",
+                "type": "state",
+                "common": {
+                    "role": "media.mute",
+                    "name": "If true the input at premix gain is muted",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": true
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level linear from 0 to 1000 (0 db is 764)",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": 0,
+                    "max": 1000,
+                    "def": 0
+                },
+                "native": {}
+            },
+            {
+                "_id": "premix.level_db",
+                "type": "state",
+                "common": {
+                    "role": "level.volume",
+                    "name": "Mix level logarithmic from -100 to 12 in 0.1 db steps",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
+                    "min": -100.0,
+                    "max": 12.0,
+                    "def": -100.0
+                },
+                "native": {}
+            },
+            {
+                "_id": "mixPoints",
+                "type": "folder",
+                "common": {
+                    "name": "Matrix of patchable junction points"
+                },
+                "native": {}
+            }            
+        ],
         "virtualReturns": [
             {
                 "_id": "name",
@@ -1216,51 +1271,6 @@
                 "type": "folder",
                 "common": {
                     "name": "Matrix of patchable junction points"
-                },
-                "native": {}
-            }
-        ],
-        "mixPoints": [
-            {
-                "_id": "mute",
-                "type": "state",
-                "common": {
-                    "role": "media.mute",
-                    "name": "If true the mixpoint is disabled",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": true
-                },
-                "native": {}
-            },
-            {
-                "_id": "level",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "Level linear from 0 to 1000 (0 dB is 764)",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 1000,
-                    "def": 0
-                },
-                "native": {}
-            },
-            {
-                "_id": "level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "Level logarithmic from -100 to 12 in 0.1 dB steps",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": -100.0,
-                    "max": 12.0,
-                    "def": -100.0
                 },
                 "native": {}
             }
@@ -3399,91 +3409,65 @@
         ]
     },
     "mixPoints": [
-            {
-                "_id": "mute",
-                "type": "state",
-                "common": {
-                    "role": "media.mute",
-                    "name": "If true the mixpoint is disabled (DSM)",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": true
-                },
-                "native": {}
+        {
+            "_id": "mute",
+            "type": "state",
+            "common": {
+                "role": "media.mute",
+                "name": "If true the mixpoint is disabled (DSM)",
+                "type": "boolean",
+                "read": true,
+                "write": true,
+                "def": true
             },
-            {
-                "_id": "level",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "Level linear from 0 to 1000 (0 dB is 764)",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 1000,
-                    "def": 0
-                },
-                "native": {}
+            "native": {}
+        },
+        {
+            "_id": "level",
+            "type": "state",
+            "common": {
+                "role": "level.volume",
+                "name": "Level linear from 0 to 1000 (0 dB is 764)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "min": 0,
+                "max": 1000,
+                "def": 0
             },
-            {
-                "_id": "level_db",
-                "type": "state",
-                "common": {
-                    "role": "level.volume",
-                    "name": "Level logarithmic from -100 to 12 in 0.1 dB steps (DSG)",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": -100.0,
-                    "max": 12.0,
-                    "def": -100.0
-                },
-                "native": {}
+            "native": {}
+        },
+        {
+            "_id": "level_db",
+            "type": "state",
+            "common": {
+                "role": "level.volume",
+                "name": "Level logarithmic from -100 to 12 in 0.1 dB steps (DSG)",
+                "type": "number",
+                "read": true,
+                "write": true,
+                "min": -100.0,
+                "max": 12.0,
+                "def": -100.0
             },
-            {
-                "_id": "automix",
-                "type": "state",
-                "common": {
-                    "role": "media.mute",
-                    "name": "If true the automixer is bypassed (DSP)",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": true
-                },
-                "native": {}
-            },
-            {
-                "_id": "processing",
-                "type": "state",
-                "common": {
-                    "role": "media.mute",
-                    "name": "If true the DSp processing is bypassed (DSZ)",
-                    "type": "boolean",
-                    "read": true,
-                    "write": true,
-                    "def": false
-                },
-                "native": {}
-            }
-        ],
-    "userflash" : {
-        "filesystem" : {
+            "native": {}
+        }
+    ],
+    "userflash" : [
+        {
             "_id": "fs",
             "type": "folder",
             "common": {
                 "name": "User Filesystem"
             },
-            "native": {}  
+            "native": {}
         },
-        "directory" : {
+        {
             "_id": "fs.dir",
             "type": "state",
             "common": {
                 "role": "switch",
-                "name": "If true, directory content is requested",
+                "name": "if true, directory content is requested",
                 "type": "boolean",
                 "read": true,
                 "write": true,
@@ -3491,12 +3475,12 @@
                 },
             "native": {}
         },
-        "upload" : {
+        {
             "_id": "fs.upl",
             "type": "state",
             "common": {
                 "role": "media.url",
-                "name": "Filepath to be uploaded",
+                "name": "filepath to be uploaded",
                 "type": "string",
                 "read": true,
                 "write": true,
@@ -3504,7 +3488,7 @@
                 },
             "native": {}
         },
-        "freespace" : {
+        {
             "_id": "fs.freespace",
             "type": "state",
             "common": {
@@ -3517,7 +3501,7 @@
                 },
             "native": {}
         },
-        "filecount" : {
+        {
             "_id": "fs.filecount",
             "type": "state",
             "common": {
@@ -3530,39 +3514,39 @@
                 },
             "native": {}
         },
-        "files" : {
+        {
             "_id": "fs.files",
             "type": "folder",
             "common": {
                 "name": "User Flash Files"
             },
             "native": {}
-        },
-        "file" : {
-            "channel": {
-                "_id":"0",
-                "type": "channel",
-                "common":{
-                    "role":"media.channel",
-                    "name":"file"
-                },
-                "native":{}
+        }
+    ],
+    "file" : {
+        "channel": {
+            "_id":"0",
+            "type": "channel",
+            "common":{
+                "role":"media.channel",
+                "name":"file"
             },
-            "filename": {
-                "_id": "filename",
-                "type": "state",
-                "common": {
-                    "role": "media.link",
-                    "name": "filename",
-                    "type": "string",
-                    "read": true,
-                    "write": false,
-                    "def": ""
-                },
-                "native": {}
+            "native":{}
+        },
+        "filename": {
+            "_id": "filename",
+            "type": "state",
+            "common": {
+                "role": "media.link",
+                "name": "filename",
+                "type": "string",
+                "read": true,
+                "write": false,
+                "def": ""
             },
             "native": {}
-        }
+        },
+        "native": {}
     },
     "danterelay" : [
         {
@@ -3580,7 +3564,7 @@
                 "name": "available",
                 "desc": "as received by AEXPR",
                 "role": "value",
-                "type": "object",
+                "type": "json",
                 "read": true,
                 "write": true,
                 "def" : "[]"
@@ -3594,7 +3578,7 @@
                 "name": "connected",
                 "desc": "as received by LEXPR",
                 "role": "value",
-                "type": "object",
+                "type": "json",
                 "read": true,
                 "write": true,
                 "def": "[]"
