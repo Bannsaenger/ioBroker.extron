@@ -7,7 +7,7 @@
     "hlpHost": "Dirección IP o FQDN del dispositivo",
     "lblType": "Protocolo de transporte",
     "lblPort": "Puerto",
-    "hlpPort": "Puerto TCP (predeterminado: SSH:22023, Telnet:22)",
+    "hlpPort": "Puerto TCP (predeterminado: SSH:22023, Telnet:23)",
     "lblUser": "Nombre de usuario",
     "lblPassword": "Contraseña",
     "hlpPollDelay": "tiempo entre consultas de estado cíclicas (en ms)",

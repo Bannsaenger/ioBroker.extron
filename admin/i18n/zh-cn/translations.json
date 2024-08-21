@@ -7,7 +7,7 @@
     "hlpHost": "设备的 IP 地址或 FQDN",
     "lblType": "传输协议",
     "lblPort": "港口",
-    "hlpPort": "TCP 端口（默认：SSH:22023，Telnet:22）",
+    "hlpPort": "TCP 端口（默认：SSH:22023，Telnet:23）",
     "lblUser": "用户名",
     "lblPassword": "密码",
     "hlpPollDelay": "循环状态查询之间的时间（以毫秒为单位）",

@@ -2900,16 +2900,17 @@ class Extron extends utils.Adapter {
             default:
                 this.log.error(`sendGroupLevel() groupType "${this.groupTypes[group]}" for group "${group}" not supported`);
         }
-        if (this.grpDelPnd[group] == false) {
-            try {
-                this.streamSend(cmd); // send command
+        if (cmd != '')
+            if (this.grpDelPnd[group] == false) {
+                try {
+                    this.streamSend(cmd); // send command
+                }
+                catch (err) {
+                    this.errorHandler(err, 'sendGroupLevel');
+                }
+            } else {
+                this.queueGrpCmd(group,cmd); // push command to buffer
             }
-            catch (err) {
-                this.errorHandler(err, 'sendGroupLevel');
-            }
-        } else {
-            this.queueGrpCmd(group,cmd); // push command to buffer
-        }
     }
 
     /** store group level in database

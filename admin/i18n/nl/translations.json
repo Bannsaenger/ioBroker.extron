@@ -7,7 +7,7 @@
     "hlpHost": "IP-adres of FQDN van het apparaat",
     "lblType": "Transportprotocol",
     "lblPort": "Poort",
-    "hlpPort": "TCP-poort (standaard: SSH:22023, Telnet:22)",
+    "hlpPort": "TCP-poort (standaard: SSH:22023, Telnet:23)",
     "lblUser": "Gebruikersnaam",
     "lblPassword": "Wachtwoord",
     "hlpPollDelay": "tijd tussen cyclische statusopvragingen (in ms)",

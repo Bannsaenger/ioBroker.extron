@@ -86,7 +86,7 @@
                     "help": "hlpPort",
                     "onChange": {
                         "alsoDependsOn": ["type"],
-                        "calculateFunc": "data.type === 'telnet' ? 22 : 22023",
+                        "calculateFunc": "data.type === 'telnet' ? 23 : 22023",
                         "ignoreOwnChanges": true
                     }
                 },
