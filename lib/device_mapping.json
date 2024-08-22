@@ -1,7 +1,8 @@
 {
     "DTP2_CrossPoint_82" : {
-        "name" : "DTP2 CrossPoint 82",
+        "model" : "DTP2 CrossPoint 82",
         "short" : "cp82",
+        "pno" : "60-1812-01",
         "description": {
             "en": "8x2 Presentation Matrix Switcher (DTP2 CrossPoint 82)",
             "de": "8x2 Präsentationskreuzschiene (DTP2 CrossPoint 82)",
@@ -69,8 +70,9 @@
         }
     },
     "SMD202" : {
-        "name" : "SMD 202",
+        "model" : "SMD 202",
         "short" : "smd202",
+        "pno" : "60-1306-01",
         "description": {
             "en": "H.264 Streaming Media Player and Decoder (SMD 202)",
             "de": "H.264-Player und Dekodierer (SMD 202)",
@@ -91,8 +93,9 @@
         ]
     },
     "SME211" : {
-        "name" : "SME 211",
+        "model" : "SME 211",
         "short" : "sme211",
+        "pno" : "60-1763-01",
         "description": {
             "en": "Streaming Media Encoder (SME 211)",
             "de": "Kodierer für Medien-Streaming (SME 211)",
@@ -132,8 +135,9 @@
         }
     },
     "DMP128Plus_AT" : {
-        "name" : "DMP 128 Plus AT",
+        "model" : "DMP 128 Plus AT",
         "short" : "dmp",
+        "pno" : "60-1511-10",
         "description": {
             "en": "12x8 ProDSP Processor w/Dante (DMP 128 Plus AT)",
             "de": "12x8 Matrix-Prozessor mit ProDSP und Dante (DMP 128 Plus AT)",
@@ -231,8 +235,9 @@
         }
     },
     "DMP128Plus_C_V_AT" : {
-        "name" : "DMP 128 Plus C V AT",
+        "model" : "DMP 128 Plus C V AT",
         "short" : "dmp128",
+        "pno" : "60-1513-10",
         "description": {
             "en": "12x8 ProDSP Processor w/AEC, VoIP, and Dante (DMP 128 Plus C V AT)",
             "de": "12x8 Matrix-Prozessoren mit ProDSP, AEC, VoIP und Dante (DMP 128 Plus C V AT)",
@@ -322,9 +327,10 @@
             }
         }
     },
-    "DMP64Plus_AT" : {
-        "name" : "DMP 64 Plus AT",
+    "DMP64Plus_C_AT" : {
+        "model" : "DMP 64 Plus AT",
         "short" : "dmp64",
+        "pno" : "60-1823-10",        
         "description": {
             "en": "6x4 Digital Matrix Processor w/ AEC and Dante (DMP 64 Plus C AT)",
             "de": "Digitaler 6x4 Matrix-Prozessor mit AEC und Dante (DMP 64 Plus C AT)",
@@ -415,8 +421,9 @@
         }
     },
     "XMP240_C_AT" : {
-        "name" : "XMP 240 C AT",
+        "model" : "XMP 240 C AT",
         "short" : "xmp240cat",
+        "pno" : "60-1836-01",
         "description": {
             "en": "Dante Audio Matrix Processor with AEC (XMP 240 C AT)",
             "de": "Matrixprozessor mit 24 AEC-Kanälen und Dante (XMP 240 C AT)",
@@ -475,8 +482,9 @@
         }   
     },
     "NetPA_U_1002" :{
-        "name" : "NetPA U 1002",
+        "model" : "NetPA U 1002",
         "short" : "npa1002",
+        "pno" : "60-1767-01",
         "description": {
             "en": "100 watt 2 channel low impedance amplifier with DSP and Dante (NetPA U 1002)",
             "de": "Verstärker mit zwei Kanälen mit Dante und DSP 100 W je Kanal (NetPA U 1002)",
@@ -539,8 +547,9 @@
         }
     },
     "NetPA_U_1004":{
-        "name" : "NetPA U 1004",
+        "model" : "NetPA U 1004",
         "short" : "npa1004",
+        "pno" : "60-1766-01",
         "description": {
             "en": "100 watt 4 channel low impedance amplifier with DSP and Dante (NetPA U 1004)",
             "de": "Verstärker mit vier Kanälen mit Dante und DSP 100 W je Kanal (NetPA U 1004)",
@@ -603,8 +612,9 @@
         }
     },
     "NetPA_U_2002":{
-        "name" : "NetPA U 2002",
+        "model" : "NetPA U 2002 SB",
         "short" : "npa2002",
+        "pno" : "60-1757-10",
         "description": {
             "en": "200 watt 2 channel low impedance amplifier with DSP and Dante (NetPA U 2002)",
             "de": "Verstärker mit zwei Kanälen mit Dante und DSP 200 W je Kanal (NetPA U 2002)",
@@ -667,8 +677,9 @@
         }
     },
     "NetPA_U_8001" :{
-        "name" : "NetPA U 8001",
+        "model" : "NetPA U 8001",
         "short" : "npa8001",
+        "pno" : "60-1866-01",
         "description": {
             "en": "800W Mono Subwoofer Amplifier with Dante and DSP (NetPA U 8001)",
             "de": "Mono Subwoofer Verstärker mit Dante und DSP 800 W (NetPA U 8001)",
@@ -731,8 +742,9 @@
         }
     },
     "AXI44_AT":{
-        "name" : "AXI 44 AT",
+        "model" : "AXI 44 AT",
         "short" : "axi44",
+        "pno" : "60-1628-11",
         "description": {
             "en": "Audio expansion interface with Dante DDM AES67 4 inputs 4 outputs (AXI 44 AT)",
             "de": "Dante-Audiointerface mit 4 Eingängen, 4 Ausgängen, DDM und AES67 (AXI 44 AT)",
@@ -767,8 +779,9 @@
         }
     },
     "AXI22_AT":{
-        "name" : "AXI 22 AT",
-        "short" : "22",
+        "model" : "AXI 22 AT",
+        "short" : "axi22",
+        "pno" : "60-1627-11",        
         "description": {
             "en": "Audio expansion interface with Dante DDM AES67 2 inputs 2 outputs (AXI 22 AT)",
             "de": "Dante-Audiointerface mit 2 Eingängen, 2 Ausgängen, DDM und AES67 (AXI 22 AT)",
@@ -803,8 +816,9 @@
         }
     },
     "AXI02_AT":{
-        "name" : "AXI 02 AT",
+        "model" : "AXI 02 AT",
         "short" : "axi02",
+        "pno" : "60-1753-01",
         "description": {
             "en": "Audio expansion interface with Dante DDM AES67 2 outputs (AXI 02 AT)",
             "de": "Dante-Audiointerface mit 2 Ausgängen, DDM und AES67 (AXI 02 AT)",

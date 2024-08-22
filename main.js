@@ -359,7 +359,7 @@ class Extron extends utils.Adapter {
      * @param {string | void} device
      */
     streamSend(data, device = '') {
-        if (device !== '') if ((this.devices[this.config.device].name.includes('Plus')||this.devices[this.config.device].name.includes('XMP') )) { // DANTE control only on DMP plus / XMP series
+        if (device !== '') if ((this.devices[this.config.device].model.includes('Plus')||this.devices[this.config.device].model.includes('XMP') )) { // DANTE control only on DMP plus / XMP series
             data = data.replace('\r','|');
             data = `{dante@${device}:${data}}\r`;
         }
@@ -394,9 +394,9 @@ class Extron extends utils.Adapter {
             data = data.toString();     // convert buffer to String
 
             if (!this.isDeviceChecked) {        // the first data has to be the banner with device info
-                if (data.includes(this.devices[this.config.device].name)) {
+                if (data.includes(this.devices[this.config.device].pno)) {
                     this.isDeviceChecked = true;
-                    this.log.info(`onStreamData(): Device "${this.devices[this.config.device].name}" verified`);
+                    this.log.info(`onStreamData(): Device "${this.devices[this.config.device].model}" verified`);
                     // this.setState('info.connection', true, true);
                     if (this.config.type === 'ssh') {
                         if (!this.isVerboseMode) {          // enter the verbose mode
@@ -503,6 +503,9 @@ class Extron extends utils.Adapter {
                         this.timers.timeoutQueryStatus.refresh();   // refresh poll timer
 
                         switch (command) {
+                            case 'VRB':
+                                this.log.info(`onStreamData(): ${dante?'danteDevice '+danteDevice:'device'} entered verbose mode: "${ext1}"`);
+                                break;
                             case 'VER':             // received a Version (answer to status query)
                                 switch (ext1) {
                                     case '00' :
@@ -514,15 +517,30 @@ class Extron extends utils.Adapter {
                                             if (!dante) this.versionSet = true;
                                             if (!dante) this.device.version = `${ext2}`;
                                             this.setState(`${dante?'dante.'+danteDevice:'device'}.version`, ext2, true);
-                                            this.log.info(`onStreamData(): Extron set ${dante?'dante.'+danteDevice:'device'}.version: "${ext2}"`);
+                                            this.log.debug(`onStreamData(): Extron set ${dante?'dante.'+danteDevice:'device'}.version: "${ext2}"`);
                                         }
                                         break;
+
+                                    case '02' :
+                                        this.log.debug(`onStreamData(): Extron got device description: "${ext2}"`);
+                                        break;
+
+                                    case '03' :
+                                        this.log.debug(`onStreamData(): Extron got device memory usage: "${ext2}"`);
+                                        break;
+
+                                    case '04' :
+                                        this.log.debug(`onStreamData(): Extron got user memory usage: "${ext2}"`);
+                                        break;
+
                                     case '14' :
                                         this.log.debug(`onStreamData(): Extron got embedded OS type and version: "${ext2}"`);
                                         break;
+
                                     case '20' :
                                         this.log.debug(`onStreamData(): Extron got firmware version with build: "${ext2}"`);
                                         break;
+
                                     default:
                                         this.log.warn(`onStreamData(): Extron got unknown version information: "${ext2}"`);
                                 }
@@ -549,6 +567,11 @@ class Extron extends utils.Adapter {
                                 this.log.info(`onStreamData(): Extron got ${dante?'dante ':''}devicename: "${ext2}"`);
                                 if (!dante) this.device.name = `${ext2}`;
                                 this.setState(`${dante?'dante.'+danteDevice:'device'}.name`, ext2, true);
+                                break;
+
+                            case 'PNO':            // received Part Number
+                                this.log.info(`onStreamData(): Extron got ${dante?`dante ${danteDevice} `:'device '}partnumber: "${ext1}"`);
+                                this.setDevicePartnumber(danteDevice, ext1);
                                 break;
 
                             // DSP SIS commands
@@ -970,11 +993,16 @@ class Extron extends utils.Adapter {
                             case 'EXPRC':   // DANTE connection status
                                 this.log.info(`onStreamData(): Extron DANTE connection to remote device: ${ext1}, ${ext2=='1'?'established':'disconnected'} `);
                                 this.setDanteConnection(ext1,ext2 == '1');
+                                if (ext2 == '1') {
+                                    this.switchMode(ext1);  // switch device to verbose mode
+                                    this.getDevicePartnumber(ext1); // request device part number
+                                }
                                 break;
 
                             case 'EXPRL':   // list of DANTE connected devices
                                 this.log.info(`onStreamData(): Extron listening to remote devices: [${ext2.split('*')}]`);
                                 this.setDanteConnections(ext2.split('*'));
+                                //for (const device of ext2.split('*')) this.getDevicePartnumber(device);
                                 break;
 
                             case 'DANTE':
@@ -1077,13 +1105,13 @@ class Extron extends utils.Adapter {
 
     /**
      * called to switch the verbose mode
+     * @param {string | void} device
      */
-    switchMode() {
-        const device = this.devices[this.config.device].short;
+    switchMode(device = '') {
         try {
-            this.log.debug('switchMode(): Extron switching to verbose mode 3');
-            this.streamSend('W3CV\r');
-            if (device === 'smd202') {
+            this.log.debug(`switchMode(): Extron switching ${device} to verbose mode 3`);
+            this.streamSend('W3CV\r', device);
+            if (this.devices[this.config.device].short === 'smd202') {
                 this.log.debug(`switchMode(): Extron disabling subtitle display`);
                 this.streamSend('WE1*0SUBT\r');
             }
@@ -1113,6 +1141,7 @@ class Extron extends utils.Adapter {
                 if (!this.fileSend) {
                     if (this.pollCount) this.log.debug(`queryStatus(): Extron send query poll #${this.pollCount}`);
                     this.streamSend('Q');
+                    for (const device of Object.keys(this.danteDevices)) if (this.danteDevices[device].connectionState == 'CONNECTED') this.streamSend('Q', device);
                     this.pollCount += 1;
                 }
             }
@@ -1135,17 +1164,17 @@ class Extron extends utils.Adapter {
             switch (typeof instanceObj.common.titleLang) {
                 case 'string' : // shold never occur, js-controller issue filed 20240606
                     //@ts-ignore
-                    if (!instanceObj.common.titleLang.includes(this.devices[this.config.device].name)) {
+                    if (!instanceObj.common.titleLang.includes(this.devices[this.config.device].model)) {
                         //@ts-ignore
-                        instanceObj.common.titleLang = `${this.devices[this.config.device].name}`;
+                        instanceObj.common.titleLang = `${this.devices[this.config.device].model}`;
                         await this.setForeignObjectAsync(`system.adapter.${this.namespace}`, instanceObj);
                         this.log.debug(`setInstanceNamec(): set titleLang`);
                     }
                     break;
                 case 'object' :
-                    if (!instanceObj.common.titleLang.de.includes(this.devices[this.config.device].name)) {
+                    if (!instanceObj.common.titleLang.de.includes(this.devices[this.config.device].model)) {
                         for (const key of Object.keys(instanceObj.common.titleLang)){
-                            instanceObj.common.titleLang[key] = `${this.devices[this.config.device].name}`;
+                            instanceObj.common.titleLang[key] = `${this.devices[this.config.device].model}`;
                         }
                         await this.setForeignObjectAsync(`system.adapter.${this.namespace}`, instanceObj);
                         this.log.debug(`setInstanceNamec(): set titleLang.xx`);
@@ -1173,9 +1202,9 @@ class Extron extends utils.Adapter {
 
             // add deviceName to database
             const deviceObj = this.objectTemplates.common[0];
-            deviceObj.common.name = this.devices[this.config.device].name;
+            deviceObj.common.name = this.devices[this.config.device].model;
             await this.setObjectAsync('device', deviceObj);
-            this.log.debug(`createDatabaseAsync(): set deviceName`);
+            this.log.debug(`createDatabaseAsync(): set deviceModel`);
 
             // if cp82 or sme211 : create video inputs and outputs
             if ((device === 'cp82') || (device === 'sme211')) {
@@ -1439,24 +1468,21 @@ class Extron extends utils.Adapter {
     async createDanteDeviceAsync(deviceName, deviceType) {
         this.log.debug(`createDanteDevice(): setting up database for "${deviceName}" as "${deviceType}"`);
         // create the common section
+        this.log.debug(`createDanteDevice(): create common section`);
         for (const element of this.objectTemplates.common) {
             element._id = `dante.${deviceName}.${element._id}`;
             await this.setObjectAsync(element._id, element);
         }
         // add deviceName to database
+        this.log.debug(`createDanteDevice(): set deviceName`);
         const deviceObj = this.objectTemplates.common[0];
         deviceObj.common.name = deviceName;
         deviceObj._id = `dante.${deviceName}.${deviceObj._id}`;
         await this.setObjectAsync(deviceObj._id, deviceObj);
-        this.log.debug(`createDanteDevice(): set deviceName`);
-        /*
         for (const element of this.objectTemplates[deviceType]) {
-            elemnt._id = `dante.${deviceName}.${element._id}`;
+            element._id = `dante.${deviceName}.${element._id}`;
             await this.setObjectAsync(element._id, element);
         }
-        this.log.debug(`createDanteDevice(): create common section`);
-        */
-
     }
 
     /**
@@ -1975,6 +2001,31 @@ class Extron extends utils.Adapter {
         } catch (err) {
             this.errorHandler(err, 'restoreDeviceConfig');
         }
+    }
+
+    /**
+     * request device part number
+     * cmd = N
+     * @param {string | void} deviceName
+     */
+    getDevicePartnumber(deviceName = '') {
+        try {
+            this.streamSend(`N\r`, deviceName);
+        } catch (err) {
+            this.errorHandler(err, 'getDevicePartnumber');
+        }
+    }
+
+    /**
+     * set device part number
+     * cmd = PNO
+     * @param {string} deviceName
+     * @param {string} partNumber
+     */
+    setDevicePartnumber(deviceName, partNumber) {
+        // () => for (const device of this.devices) if (device.pno == partNumber) return device.model;
+        this.danteDevices[deviceName].pno = partNumber;
+        this.danteDevices[deviceName].model = this.devices[`${Object.keys(this.devices).find(device => this.devices[device].pno == partNumber)}`].model;
     }
 
     /** END device config control */
@@ -2705,7 +2756,7 @@ class Extron extends utils.Adapter {
             let i = 0;
             userFileList.sort();    // sort list alphabetically to resemble DSP configurator display
             this.log.info(`setUserFile(): deleting file objects...`);
-            const files = this.objectTemplates.userflash.find((element)=>{return element._id === 'fs.files';});
+            const files = this.objectTemplates.userflash.find(element => element._id === 'fs.files');
             await this.delObjectAsync(files._id,{recursive:true}); // delete files recursively
             this.log.info(`setUserFile(): create files folder object...`);
             await this.setObjectAsync(files._id, files);
@@ -3491,6 +3542,7 @@ class Extron extends utils.Adapter {
     setDanteDevices(deviceList) {
         try {
             this.setState(`dante.available`, JSON.stringify(deviceList), true);
+            for (const deviceName of deviceList) {this.danteDevices[deviceName] = {'connectionState' :'AVAILABLE'};}
         } catch (err) {
             this.errorHandler(err, 'setDanteDevices');
         }
@@ -3501,7 +3553,7 @@ class Extron extends utils.Adapter {
      * @param {number | boolean} state
      * cmd = C[device]*[state]EXPR
      */
-    ctrlDanteConnection(deviceName, state) {
+    sendDanteConnection(deviceName, state) {
         try {
             this.streamSend(`WC${deviceName}*${state?1:0}EXPR\r`);
         } catch (err) {
@@ -3513,7 +3565,7 @@ class Extron extends utils.Adapter {
      * @param {string} deviceName
      * cmd = C[deviceName]EXPR
     */
-    checkDanteConnection(deviceName) {
+    getDanteConnection(deviceName) {
         try {
             this.streamSend(`WC${deviceName}EXPR\r`);
         } catch (err) {
@@ -3523,11 +3575,12 @@ class Extron extends utils.Adapter {
 
     /** set DANTE connection
      * @param {string} deviceName
-     * @param {boolean} connectionState
+     * @param {boolean} state
     */
-    setDanteConnection(deviceName, connectionState) {
+    setDanteConnection(deviceName, state) {
         try {
-            this.setState(`dante.${deviceName}.info.connection`, connectionState, true);
+            this.setState(`dante.${deviceName}.info.connection`, state, true);
+            this.danteDevices[deviceName].connectionState = state ? 'CONNECTED' : 'AVAILABLE';
         } catch (err) {
             this.errorHandler(err, 'setDanteConnection');
         }
@@ -3550,7 +3603,10 @@ class Extron extends utils.Adapter {
     setDanteConnections(deviceList) {
         try {
             this.setState(`dante.connected`, JSON.stringify(deviceList), true);
-            //this.listDanteConnections();    // update connection list
+            for (const deviceName of deviceList) {
+                this.danteDevices[deviceName].connectionState = 'CONNECTED';
+                //this.setState(`dante.${deviceName}.info.connection`, true, true);
+            }
         } catch (err) {
             this.errorHandler(err, 'setDanteConnections');
         }
@@ -4362,7 +4418,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'connection' :
-                                if (idArray[1] == 'dante') this.ctrlDanteConnection(device, Number(state.val));
+                                if (idArray[1] == 'dante') this.sendDanteConnection(device, Number(state.val));
                                 break;
 
                             case 'available' :
