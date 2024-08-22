@@ -37,6 +37,7 @@ If you are a non commercial organisation or use it for private use you can get a
 - 8x2 Presentation Matrix Switcher (DTP2 CrossPoint 82)
 - H.264 Streaming Media Player and Decoder (SMD 202)
 - Streaming Media Encoder (SME 211)
+- 6x4 ProDSP Processor w/AEC and Dante (DMP 64 Plus C AT)
 - 12x8 ProDSP Processor w/Dante (DMP 128 Plus AT)
 - 12x8 ProDSP Processor w/AEC, VoIP, and Dante (DMP 128 Plus C V AT)
 - Dante Audio Matrix Processor with AEC (XMP 240 C AT)

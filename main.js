@@ -359,13 +359,13 @@ class Extron extends utils.Adapter {
      * @param {string | void} device
      */
     streamSend(data, device = '') {
-        if (device !== '') if ((this.devices[this.config.device].model.includes('Plus')||this.devices[this.config.device].model.includes('XMP') )) { // DANTE control only on DMP plus / XMP series
-            data = data.replace('\r','|');
-            data = `{dante@${device}:${data}}\r`;
-        }
         try {
             if (this.streamAvailable) {
                 if (data != 'Q') this.log.info(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.fileSend?'file data':this.decodeBufferToLog(data)}"`);
+                if (device !== '') if ((this.devices[this.config.device].model.includes('Plus')||this.devices[this.config.device].model.includes('XMP') )) { // DANTE control only on DMP plus / XMP series
+                    data = data.replace('\r','|');
+                    data = `{dante@${device}:${data}}\r`;
+                }
                 this.streamAvailable = this.stream.write(data);
             } else {
                 const bufSize = this.sendBuffer.push(data);
