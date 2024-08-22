@@ -11,7 +11,7 @@
 [![NPM](https://nodei.co/npm/iobroker.extron.png?downloads=true)](https://nodei.co/npm/iobroker.extron/)
 
 ## References
-Extron®, CrossPoint®, DTP®, eBUS®, NetPA®, XPA®, XTP® are registered trademarks of RGB Systems, Incorporated\
+Extron®, CrossPoint®, DTP®, NetPA®, XPA®, XTP® are registered trademarks of RGB Systems, Incorporated\
 See [www.extron.com](https://www.extron.com/article/termsprivacy)
 
 The logo is taken from the Extron Control App by Extron
