@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20240829 mschlgl
+ *      last edit 20240823 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -360,12 +360,12 @@ class Extron extends utils.Adapter {
      */
     streamSend(data, device = '') {
         try {
+            if (device !== '') if ((this.devices[this.config.device].model.includes('Plus')||this.devices[this.config.device].model.includes('XMP') )) { // DANTE control only on DMP plus / XMP series
+                data = data.replace('\r','|');  // for DANTE relayed messages replace '\r' with '|'
+                data = `{dante@${device}:${data}}\r`;   // format DANTe relay message
+            }
             if (this.streamAvailable) {
-                if (data != 'Q') this.log.info(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.fileSend?'file data':this.decodeBufferToLog(data)}"`);
-                if (device !== '') if ((this.devices[this.config.device].model.includes('Plus')||this.devices[this.config.device].model.includes('XMP') )) { // DANTE control only on DMP plus / XMP series
-                    data = data.replace('\r','|');
-                    data = `{dante@${device}:${data}}\r`;
-                }
+                if (!data.match(/(Q|:Q\|)/)) this.log.debug(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.fileSend?'file data':this.decodeBufferToLog(data)}"`);
                 this.streamAvailable = this.stream.write(data);
             } else {
                 const bufSize = this.sendBuffer.push(data);
@@ -390,7 +390,7 @@ class Extron extends utils.Adapter {
         this.streamAvailable = true;    // if we receive data the stream is available
         if (this.fileSend) return; // do nothing during file transmission
         try {
-            this.log.debug(`onStreamData(): Extron got data: "${this.decodeBufferToLog(data)}"`);
+            this.log.debug(`onStreamData(): received data: "${this.decodeBufferToLog(data)}"`);
             data = data.toString();     // convert buffer to String
 
             if (!this.isDeviceChecked) {        // the first data has to be the banner with device info
@@ -400,7 +400,7 @@ class Extron extends utils.Adapter {
                     // this.setState('info.connection', true, true);
                     if (this.config.type === 'ssh') {
                         if (!this.isVerboseMode) {          // enter the verbose mode
-                            this.switchMode();
+                            this.sendVerboseMode();
                             return;
                         }
                     }
@@ -421,7 +421,7 @@ class Extron extends utils.Adapter {
                         this.log.info('onStreamData(): Extron Telnet logged in');
                         this.setState('info.connection', true, true);
                         if (!this.isVerboseMode) {          // enter the verbose mode
-                            this.switchMode();
+                            this.sendVerboseMode();
                             return;
                         }
                         return;
@@ -439,41 +439,17 @@ class Extron extends utils.Adapter {
             // iterate through multiple answers connected via [LF]
             for (const cmdPart of data.split('\n')) {
 
-                if (cmdPart.includes('3CV')) {
-                    this.log.info('onStreamData(): Extron device switched to verbose mode 3');
-                    this.isVerboseMode = true;
-                    this.timers.timeoutQueryStatus.refresh();
-                    return;
-                }
-                if (cmdPart.includes('Vrb3')) {
-                    this.log.info('onStreamData(): Extron device entered verbose mode 3');
-                    this.isVerboseMode = true;
-                    if (!this.initDone) {
-                        this.streamSend('Q');       // query Version
-                        this.streamSend('1I');      // query Model
-                        this.streamSend('WCN\r');   // query deviceName
-                        this.initDone = true;
-                        this.timers.timeoutQueryStatus.refresh();
-                        if (this.config.pushDeviceStatus === true) {
-                            await this.setDeviceStatusAsync();
-                        } else {
-                            await this.getDeviceStatusAsync();
-                            //this.log.info('Extron get device status diabled ');
-                        }
-                    }
-                    return;
-                }
                 const answer = cmdPart.replace(/[\r\n]/gm, ''); // remove [CR] and [LF] from string
-                // Error handling
+                /** Error handling
                 if (answer.match(/^E\d\d/gim)) {    // received an error
                     throw { 'message': 'Error response from device', 'stack'  : errCodes[answer] };
-                }
+                }**/
 
                 if (this.requestDir && answer.match(/\.\w{3} /)) {
-                    this.log.info(`onStreamData(): Extron got file data: "${answer}"`);
+                    this.log.info(`onStreamData(): received file data: "${answer}"`);
                     userFileList.push(answer);
                 } else if (this.requestDir && answer.includes('Bytes Left')) {
-                    this.log.info(`onStreamData(): Extron got freespace: "${answer.match(/\d+/)}"`);
+                    this.log.info(`onStreamData(): received freespace: "${answer.match(/\d+/)}"`);
                     userFileList.push(answer);
                     this.requestDir = false;        // directory list has been received, clear flag
                     this.fileList.freeSpace = 0;   // clear free space to be filled with new value from list
@@ -489,277 +465,286 @@ class Extron extends utils.Adapter {
                 } else
                 {   // lookup the command
                     // const matchArray = answer.match(/([A-Z][a-z]+[A-Z]|\w{3})(\d*)\*?,? ?(.*)/i);    // initial separation detecting eg. "DsG60000*-10"
-                    const matchArray = answer.match(/({(dante)@(.*)})?([A-Z][a-z]+[A-Z]|\w{3})([\w-]*|\d*),?\*? ?(.*)/i); // extended to detect DANTE remote responses eg. "{dante@AXI44-92efe7}DsG60000*-10"
+                    const matchArray = answer.match(/({(dante)@(.*)})?([A-Z][a-z]{1,3}[A-Z]|E|\w{3})([\w-]*|\d*),?\*? ?(.*)/i); // extended to detect DANTE remote responses eg. "{dante@AXI44-92efe7}DsG60000*-10"
                     if (matchArray) {       // if any match
+                        //this.log.debug(`onStreamData(): ${matchArray}`);
                         const command = matchArray[4].toUpperCase();
                         const dante = matchArray[2]?(matchArray[2] == 'dante'): false;
                         const danteDevice = matchArray[3];
                         const ext1 = matchArray[5] ? matchArray[5] : '';
                         const ext2 = matchArray[6] ? matchArray[6] : '';
 
-                        this.log.debug(`onStreamData(): command "${command}", ext1 "${ext1}", ext2 "${ext2}`);
+                        this.log.debug(`onStreamData(): ${dante?'"'+danteDevice+'" ':''}command "${command}", ext1 "${ext1}", ext2 "${ext2}`);
 
                         this.pollCount = 0;     // reset pollcounter as valid data has been received
                         this.timers.timeoutQueryStatus.refresh();   // refresh poll timer
 
                         switch (command) {
+                            case 'E':
+                                // Error handling
+                                this.log.warn(`onStreamData(): Error response from ${dante?'danteDevice '+danteDevice:'device'} '${command}${ext1}': ${errCodes[command+ext1]}}`);
+                                break;
+
                             case 'VRB':
                                 this.log.info(`onStreamData(): ${dante?'danteDevice '+danteDevice:'device'} entered verbose mode: "${ext1}"`);
+                                if (dante) this.setVerboseMode(danteDevice);
+                                else this.setVerboseMode();
                                 break;
+
                             case 'VER':             // received a Version (answer to status query)
                                 switch (ext1) {
                                     case '00' :
-                                        this.log.debug(`onStreamData(): Extron got detailed firmware version: "${ext2}"`);
+                                        this.log.debug(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}detailed firmware version: "${ext2}"`);
                                         break;
                                     case '01' :
-                                        this.log.debug(`onStreamData(): Extron got firmware version: "${ext2}"`);
+                                        this.log.debug(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}firmware version: "${ext2}"`);
                                         if (!this.versionSet) {
                                             if (!dante) this.versionSet = true;
                                             if (!dante) this.device.version = `${ext2}`;
                                             this.setState(`${dante?'dante.'+danteDevice:'device'}.version`, ext2, true);
-                                            this.log.debug(`onStreamData(): Extron set ${dante?'dante.'+danteDevice:'device'}.version: "${ext2}"`);
+                                            this.log.info(`onStreamData(): set ${dante?'dante.'+danteDevice:'device'}.version: "${ext2}"`);
                                         }
                                         break;
 
                                     case '02' :
-                                        this.log.debug(`onStreamData(): Extron got device description: "${ext2}"`);
+                                        this.log.debug(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}device description: "${ext2}"`);
                                         break;
 
                                     case '03' :
-                                        this.log.debug(`onStreamData(): Extron got device memory usage: "${ext2}"`);
+                                        this.log.debug(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}device memory usage: "${ext2}"`);
                                         break;
 
                                     case '04' :
-                                        this.log.debug(`onStreamData(): Extron got user memory usage: "${ext2}"`);
+                                        this.log.debug(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}user memory usage: "${ext2}"`);
                                         break;
 
                                     case '14' :
-                                        this.log.debug(`onStreamData(): Extron got embedded OS type and version: "${ext2}"`);
+                                        this.log.debug(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}embedded OS type and version: "${ext2}"`);
                                         break;
 
                                     case '20' :
-                                        this.log.debug(`onStreamData(): Extron got firmware version with build: "${ext2}"`);
+                                        this.log.debug(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}firmware version with build: "${ext2}"`);
                                         break;
 
                                     default:
-                                        this.log.warn(`onStreamData(): Extron got unknown version information: "${ext2}"`);
+                                        this.log.warn(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}unknown version information: "${ext2}"`);
                                 }
                                 break;
 
                             case 'INF':
                                 switch (ext1) {
                                     case '01' :
-                                        this.log.info(`onStreamData(): Extron got ${dante?'dante.'+danteDevice:'device'} model: "${ext2}"`);
+                                        this.log.info(`onStreamData(): received ${dante?'dante.'+danteDevice:'device'} model: "${ext2}"`);
                                         if (!dante) this.device.model = `${ext2}`;
                                         this.setState(`${dante?'dante.'+danteDevice:'device'}.model`, ext2, true);
                                         break;
                                     case '02' :
-                                        this.log.info(`onStreamData(): Extron got ${dante?'dante.'+danteDevice:'device'} model description: "${ext2}"`);
+                                        this.log.info(`onStreamData(): received ${dante?'dante.'+danteDevice:'device'} model description: "${ext2}"`);
                                         if (!dante) this.device.description = `${ext2}`;
                                         this.setState(`${dante?'dante.'+danteDevice:'device'}.description`, ext2, true);
                                         break;
                                     default:
-                                        this.log.warn(`onStreamData(): Extron got unknown information: "${ext2}"`);
+                                        this.log.warn(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}unknown information: "${ext2}"`);
                                 }
                                 break;
 
                             case 'IPN':             // received a device name
-                                this.log.info(`onStreamData(): Extron got ${dante?'dante ':''}devicename: "${ext2}"`);
+                                this.log.info(`onStreamData(): received ${dante?'dante ':''}devicename: "${ext2}"`);
                                 if (!dante) this.device.name = `${ext2}`;
                                 this.setState(`${dante?'dante.'+danteDevice:'device'}.name`, ext2, true);
                                 break;
 
                             case 'PNO':            // received Part Number
-                                this.log.info(`onStreamData(): Extron got ${dante?`dante ${danteDevice} `:'device '}partnumber: "${ext1}"`);
+                                this.log.info(`onStreamData(): received ${dante?`dante ${danteDevice} `:'device '}partnumber: "${ext1}"`);
                                 this.setDevicePartnumber(danteDevice, ext1);
                                 break;
 
                             // DSP SIS commands
                             case 'DSA' :            // dynamics attack
-                                this.log.info(`onStreamData(): Extron received attack time change from OID : "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received attack time change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}"`);
                                 break;
 
                             case 'DSB':
                                 if (ext1.startsWith('460')) {   // AEC Block
-                                    this.log.info(`onStreamData(): Extron received AEC config  change from OID : "${ext1}" value "${ext2}"`);
+                                    this.log.info(`onStreamData(): received AEC config  change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}"`);
                                 } else
-                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
+                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for ${dante?'"'+danteDevice+'" ':''}command: "${command}"`);
                                 break;
 
                             case 'DSC':
                                 if (ext1.startsWith('460')) {   // AEC Block
-                                    this.log.info(`onStreamData(): Extron received AEC config  change from OID : "${ext1}" value "${ext2}"`);
+                                    this.log.info(`onStreamData(): received AEC config  change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}"`);
                                 } else
-                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
+                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for ${dante?'"'+danteDevice+'" ':''}command: "${command}"`);
                                 break;
 
                             case 'DSD':
                                 if (ext1.startsWith('400')) { // input source control
-                                    this.log.info(`onStreamData(): Extron got source ${command} from OID: "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received source ${command} from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: "${ext2}"`);
                                     this.setSource(ext1, ext2);
                                 } else if (ext1.startsWith('450')) {    // input delay value change
-                                    this.log.info(`onStreamData(): Extron received delay value change from OID : "${ext1}" value "${ext2}samples"`);
+                                    this.log.info(`onStreamData(): received delay value change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}samples"`);
                                 } else if (ext1.startsWith('590')) {    // input automixer group change
-                                    this.log.info(`onStreamData(): Extron got automix group change from OID: "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received automix group change from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('600')) {    // aux output target change
-                                    this.log.info(`onStreamData(): Extron got aux output target change from OID: "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received aux output target change from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: "${ext2}"`);
                                     this.setSource(ext1, ext2);
                                 } else if (ext1.startsWith('650')) {    // output delay value change
-                                    this.log.info(`onStreamData(): Extron received delay value change from OID : "${ext1}" value "${ext2}samples"`);
+                                    this.log.info(`onStreamData(): received delay value change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}samples"`);
                                 } else
-                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
+                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for ${dante?'"'+danteDevice+'" ':''}command: "${command}"`);
                                 break;
 
                             case 'DSE' :            // DSP block bypass change
                                 if (ext1.startsWith('41')) { // input filter block
-                                    this.log.info(`onStreamData(): Extron got input filter block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received input filter block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                     this.setDspBlockStatus(ext1, ext2);
                                 } else if (ext1.startsWith('44')) { // input dynamics block
-                                    this.log.info(`onStreamData(): Extron got input dynamics block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received input dynamics block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                     this.setDspBlockStatus(ext1, ext2);
                                 } else if (ext1.startsWith('450')) { // input delay block
-                                    this.log.info(`onStreamData(): Extron got input delay block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received input delay block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                     this.setDspBlockStatus(ext1, ext2);
                                 } else if (ext1.startsWith('460')) { // input aec block
-                                    this.log.info(`onStreamData(): Extron got input aec block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received input aec block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                     this.setDspBlockStatus(ext1, ext2);
                                 } else if (ext1.startsWith('480')) { // input ducker block
-                                    this.log.info(`onStreamData(): Extron got input ducker block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received input ducker block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                     this.setDspBlockStatus(ext1, ext2);
                                 } else if (ext1.startsWith('51')) { // output filter block
-                                    this.log.info(`onStreamData(): Extron got output filter block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received output filter block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                     this.setDspBlockStatus(ext1, ext2);
                                 } else if (ext1.startsWith('52')) { // output feedback suppressor filter block
-                                    this.log.info(`onStreamData(): Extron got output feedback suppressor filter block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received output feedback suppressor filter block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                     this.setDspBlockStatus(ext1, ext2);
                                 } else if (ext1.startsWith('530')) { // output feedback suppressor block
-                                    this.log.info(`onStreamData(): Extron got output feedback suppressor block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received output feedback suppressor block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                     this.setDspBlockStatus(ext1, ext2);
                                 } else if (ext1.startsWith('540')) { // output dynamics filter block
-                                    this.log.info(`onStreamData(): Extron got output dynamics block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received output dynamics block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                     this.setDspBlockStatus(ext1, ext2);
                                 } else if (ext1.startsWith('550')) { // output delay block
-                                    this.log.info(`onStreamData(): Extron got output delay block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received output delay block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                     this.setDspBlockStatus(ext1, ext2);
                                 } else if (ext1.startsWith('56')) { // input ducker source block
-                                    this.log.info(`onStreamData(): Extron got input ducker source enabled change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received input ducker source enabled change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('57')) { // input ducker source block
-                                    this.log.info(`onStreamData(): Extron got input ducker source enabled block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received input ducker source enabled block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('590')) { // input automix block
-                                    this.log.info(`onStreamData(): Extron got input automix block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received input automix block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('61')) { // output filter block
-                                    this.log.info(`onStreamData(): Extron got output filter block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received output filter block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('640')) { // output dynamics block
-                                    this.log.info(`onStreamData(): Extron got output dynamics block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received output dynamics block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('650')) { // output delay block
-                                    this.log.info(`onStreamData(): Extron got output delay block bypass change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received output delay block bypass change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                 } else
-                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
+                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for ${dante?'"'+danteDevice+'" ':''}command: "${command}"`);
                                 break;
 
                             case 'DSF' :            // filter frequency change
-                                this.log.info(`onStreamData(): Extron received filter frequency change from OID : "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received filter frequency change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}"`);
                                 break;
 
                             case 'DSG':             // received a gain level change
-                                this.log.info(`onStreamData(): Extron got mute/gain ${command} from OID: "${ext1}" value: ${ext2}`);
+                                this.log.info(`onStreamData(): received mute/gain ${command} from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: ${ext2}`);
                                 this.setGain(command, ext1, ext2);
                                 break;
 
                             case 'DSH' :
                                 if (ext1.startsWith('400')) {    // digital input gain level change
-                                    this.log.info(`onStreamData(): Extron got gain ${command} from OID: "${ext1}" value: ${ext2}`);
+                                    this.log.info(`onStreamData(): received gain ${command} from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: ${ext2}`);
                                     this.setGain(command, ext1, ext2);
                                 } else if (ext1.startsWith('440')) {           // input dynamics hold time change
-                                    this.log.info(`onStreamData(): Extron received hold time change from OID : "${ext1}" value "${ext2}"`);
+                                    this.log.info(`onStreamData(): received hold time change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}"`);
                                 } else if (ext1.startsWith('540')) {           // input dynamics hold time change
-                                    this.log.info(`onStreamData(): Extron received hold time change from OID : "${ext1}" value "${ext2}"`);
+                                    this.log.info(`onStreamData(): received hold time change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}"`);
                                 } else if (ext1.startsWith('640')) {           // output dynamics hold time change
-                                    this.log.info(`onStreamData(): Extron received hold time change from OID : "${ext1}" value "${ext2}"`);
+                                    this.log.info(`onStreamData(): received hold time change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}"`);
                                 } else
-                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
+                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for ${dante?'"'+danteDevice+'" ':''}command: "${command}"`);
                                 break;
 
                             case 'DSJ' :
                                 if (ext1.startsWith('400')) {    // input config change
-                                    this.log.info(`onStreamData(): Extron got input config change from OID: "${ext1}" value: ${ext2}`);
+                                    this.log.info(`onStreamData(): received input config change from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: ${ext2}`);
                                 } else if (ext1.startsWith('590')) {    // input DSP config change
-                                    this.log.info(`onStreamData(): Extron got DSP block config change from OID: "${ext1}" value: ${ext2}`);
+                                    this.log.info(`onStreamData(): received DSP block config change from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: ${ext2}`);
                                 } else if (ext1.startsWith('600')) {    // output config change
-                                    this.log.info(`onStreamData(): Extron got output config change from OID: "${ext1}" value: ${ext2}`);
+                                    this.log.info(`onStreamData(): received output config change from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: ${ext2}`);
                                 } else
-                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
+                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for ${dante?'"'+danteDevice+'" ':''}command: "${command}"`);
                                 break;
 
                             case 'DSK' :            // dynamics knee
-                                this.log.info(`onStreamData(): Extron received dynamic knee change from OID : "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received dynamic knee change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}"`);
                                 break;
 
                             case 'DSL' :            // dynamics release
-                                this.log.info(`onStreamData(): Extron received release time change from OID : "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received release time change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}"`);
                                 break;
 
                             case 'DSM':             // received a mute command
-                                this.log.info(`onStreamData(): Extron got mute ${command} from OID: "${ext1}" value: ${ext2}`);
+                                this.log.info(`onStreamData(): received mute ${command} from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: ${ext2}`);
                                 this.setGain(command, ext1, ext2);
                                 break;
 
                             case 'DSN':
                                 if (ext1.startsWith('460')) {    // digital input AEC config change
-                                    this.log.info(`onStreamData(): Extron got input AEC config change from OID: "${ext1}" value: ${ext2}`);
+                                    this.log.info(`onStreamData(): received input AEC config change from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: ${ext2}`);
                                 } else if (ext1.startsWith('590')) {    // input automix config change
-                                    this.log.info(`onStreamData(): Extron got input automix config change from OID: "${ext1}" value: ${ext2}`);
-                                } else this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
+                                    this.log.info(`onStreamData(): received input automix config change from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: ${ext2}`);
+                                } else this.log.warn(`onStreamData(): unknown OID: "${ext1}" for ${dante?'"'+danteDevice+'" ':''}command: "${command}"`);
                                 break;
 
                             case 'DSO' :            // filter slope 0=6dB/O, 1=12dB/O ... 7=48dB/O
-                                this.log.info(`onStreamData(): Extron received filter slope change from OID : "${ext1}" value "${6+(Number(ext2)*6)}dB/O"`);
+                                this.log.info(`onStreamData(): received filter slope change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${6+(Number(ext2)*6)}dB/O"`);
                                 break;
 
                             case 'DSP':
                                 if (ext1.startsWith('2'))  {   // mixpoint automixer status change
-                                    this.log.info(`onStreamData(): Extron received mixpoint automixer status change from OID : "${ext1}" value "${ext2}"`);
+                                    this.log.info(`onStreamData(): received mixpoint automixer status change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}"`);
                                 } else if (ext1.startsWith('400')) { // input polarity change
-                                    this.log.info(`onStreamData(): Extron got input polarity change change from OID: "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received input polarity change change from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('590')) { // input automixer last mic change
-                                    this.log.info(`onStreamData(): Extron got automix last mic change from OID: "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received automix last mic change from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('600')) { // output polarity change
-                                    this.log.info(`onStreamData(): Extron got output polarity change change from OID: "${ext1}" value: "${ext2}"`);
-                                } else this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
+                                    this.log.info(`onStreamData(): received output polarity change change from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: "${ext2}"`);
+                                } else this.log.warn(`onStreamData(): unknown OID: "${ext1}" for ${dante?'"'+danteDevice+'" ':''}command: "${command}"`);
                                 break;
 
                             case 'DSQ' :            // filter q-factor change
-                                this.log.info(`onStreamData(): Extron received filter Q-factor change from OID : "${ext1}" value "${Number(ext2)/1000}"`);
+                                this.log.info(`onStreamData(): received filter Q-factor change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${Number(ext2)/1000}"`);
                                 break;
 
                             case 'DSR' :            // dynamics ratio
-                                this.log.info(`onStreamData(): Extron received ratio change from OID : "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received ratio change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}"`);
                                 break;
 
                             case 'DST' :
                                 if (ext1.startsWith('44')) {  // input dynamics threshold change
-                                    this.log.info(`onStreamData(): Extron got a threshold change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received a threshold change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                     this.setDynamicsThreshold(ext1, ext2);
                                 } else if (ext1.startsWith('450')) {    // input delay reference temperature change
-                                    this.log.info(`onStreamData(): Extron got a delay ref temperature change from OID : "${ext1}" value: "${ext2}°F"`);
+                                    this.log.info(`onStreamData(): received a delay ref temperature change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}°F"`);
                                 } else if (ext1.startsWith('480')) {    // input dynamics threshold change
-                                    this.log.info(`onStreamData(): Extron got a threshold change from OID : "${ext1}" value: "${ext2}°F"`);
+                                    this.log.info(`onStreamData(): received a threshold change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}°F"`);
                                 } else if (ext1.startsWith('540')) {    // input dynamics threshold change
-                                    this.log.info(`onStreamData(): Extron got a threshold change from OID : "${ext1}" value: "${ext2}°F"`);
+                                    this.log.info(`onStreamData(): received a threshold change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}°F"`);
                                 } else if (ext1.startsWith('550')) {    // input delay reference temperature change
-                                    this.log.info(`onStreamData(): Extron got a delay ref temperature change from OID : "${ext1}" value: "${ext2}°F"`);
+                                    this.log.info(`onStreamData(): received a delay ref temperature change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}°F"`);
                                 } else if (ext1.startsWith('590')) {    // input dynamics threshold change
-                                    this.log.info(`onStreamData(): Extron got a threshold change from OID : "${ext1}" value: "${ext2}°F"`);
+                                    this.log.info(`onStreamData(): received a threshold change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}°F"`);
                                 } else if (ext1.startsWith('640')) {    // output dynamics block
-                                    this.log.info(`onStreamData(): Extron got output dynamics threshold change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received output dynamics threshold change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('650')) {    // output delay reference temperature change
-                                    this.log.info(`onStreamData(): Extron got a delay ref temperature change from OID : "${ext1}" value: "${ext2}°F"`);
+                                    this.log.info(`onStreamData(): received a delay ref temperature change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}°F"`);
                                 } else
-                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
+                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for ${dante?'"'+danteDevice+'" ':''}command: "${command}"`);
                                 break;
 
                             case 'DSU' :            // delay unit change 0=samples, 1=ms, 2=fuß, 3=m
-                                this.log.info(`onStreamData(): Extron received delay unit change from OID : "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received delay unit change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}"`);
                                 break;
 
                             case 'DSV' :            // unsolicited volume/meter level
@@ -767,46 +752,46 @@ class Extron extends utils.Adapter {
 
                             case 'DSW' :            // AGC target window
                                 if (ext1.startsWith('44')) { // input dynamics block
-                                    this.log.info(`onStreamData(): Extron got input AGC window change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received input AGC window change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('540')) { // virtual return dynamics block
-                                    this.log.info(`onStreamData(): Extron got virtual return AGC window change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received virtual return AGC window change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                 } else if (ext1.startsWith('640')) { // output dynamics block
-                                    this.log.info(`onStreamData(): Extron got output AGC window change from OID : "${ext1}" value: "${ext2}"`);
+                                    this.log.info(`onStreamData(): received output AGC window change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value: "${ext2}"`);
                                 } else
-                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
+                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for ${dante?'"'+danteDevice+'" ':''}command: "${command}"`);
                                 break;
 
                             case 'DSY' :            // DSP block type change
                                 // dyn 0=no, 1=cmp, 2=lim, 3=gate, 4=agc
                                 // filter 0=no, 1= HP Butterworth, 2 = LP Butterworth, 3= Bass/Treble, 4= pra. EQ, 5= notvh EQ, 6=HP Bessel, 7= LP Bessel, 8= HP Linkwitz, 9= LP Linkwitz, 10 = Loudness
-                                this.log.info(`onStreamData(): Extron received DSP block type change from OID : "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received DSP block type change from ${dante?'"'+danteDevice+'" ':''}OID : "${ext1}" value "${ext2}"`);
                                 this.setDspBlockType(ext1, ext2);
                                 break;
 
                             case 'DSZ':
                                 if (ext1.startsWith('2')) { // mixPoint processing bypass change
-                                    this.log.info(`onStreamData(): processing bypass status change from OID: "${ext1}" value: ${ext2}`);
+                                    this.log.info(`onStreamData(): processing bypass status change from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: ${ext2}`);
                                 } else if (ext1.startsWith('400')) {    // input phantom power change
-                                    this.log.info(`onStreamData(): Phantom power status change from OID: "${ext1}" value: ${ext2}`);
+                                    this.log.info(`onStreamData(): Phantom power status change from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: ${ext2}`);
                                 } else if (ext1.startsWith('590')) {    // input automixer status change
-                                    this.log.info(`onStreamData(): automixer status change from OID: "${ext1}" value: ${ext2}`);
+                                    this.log.info(`onStreamData(): automixer status change from ${dante?'"'+danteDevice+'" ':''}OID: "${ext1}" value: ${ext2}`);
                                 } else
-                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for command: "${command}"`);
+                                    this.log.warn(`onStreamData(): unknown OID: "${ext1}" for ${dante?'"'+danteDevice+'" ':''}command: "${command}"`);
                                 break;
 
                             // player commands
                             case 'PLAY':             //received a play mode command
-                                this.log.info(`onStreamData(): Extron got play mode ${command} for Player: "${ext1}" value: "${ext2}"`);
+                                this.log.info(`onStreamData(): received play mode ${command} for Player: "${ext1}" value: "${ext2}"`);
                                 this.setPlayMode(ext1, ext2);
                                 break;
 
                             case 'CPLYA':           //received a file association to a player
-                                this.log.info(`onStreamData(): Extron got filename for Player: "${ext1}" value: "${ext2}"`);
+                                this.log.info(`onStreamData(): received filename for Player: "${ext1}" value: "${ext2}"`);
                                 this.setFileName(ext1, ext2);
                                 break;
 
                             case 'CPLYM':           //received a set repeat mode command
-                                this.log.info(`onStreamData(): Extron got repeat mode ${command} for Player: "${ext1}" value: "${ext2}"`);
+                                this.log.info(`onStreamData(): received repeat mode ${command} for Player: "${ext1}" value: "${ext2}"`);
                                 this.setRepeatMode(ext1, ext2);
                                 break;
 
@@ -818,75 +803,75 @@ class Extron extends utils.Adapter {
                             case 'IN6':
                             case 'IN7':
                             case 'IN8':
-                                this.log.info(`onStreamData(): Extron got tie command ${command} for output: ${ext2}`);
+                                this.log.info(`onStreamData(): received tie command ${command} for output: ${ext2}`);
                                 this.setTie(command, ext2);
                                 break;
 
                             case 'LOUT':            // received a tie command for loop out
-                                this.log.info(`onStreamData(): Extron got tie command input "${ext1}" to loop output`);
+                                this.log.info(`onStreamData(): received tie command input "${ext1}" to loop output`);
                                 this.setState(`connections.3.tie`, Number(ext1), true);
                                 break;
 
                             case 'VMT':             // received a video mute
-                                this.log.info(`onStreamData(): Extron got video mute for output "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received video mute for output "${ext1}" value "${ext2}"`);
                                 if (device === 'sme211') this.setState(`connections.1.mute`, Number(ext1), true);
                                 else this.setState(`connections.${ext1}.mute`, Number(ext2), true);
                                 break;
 
                             // Begin SMD202 specific commands
                             case 'PLYRS' :          // received video playing
-                                this.log.info(`onStreamData(): Extron got video playmode for player "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received video playmode for player "${ext1}" value "${ext2}"`);
                                 this.setPlayVideo(`player.`,ext1, 2-Number(ext2));
                                 break;
 
                             case 'PLYRE' :           // received Video paused
-                                this.log.info(`onStreamData(): Extron got video paused for player "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received video paused for player "${ext1}" value "${ext2}"`);
                                 this.setPlayVideo(`player.`, ext1, 2);
                                 break;
 
                             case 'PLYRO' :          // received video stopped
-                                this.log.info(`onStreamData(): Extron got video stopped for player "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received video stopped for player "${ext1}" value "${ext2}"`);
                                 this.setPlayVideo(`player.`, ext1, 0);
                                 break;
 
                             case 'PLYRR' :          // received loop state
-                                this.log.info(`onStreamData(): Extron got video loop mode for player "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received video loop mode for player "${ext1}" value "${ext2}"`);
                                 this.setLoopVideo(`player.`,ext1, ext2);
                                 break;
 
                             case 'PLYRU' :          // received video filepath
-                                this.log.info(`onStreamData(): Extron got video video filepath for player "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received video video filepath for player "${ext1}" value "${ext2}"`);
                                 this.setVideoFile(`player.`,ext2);
                                 this.getChannel();
                                 break;
 
                             case 'PLYRY' :
-                                this.log.info(`onStreamData(): Extron got video playmode for player "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received video playmode for player "${ext1}" value "${ext2}"`);
                                 this.setPlayVideo(`player.`,ext1, Number(ext2));
                                 break;
 
                             case 'PLYRL' :
-                                this.log.info(`onStreamData(): Extron got current playlist for player "${ext1}" value "${ext2}", requesting filepath`);
+                                this.log.info(`onStreamData(): received current playlist for player "${ext1}" value "${ext2}", requesting filepath`);
                                 this.getVideoFile();
                                 break;
 
                             case 'TVPRT' :
-                                this.log.info(`onStreamData(): Extron got current channel for player "${ext1}" value "${ext2}"`);
+                                this.log.info(`onStreamData(): received current channel for player "${ext1}" value "${ext2}"`);
                                 this.setChannel(`player.`, ext2);
                                 break;
 
                             case 'TVPRG' :
-                                this.log.info(`onStreamData(): Extron got Preset list`);
+                                this.log.info(`onStreamData(): received Preset list`);
                                 this.setPresets(ext2);
                                 break;
 
                             case 'AMT'  :
-                                this.log.info(`onStreamData(): Extron got Audio Output mute status value "${ext1}"`);
+                                this.log.info(`onStreamData(): received Audio Output mute status value "${ext1}"`);
                                 this.setMute('output.attenuation.', Number(ext1));
                                 break;
 
                             case 'VOL' :
-                                this.log.info(`onStreamData(): Extron got Audio Output attenuation level value "${Number(`${ext1}${ext2}`)}"`);
+                                this.log.info(`onStreamData(): received Audio Output attenuation level value "${Number(`${ext1}${ext2}`)}"`);
                                 this.setVol('output.attenuation.', this.calculateFaderValue(Number(`${ext1}${ext2}`),'logAtt'));
                                 break;
 
@@ -894,7 +879,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'STRMY' :
-                                this.log.info(`onStreamData(): Extron got streammode "${ext1}"`);
+                                this.log.info(`onStreamData(): received streammode "${ext1}"`);
                                 this.setStreamMode(`ply.players.1.common.`,Number(ext1));
                                 break;
 
@@ -902,25 +887,25 @@ class Extron extends utils.Adapter {
                             // Begin FIle transmission commands
                             case 'UPL' :
                                 this.fileSend = false;   // reset file transmission flag
-                                this.log.info(`onStreamData(): Extron got upload file confirmation command size: "${ext1}" name: "${ext2}"`);
+                                this.log.info(`onStreamData(): received upload file confirmation command size: "${ext1}" name: "${ext2}"`);
                                 this.setState('fs.upl','', true);   // reset upload file
                                 this.setState('fs.dir',true,false); // request directory update
                                 break;
 
                             case 'WDF' :
-                                this.log.info(`onStreamData(): Extron got list directory command`);
+                                this.log.info(`onStreamData(): received list directory command`);
                                 this.requestDir = true;     // set directory transmission flag
                                 break;
 
                             case 'W+UF' :
-                                this.log.info(`onStreamData(): Extron got upload file command: ${ext1} ${ext2}`);
+                                this.log.info(`onStreamData(): received upload file command: ${ext1} ${ext2}`);
                                 this.fileSend = true;   // set file transmission flag
                                 break;
 
                             // End file transmission commands
                             // begn group commands
                             case 'GRPMZ' :      // delete Group command
-                                this.log.info(`onStreamData(): Extron got group #${ext1} deleted`);
+                                this.log.info(`onStreamData(): received group #${ext1} deleted`);
                                 this.grpDelPnd[Number(ext1)] = false;   // flag group deletion confirmation
                                 this.setState(`groups.${ext1.padStart(2,'0')}.deleted`,true,true); // confirm group deletion in database
                                 this.setGroupMembers(Number(ext1),[]);
@@ -928,28 +913,28 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'GRPMD' :      // set Group fader value
-                                this.log.info(`onStreamData(): Extron got group #${ext1} fader value:"${ext2}"`);
+                                this.log.info(`onStreamData(): received group #${ext1} fader value:"${ext2}"`);
                                 this.setGroupLevel(Number(ext1),Number(ext2));
                                 break;
 
                             case 'GRPMP' :      // set Group type
-                                this.log.info(`onStreamData(): Extron got group #${ext1} type: "${ext2}"`);
+                                this.log.info(`onStreamData(): received group #${ext1} type: "${ext2}"`);
                                 this.setGroupType(Number(ext1), Number(ext2));
                                 break;
 
                             case 'GRPMO' :      // add group member
                                 members = ext2.split('*');
-                                this.log.info(`onStreamData(): Extron got group #${ext1} member(s): "${members}"`);
+                                this.log.info(`onStreamData(): received group #${ext1} member(s): "${members}"`);
                                 this.setGroupMembers(Number(ext1),members);
                                 break;
 
                             case 'GRPML' :      // set group limits
-                                this.log.info(`onStreamData(): Extron got group #${ext1} limits upper: "${ext2.split('*')[0]}" lower: "${ext2.split('*')[1]}""`);
+                                this.log.info(`onStreamData(): received group #${ext1} limits upper: "${ext2.split('*')[0]}" lower: "${ext2.split('*')[1]}""`);
                                 this.setGroupLimits(Number(ext1),Number(ext2.split('*')[0]),Number(ext2.split('*')[1]));
                                 break;
 
                             case 'GRPMN' :      // group name
-                                this.log.info(`onStreamData(): Extron got group #${ext1} name: "${ext2}"`);
+                                this.log.info(`onStreamData(): received group #${ext1} name: "${ext2}"`);
                                 this.setGroupName(Number(ext1), ext2);
                                 break;
 
@@ -960,41 +945,46 @@ class Extron extends utils.Adapter {
                             case 'NMO' :
                             case 'NEX' :
                             case 'EXPDA' :
-                                this.log.info(`onStreamData(): Extron got I/O Name "${ext2}" for I/O: "${this.oid2id(`${command}${ext1}`)}"`);
+                                this.log.info(`onStreamData(): received I/O Name "${ext2}" for I/O: "${this.oid2id(`${command}${ext1}`)}"`);
                                 this.setIOName(`${command}${ext1}`, ext2);
                                 break;
 
                             case 'CNFG' :   // configuration
                                 switch (ext2) {
                                     case '0' :    // configuration restored
-                                        this.log.info(`onStreamData(): Extron IP configuration ${ext1 == '0'?'restored':'saved'}`);
+                                        this.log.info(`onStreamData(): IP configuration ${ext1 == '0'?'restored':'saved'}`);
                                         break;
                                     case '2' :    // configuration saved
-                                        this.log.info(`onStreamData(): Extron device configuration ${ext1 == '0'?'restored':'saved'}`);
+                                        this.log.info(`onStreamData(): device configuration ${ext1 == '0'?'restored':'saved'}`);
                                         break;
+                                    default :
+                                        this.log.warn(`onStreamData(): unknown configuration ${ext1}, ${ext2} `);
                                 }
-                                this.log.info(`onStreamData(): Extron configuration ${ext1}, ${ext2} `);
                                 break;
 
                             case 'PSAV' :   // Power / Standby status
-                                this.log.info(`onStreamData(): Extron got power mode: "${ext1}", standby mode: "${ext2}"`);
+                                this.log.info(`onStreamData(): received power mode: "${ext1}", standby mode: "${ext2}"`);
                                 break;
 
                             // Dante control and configuration commands
                             case 'NEXPD' :  // DANTE devicename
-                                this.log.info(`onStremData(): Extron got Dante deviceName "${ext2}"`);
+                                this.log.info(`onStremData(): received Dante deviceName "${ext2}"`);
                                 break;
 
                             case 'EXPRA':   // available DANTE devices
-                                this.log.info(`onStreamData(): Extron got available remote devices: [${ext2.split('*')}]`);
+                                this.log.info(`onStreamData(): received available remote devices: [${ext2.split('*')}]`);
                                 this.setDanteDevices(ext2.split('*'));
                                 break;
 
+                            case 'EXPDK':   // device status
+                                this.log.info(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}device status: "${ext2}"`);
+                                break;
+
                             case 'EXPRC':   // DANTE connection status
-                                this.log.info(`onStreamData(): Extron DANTE connection to remote device: ${ext1}, ${ext2=='1'?'established':'disconnected'} `);
+                                this.log.info(`onStreamData(): DANTE connection to remote device: ${ext1}, ${ext2=='1'?'established':'disconnected'} `);
                                 this.setDanteConnection(ext1,ext2 == '1');
                                 if (ext2 == '1') {
-                                    this.switchMode(ext1);  // switch device to verbose mode
+                                    this.sendVerboseMode(ext1);  // switch device to verbose mode
                                     this.getDevicePartnumber(ext1); // request device part number
                                 }
                                 break;
@@ -1002,7 +992,7 @@ class Extron extends utils.Adapter {
                             case 'EXPRL':   // list of DANTE connected devices
                                 this.log.info(`onStreamData(): Extron listening to remote devices: [${ext2.split('*')}]`);
                                 this.setDanteConnections(ext2.split('*'));
-                                //for (const device of ext2.split('*')) this.getDevicePartnumber(device);
+                                for (const device of ext2.split('*')) this.getDevicePartnumber(device);
                                 break;
 
                             case 'DANTE':
@@ -1106,17 +1096,79 @@ class Extron extends utils.Adapter {
     /**
      * called to switch the verbose mode
      * @param {string | void} device
+     * cmd = 3CV
      */
-    switchMode(device = '') {
+    sendVerboseMode(device = '') {
         try {
-            this.log.debug(`switchMode(): Extron switching ${device} to verbose mode 3`);
+            this.log.debug(`sendVerboseMode(): Extron switching ${device} to verbose mode 3`);
             this.streamSend('W3CV\r', device);
             if (this.devices[this.config.device].short === 'smd202') {
-                this.log.debug(`switchMode(): Extron disabling subtitle display`);
+                this.log.debug(`sendVerboseMode(): Extron disabling subtitle display`);
                 this.streamSend('WE1*0SUBT\r');
             }
         } catch (err) {
-            this.errorHandler(err, 'switchMode');
+            this.errorHandler(err, 'sendVerboseMode');
+        }
+    }
+
+    /**
+     * called to request the verbose mode
+     * @param {string | void} device
+     * cmd = CV
+     */
+    getVerboseMode(device = '') {
+        try {
+            this.log.debug(`getVerboseMode(): requesting ${device} verbose mode 3`);
+            this.streamSend('WCV\r', device);
+        } catch (err) {
+            this.errorHandler(err, 'getVerboseMode');
+        }
+    }
+
+    /**
+     * called when device entered verbose mode
+     * @param {string | void} device
+     */
+    async setVerboseMode(device = '') {
+        try {
+            if (device != '') {
+                this.log.info(`setVerboseMode(): DANTE device "${device}" set verbose mode`);
+                this.danteDevices[device].isVerboseMode = true;
+            }
+            else {
+                this.log.warn('setVerboseMode(): Extron device set verbose mode');
+                this.isVerboseMode = true;
+                if (!this.initDone) {
+                    this.streamSend('Q');       // query Version
+                    this.streamSend('1I');      // query Model
+                    this.streamSend('2I');      // query Description
+                    this.streamSend('WCN\r');   // query deviceName
+                    this.initDone = true;
+                    this.timers.timeoutQueryStatus.refresh();
+                    if (this.config.pushDeviceStatus === true) {
+                        await this.setDeviceStatusAsync();
+                    } else {
+                        await this.getDeviceStatusAsync();
+                        //this.log.info('Extron get device status diabled ');
+                    }
+                }
+            }
+        } catch (err) {
+            this.errorHandler(err, 'setVerboseMode');
+        }
+    }
+
+    /**
+     * called to request device description
+     * @param {string | void} device
+     * cmd = 2I
+     */
+    getDescription(device = '') {
+        try {
+            this.log.debug(`getDescription(): requesting ${device} description`);
+            this.streamSend('2I\r', device);
+        } catch (err) {
+            this.errorHandler(err, 'getDescription');
         }
     }
 
@@ -1189,133 +1241,207 @@ class Extron extends utils.Adapter {
 
     /**
      * called to set up the database according device type
+     * {string | void } deviceName  // default this.devices[this.config.device].model;
+     * {string | void } deviceType  // default this.devices[this.config.device].short;
      */
-    async createDatabaseAsync() {
-        const device = this.devices[this.config.device].short;
-        this.log.info(`createDatabaseAsync(): start`);
+    async createDatabaseAsync(deviceName) {
+        let device = this.config.device;
+        let deviceType = this.devices[device].short;
+        let deviceObjName = this.devices[device].model;
+        let baseId = '';
+
+        if (deviceName) {
+            device = Object.keys(this.devices).find(device => this.devices[device].pno == this.danteDevices[deviceName].pno);
+            deviceType = this.devices[device].short;
+            deviceObjName = this.devices[device].model;
+            baseId = `dante.${deviceName}.`;
+        }
+        this.log.info(`createDatabaseAsync(): ${deviceName?deviceName:''}start`);
         try {
             // create the common section
             for (const element of this.objectTemplates.common) {
-                await this.setObjectAsync(element._id, element);
+                await this.setObjectAsync(`${baseId}${element._id}`, element);
             }
             this.log.debug(`createDatabaseAsync(): create common section`);
 
             // add deviceName to database
             const deviceObj = this.objectTemplates.common[0];
-            deviceObj.common.name = this.devices[this.config.device].model;
-            await this.setObjectAsync('device', deviceObj);
+            //deviceObj.common.name = this.devices[device].model;
+            deviceObj.common.name = deviceObjName;
+            await this.setObjectAsync(`${baseId}device`, deviceObj);
             this.log.debug(`createDatabaseAsync(): set deviceModel`);
 
             // if cp82 or sme211 : create video inputs and outputs
-            if ((device === 'cp82') || (device === 'sme211')) {
-                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].connections) {
-                    await this.setObjectAsync(element._id, element);
+            if ((deviceType === 'cp82') || (deviceType === 'sme211')) {
+                for (const element of this.objectTemplates[this.devices[device].objects[1]].connections) {
+                    await this.setObjectAsync(`${baseId}${element._id}`, element);
                 }
             }
             // if smd202 : create video player
-            if (device === 'smd202') {
-                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].players) {
-                    await this.setObjectAsync(element._id, element);
+            if (deviceType === 'smd202') {
+                for (const element of this.objectTemplates[this.devices[device].objects[1]].players) {
+                    await this.setObjectAsync(`${baseId}${element._id}`, element);
                 }
-                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].outputs) {
-                    await this.setObjectAsync(element._id, element);
+                for (const element of this.objectTemplates[this.devices[device].objects[1]].outputs) {
+                    await this.setObjectAsync(`${baseId}${element._id}`, element);
                 }
             }
             // if we have a user filesystem on the device
-            if (this.devices[this.config.device] && this.devices[this.config.device].fs) {
+            if (this.devices[device] && this.devices[device].fs) {
                 this.log.info(`createDatabaseAsync(): set user fileSystem`);
                 for (const element of this.objectTemplates.userflash) {
-                    await this.setObjectAsync(element._id, element);
+                    await this.setObjectAsync(`${baseId}${element._id}`, element);
                 }
                 this.setState('fs.dir',false,true); // reset directory request flag
             }
+            // if we have outputs on the device
+            if (this.devices[device] && this.devices[device].out) {
+                // at this point the device has outputs
+                this.log.info(`createDatabaseAsync(): set outputs`);
+                await this.setObjectAsync(`${baseId}out`, {
+                    'type': 'folder',
+                    'common': {
+                        'name': 'All outputs'
+                    },
+                    'native': {}
+                });
+                for (const outputs of Object.keys(this.devices[device].out)) {
+                    // create outputs folder, key name is the folder id
+                    await this.setObjectAsync(`${baseId}out.${outputs}`, {
+                        'type': 'folder',
+                        'common': {
+                            'name': this.devices[device].out[outputs].name
+                        },
+                        'native': {}
+                    });
+                    // create the amount of outputs
+                    for (let i = 1; i <= this.devices[device].out[outputs].amount; i++) {
+                        const actOutput = `${baseId}out.${outputs}.${i.toString().padStart(2,'0')}`;
+                        // create the output folder
+                        await this.setObjectAsync(actOutput, this.objectTemplates[this.devices[device].objects[1]].output);
+                        // and the common structure of a output
+                        switch (outputs) {
+                            case 'outputs' :
+                                for (const element of this.objectTemplates[this.devices[device].objects[1]].outputs) {
+                                    await this.setObjectAsync(actOutput + '.' + element._id, element);
+                                }
+                                /**
+                                if (this.devices[device].out[outputs].dspfunc) {    // if we have DSP blocks on the output
+                                    for (const dspfunc of this.devices[device].out[outputs].dspfunc) {
+                                        if (dspfunc == 'dsp_flt') {
+                                            //
+                                        } else {
+                                            for (const element of this.objectTemplates[dspfunc]) {
+                                                const element_id = actOutput+'.'+element._id;
+                                                await this.setObjectAsync(element_id, element);
+                                            }
+                                        }
+                                    }
+                                }**/
+                                break;
+
+                            case 'auxOutputs' :
+                                for (const element of this.objectTemplates[this.devices[device].objects[1]].auxOutputs) {
+                                    await this.setObjectAsync(actOutput + '.' + element._id, element);
+                                }
+                                break;
+
+                            case 'expansionOutputs' :
+                                for (const element of this.objectTemplates[this.devices[device].objects[1]].expansionOutputs) {
+                                    await this.setObjectAsync(actOutput + '.' + element._id, element);
+                                }
+                                break;
+                        }
+                    }
+                }
+            }
             // if we have inputs on the device
-            if (this.devices[this.config.device] && this.devices[this.config.device].in) {
+            if (this.devices[device] && this.devices[device].in) {
                 // at this point the device has inputs
                 this.log.info(`createDatabaseAsync(): set inputs`);
-                await this.setObjectAsync('in', {
+                await this.setObjectAsync(`${baseId}in`, {
                     'type': 'folder',
                     'common': {
                         'name': 'All input types'
                     },
                     'native': {}
                 });
-                for (const inputs of Object.keys(this.devices[this.config.device].in)) {
+                for (const inputs of Object.keys(this.devices[device].in)) {
                     // create input folder, key name is the folder id
-                    await this.setObjectAsync(`in.${inputs}`, {
+                    await this.setObjectAsync(`${baseId}in.${inputs}`, {
                         'type': 'folder',
                         'common': {
-                            'name': this.devices[this.config.device].in[inputs].name
+                            'name': this.devices[device].in[inputs].name
                         },
                         'native': {}
                     });
                     // for each input type create the amount of inputs
-                    for (let i = 1; i <= this.devices[this.config.device].in[inputs].amount; i++) {
-                        const actInput = `in.${inputs}.${i.toString().padStart(2,'0')}`;
+                    for (let i = 1; i <= this.devices[device].in[inputs].amount; i++) {
+                        const actInput = `${baseId}in.${inputs}.${i.toString().padStart(2,'0')}`;
                         // create the input folder
-                        await this.setObjectAsync(actInput, this.objectTemplates[this.devices[this.config.device].objects[1]].input);
+                        await this.setObjectAsync(actInput, this.objectTemplates[this.devices[device].objects[1]].input);
                         // and the common structure of an input depending on type
                         switch (inputs) {
 
                             case 'inputs' :
-                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].inputs) {
+                                for (const element of this.objectTemplates[this.devices[device].objects[1]].inputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'lineInputs' :
-                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].lineInputs) {
+                                for (const element of this.objectTemplates[this.devices[device].objects[1]].lineInputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'playerInputs' :
-                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].playerInputs) {
+                                for (const element of this.objectTemplates[this.devices[device].objects[1]].playerInputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'programInputs' :
-                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].programInputs) {
+                                for (const element of this.objectTemplates[this.devices[device].objects[1]].programInputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'videoInputs' :
-                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].videoInputs) {
+                                for (const element of this.objectTemplates[this.devices[device].objects[1]].videoInputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'auxInputs' :
-                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].auxInputs) {
+                                for (const element of this.objectTemplates[this.devices[device].objects[1]].auxInputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'virtualReturns' :
-                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].virtualReturns) {
+                                for (const element of this.objectTemplates[this.devices[device].objects[1]].virtualReturns) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                             case 'expansionInputs' :
-                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].expansionInputs) {
+                                for (const element of this.objectTemplates[this.devices[device].objects[1]].expansionInputs) {
                                     await this.setObjectAsync(actInput + '.' + element._id, element);
                                 }
                                 break;
 
                         }
                         // now the mixpoints are created
-                        if (this.devices[this.config.device] && this.devices[this.config.device].mp) {      // if we have mixpoints
+                        if (this.devices[device] && this.devices[device].mp) {      // if we have mixpoints
                             if (inputs != 'videoInputs') {
                                 // this.log.debug(`createDatabaseAsync(): set mixpoints`);
-                                for (const outType of Object.keys(this.devices[this.config.device].out)) {
-                                    for (let j = 1; j <= this.devices[this.config.device].out[outType].amount; j++) {
+                                for (const outType of Object.keys(this.devices[device].out)) {
+                                    for (let j = 1; j <= this.devices[device].out[outType].amount; j++) {
                                         if (i === j && outType === 'virtualSendBus') {
                                             continue;       // these points cannot be set
                                         }
-                                        const actMixPoint = actInput + '.mixPoints.' + this.devices[this.config.device].out[outType].short + j.toString().padStart(2,'0');
+                                        const actMixPoint = actInput + '.mixPoints.' + this.devices[device].out[outType].short + j.toString().padStart(2,'0');
                                         await this.setObjectAsync(actMixPoint, {
                                             'type': 'channel',
                                             'common': {
@@ -1335,101 +1461,40 @@ class Extron extends utils.Adapter {
                 }
             }
             // if we have players on the device
-            if (this.devices[this.config.device] && this.devices[this.config.device].ply) {
+            if (this.devices[device] && this.devices[device].ply) {
                 // at this point the device has players
-                this.log.info(`createDatabaseAsync(): set players`);await this.setObjectAsync('ply', {
+                this.log.info(`createDatabaseAsync(): set players`);await this.setObjectAsync(`${baseId}ply`, {
                     'type': 'folder',
                     'common': {
                         'name': 'All players'
                     },
                     'native': {}
                 });
-                for (const players of Object.keys(this.devices[this.config.device].ply)) {
+                for (const players of Object.keys(this.devices[device].ply)) {
                     // create player folder, key name is the folder id
-                    await this.setObjectAsync(`ply.${players}`, {
+                    await this.setObjectAsync(`${baseId}ply.${players}`, {
                         'type': 'folder',
                         'common': {
-                            'name': this.devices[this.config.device].ply[players].name
+                            'name': this.devices[device].ply[players].name
                         },
                         'native': {}
                     });
                     // create the amount of players
-                    for (let i = 1; i <= this.devices[this.config.device].ply[players].amount; i++) {
-                        const actPlayer = `ply.${players}.${i}`;
+                    for (let i = 1; i <= this.devices[device].ply[players].amount; i++) {
+                        const actPlayer = `${baseId}ply.${players}.${i}`;
                         // create the player folder
-                        await this.setObjectAsync(actPlayer, this.objectTemplates[this.devices[this.config.device].objects[1]].player);
+                        await this.setObjectAsync(actPlayer, this.objectTemplates[this.devices[device].objects[1]].player);
                         // and the common structure of a player
-                        for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].players) {
+                        for (const element of this.objectTemplates[this.devices[device].objects[1]].players) {
                             await this.setObjectAsync(actPlayer + '.' + element._id, element);
                         }
                     }
                 }
             }
-            // if we have outputs on the device
-            if (this.devices[this.config.device] && this.devices[this.config.device].out) {
-                // at this point the device has outputs
-                this.log.info(`createDatabaseAsync(): set outputs`);
-                await this.setObjectAsync('out', {
-                    'type': 'folder',
-                    'common': {
-                        'name': 'All outputs'
-                    },
-                    'native': {}
-                });
-                for (const outputs of Object.keys(this.devices[this.config.device].out)) {
-                    // create outputs folder, key name is the folder id
-                    await this.setObjectAsync(`out.${outputs}`, {
-                        'type': 'folder',
-                        'common': {
-                            'name': this.devices[this.config.device].out[outputs].name
-                        },
-                        'native': {}
-                    });
-                    // create the amount of outputs
-                    for (let i = 1; i <= this.devices[this.config.device].out[outputs].amount; i++) {
-                        const actOutput = `out.${outputs}.${i.toString().padStart(2,'0')}`;
-                        // create the output folder
-                        await this.setObjectAsync(actOutput, this.objectTemplates[this.devices[this.config.device].objects[1]].output);
-                        // and the common structure of a output
-                        switch (outputs) {
-                            case 'outputs' :
-                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].outputs) {
-                                    await this.setObjectAsync(actOutput + '.' + element._id, element);
-                                }
-                                /**
-                                if (this.devices[this.config.device].out[outputs].dspfunc) {    // if we have DSP blocks on the output
-                                    for (const dspfunc of this.devices[this.config.device].out[outputs].dspfunc) {
-                                        if (dspfunc == 'dsp_flt') {
-                                            //
-                                        } else {
-                                            for (const element of this.objectTemplates[dspfunc]) {
-                                                const element_id = actOutput+'.'+element._id;
-                                                await this.setObjectAsync(element_id, element);
-                                            }
-                                        }
-                                    }
-                                }**/
-                                break;
-
-                            case 'auxOutputs' :
-                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].auxOutputs) {
-                                    await this.setObjectAsync(actOutput + '.' + element._id, element);
-                                }
-                                break;
-
-                            case 'expansionOutputs' :
-                                for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].expansionOutputs) {
-                                    await this.setObjectAsync(actOutput + '.' + element._id, element);
-                                }
-                                break;
-                        }
-                    }
-                }
-            }
             // if we have groups on the device
-            if (this.devices[this.config.device] && this.devices[this.config.device].grp) {
+            if (this.devices[device] && this.devices[device].grp) {
                 this.log.info(`createDatabaseAsync(): set groups`);
-                await this.setObjectAsync('groups', {
+                await this.setObjectAsync(`${baseId}groups`, {
                     'type': 'folder',
                     'common': {
                         'name': 'All Groups'
@@ -1437,18 +1502,18 @@ class Extron extends utils.Adapter {
                     'native': {}
                 });
                 // create the amount of groups
-                for (let i = 1; i <= this.devices[this.config.device].grp.groups.amount; i++) {
-                    const actGroup = `groups.${i.toString().padStart(2,'0')}`;
+                for (let i = 1; i <= this.devices[device].grp.groups.amount; i++) {
+                    const actGroup = `${baseId}groups.${i.toString().padStart(2,'0')}`;
                     // create the group folder
-                    await this.setObjectAsync(actGroup, this.objectTemplates[this.devices[this.config.device].objects[1]].group);
+                    await this.setObjectAsync(actGroup, this.objectTemplates[this.devices[device].objects[1]].group);
                     // and the common structure of a group
-                    for (const element of this.objectTemplates[this.devices[this.config.device].objects[1]].groups) {
+                    for (const element of this.objectTemplates[this.devices[device].objects[1]].groups) {
                         await this.setObjectAsync(actGroup + '.' + element._id, element);
                     }
                 }
             }
             // if we have a DANTE relay device
-            if (this.devices[this.config.device] && this.devices[this.config.device].objects.includes('danterelay')) {
+            if (this.devices[device] && this.devices[device].objects.includes('danterelay')) {
                 this.log.info(`createDatabaseAsync(): create dante relay`);
                 for (const element of this.objectTemplates.danterelay) {
                     await this.setObjectAsync(element._id, element);
@@ -1458,31 +1523,6 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'createDatabase');
         }
         this.log.info(`createDatabaseAsync(): completed`);
-    }
-
-    /**
-     * called to create DANTE device objects in database
-     * @param {string} deviceName
-     * @param {string} deviceType
-     */
-    async createDanteDeviceAsync(deviceName, deviceType) {
-        this.log.debug(`createDanteDevice(): setting up database for "${deviceName}" as "${deviceType}"`);
-        // create the common section
-        this.log.debug(`createDanteDevice(): create common section`);
-        for (const element of this.objectTemplates.common) {
-            element._id = `dante.${deviceName}.${element._id}`;
-            await this.setObjectAsync(element._id, element);
-        }
-        // add deviceName to database
-        this.log.debug(`createDanteDevice(): set deviceName`);
-        const deviceObj = this.objectTemplates.common[0];
-        deviceObj.common.name = deviceName;
-        deviceObj._id = `dante.${deviceName}.${deviceObj._id}`;
-        await this.setObjectAsync(deviceObj._id, deviceObj);
-        for (const element of this.objectTemplates[deviceType]) {
-            element._id = `dante.${deviceName}.${element._id}`;
-            await this.setObjectAsync(element._id, element);
-        }
     }
 
     /**
@@ -2025,7 +2065,9 @@ class Extron extends utils.Adapter {
     setDevicePartnumber(deviceName, partNumber) {
         // () => for (const device of this.devices) if (device.pno == partNumber) return device.model;
         this.danteDevices[deviceName].pno = partNumber;
-        this.danteDevices[deviceName].model = this.devices[`${Object.keys(this.devices).find(device => this.devices[device].pno == partNumber)}`].model;
+        this.danteDevices[deviceName].deviceType = Object.keys(this.devices).find(device => this.devices[device].pno == partNumber);
+        this.danteDevices[deviceName].remoteDeviceType = Object.keys(this.devices).find(device => this.devices[device].pno == partNumber);
+        this.danteDevices[deviceName].model = this.devices[this.danteDevices[deviceName].deviceType].model;
     }
 
     /** END device config control */
@@ -2042,20 +2084,20 @@ class Extron extends utils.Adapter {
         try {
             const id = this.oid2id(oid);
             const idArray = id.split('.');
-            // extron.[n].[fld].[type].[number].[block]
-            //   0     1    2     3       4        5
-            // extron.[n].in.auxInputs.01.mixPoints.A01.gain
-            // extron.[n].out.outputs.01.filter.1.gain
-            // extron.[n].dante.available
-            // extron.[n].dante.[deviceName].[fld].[type].[number].[block]
-            //   0     1    2       3          4     5       6        7
+            // [fld].[type].[number].[block]
+            //   0     1        2       3
+            // in.auxInputs.01.mixPoints.A01.gain
+            // out.outputs.01.filter.1.gain
+            // dante.available
+            // dante.[deviceName].[fld].[type].[number].[block]
+            //   0     1            2      3        4     5
             let idType ='';
             let idBlock = '';
             let device = this.devices[this.config.device].short;
-            if (idArray[1] == 'dante') {
+            if (idArray[0] == 'dante') {
                 idType = idArray[3];
                 idBlock = idArray[5];
-                device = idArray[2];
+                device = this.devices[Object.keys(this.danteDevices).find(device=>device==idArray[1])].short;
             } else {
                 idType = idArray[1];
                 idBlock = idArray[3];
@@ -3542,7 +3584,16 @@ class Extron extends utils.Adapter {
     setDanteDevices(deviceList) {
         try {
             this.setState(`dante.available`, JSON.stringify(deviceList), true);
-            for (const deviceName of deviceList) {this.danteDevices[deviceName] = {'connectionState' :'AVAILABLE'};}
+            for (const deviceName of deviceList) {
+                if (typeof this.danteDevices[deviceName] == 'undefined')
+                    this.danteDevices[deviceName] = {
+                        'connectionState' :'AVAILABLE',
+                        'deviceActive': false,
+                        'danteName': deviceName,
+                        'remoteDeviceType': '',
+                        'friendlyName': 'Das Ding' + Math.floor(Math.random() * 100)
+                    };
+            }
         } catch (err) {
             this.errorHandler(err, 'setDanteDevices');
         }
@@ -3614,7 +3665,7 @@ class Extron extends utils.Adapter {
     /** END DANTE control messages */
 
     /**
-     * determine the database id from oid e.g. 20002 -> in.inputs.01.mixPoints.O03
+     * determine the database id from ${dante?'"'+danteDevice+'" ':''}OID e.g. 20002 -> in.inputs.01.mixPoints.O03
      * @param {string} oid
      * @param {string} deviceName
      * returns: String with complete base id to mixPoint or the gainBlock
@@ -4486,18 +4537,18 @@ class Extron extends utils.Adapter {
                 let canDanteAnswer = 'no';
                 // eslint-disable-next-line prefer-const
                 let localRemoteDevices = structuredClone(this.config.remoteDevices);
-                const newRemoteDevice = {
+                /*const newRemoteDevice = {
                     'deviceActive': false,
                     'danteName': 'Device' + Math.floor(Math.random() * 10),
                     'remoteDeviceType': 'NetPA_U_1004',
                     'friendlyName': 'Das Ding' + Math.floor(Math.random() * 100)
-                };
+                };*/
                 this.log.debug(`get command: ${JSON.stringify(obj.command)}`);
                 switch (obj.command) {
 
                     case 'getDeviceTypes':
                         this.log.debug(`onMessage getDeviceTypes: ${JSON.stringify(obj)}`);
-                        for (const deviceKey in this.devices) {
+                        for (const deviceKey of Object.keys(this.devices)) {
                             if (this.devices[deviceKey].connectionType === 'network') {     // only direct connected devices
                                 sendBack.push({'label': this.devices[deviceKey].description[sysLang] || this.devices[deviceKey].description.en, 'value': deviceKey});
                             }
@@ -4508,7 +4559,7 @@ class Extron extends utils.Adapter {
 
                     case 'getRemoteDeviceTypes':
                         this.log.debug(`onMessage getRemoteDeviceTypes: ${JSON.stringify(obj)}`);
-                        for (const deviceKey in this.devices) {
+                        for (const deviceKey of Object.keys(this.devices)) {
                             if (this.devices[deviceKey].connectionType === 'dante') {       // only via Dante connected devices
                                 sendBack.push({'label': this.devices[deviceKey].description[sysLang] || this.devices[deviceKey].description.en, 'value': deviceKey});
                             }
@@ -4533,14 +4584,17 @@ class Extron extends utils.Adapter {
                         this.log.debug(`onMessage getRemoteDevices: ${JSON.stringify(obj)}`);
                         // mix native and newly discovered devices
                         // @ts-ignore
-                        if (localRemoteDevices.some(item => item.danteName === newRemoteDevice.danteName)) {
-                            // We found at least one object that we're looking for!
-                            // @ts-ignore
-                            this.log.debug(`Value already in remoteDevices: ${newRemoteDevice.danteName}`);
-                        } else {
-                            // @ts-ignore
-                            this.log.debug(`Pushing value : ${newRemoteDevice.danteName} to remoteDevices`);
-                            localRemoteDevices.push(newRemoteDevice);
+                        this.log.debug(`this.danteDevices: ${JSON.stringify(this.danteDevices)}`);
+                        for (const device of Object.keys(this.danteDevices)) {
+                            if (localRemoteDevices.some(item => item.danteName === this.danteDevices[device].danteName)) {
+                                // We found at least one object that we're looking for!
+                                // @ts-ignore
+                                this.log.debug(`Value already in remoteDevices: ${this.danteDevices[device].danteName}`);
+                            } else {
+                                // @ts-ignore
+                                this.log.debug(`Pushing value : ${this.danteDevices[device].danteName} to remoteDevices`);
+                                localRemoteDevices.push(this.danteDevices[device]);
+                            }
                         }
                         this.sendTo(obj.from, obj.command, {'native': {'remoteDevices': localRemoteDevices}}, obj.callback);
                         break;

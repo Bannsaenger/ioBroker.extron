@@ -3322,12 +3322,13 @@
                 "type": "state",
                 "common": {
                     "role": "level.volume",
-                    "name": "Gain logarithmic from -18 to 80 in 0.1 db steps",
+                    "name": "Gain logarithmic from 0 to 42 in 3db steps",
                     "type": "number",
                     "read": true,
                     "write": true,
                     "min": 0,
                     "max": 42,
+                    "step": 3,
                     "def": 0
                 },
                 "native": {}
@@ -3396,13 +3397,14 @@
                 "type": "state",
                 "common": {
                     "role": "level.volume",
-                    "name": "Output attenuation logarithmic from -100 to 0 in 0.1 db steps",
+                    "name": "Output attenuation logarithmic from -100 to 0 in 1db steps",
                     "type": "number",
                     "read": true,
                     "write": true,
-                    "min": -100.0,
-                    "max": 0.0,
-                    "def": -100.0
+                    "min": -100,
+                    "max": 0,
+                    "step": 1,
+                    "def": -100
                 },
                 "native": {}
             }
