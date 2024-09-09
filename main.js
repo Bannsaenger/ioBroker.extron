@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20240823 mschlgl
+ *      last edit 20240909 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -157,16 +157,16 @@ class Extron extends utils.Adapter {
                         break;
 
                     case 'telnet' :
-                        this.net.on('connectionAttempt',()=>{this.log.debug(`Telnet: connectionAttempt started`);});
-                        this.net.on('connectionAttemptTimeout',()=>{this.log.warn(`Telnet: connectionAttemptTimeout`);});
-                        this.net.on('connectionAttemptFailed',()=>{this.log.warn(`Telnet: connectionAttemptFailed`);});
-                        this.net.on('timeout',()=>{this.log.warn(`Telnet: connection idle timeout`);});
-                        this.net.on('connect',()=>{this.log.debug(`Telnet: connected`);});
+                        this.net.on('connectionAttempt',()=>{this.log.debug(`this.net.on: Telnet: connectionAttempt started`);});
+                        this.net.on('connectionAttemptTimeout',()=>{this.log.warn(`this.net.on: Telnet: connectionAttemptTimeout`);});
+                        this.net.on('connectionAttemptFailed',()=>{this.log.warn(`this.net.on: Telnet: connectionAttemptFailed`);});
+                        this.net.on('timeout',()=>{this.log.warn(`this.net.on: Telnet: connection idle timeout`);});
+                        this.net.on('connect',()=>{this.log.debug(`this.net.on: Telnet: connected`);});
                         this.net.on('ready', this.onClientReady.bind(this));
                         this.net.on('error', this.onClientError.bind(this));
                         this.net.on('end', this.onClientEnd.bind(this));
                         this.net.on('close', ()=>{
-                            this.log.debug(`Telnet: socket closed`);
+                            this.log.debug(`this.net.on: Telnet: socket closed`);
                             this.clientReConnect();
                         });
                         break;
@@ -974,6 +974,7 @@ class Extron extends utils.Adapter {
                             case 'EXPRA':   // available DANTE devices
                                 this.log.info(`onStreamData(): received available remote devices: [${ext2.split('*')}]`);
                                 this.setDanteDevices(ext2.split('*'));
+                                this.checkConfiguredRemoteDevices();
                                 break;
 
                             case 'EXPDK':   // device status
@@ -987,12 +988,15 @@ class Extron extends utils.Adapter {
                                     this.sendVerboseMode(ext1);  // switch device to verbose mode
                                     this.getDevicePartnumber(ext1); // request device part number
                                 }
+                                this.listDanteConnections();
                                 break;
 
                             case 'EXPRL':   // list of DANTE connected devices
                                 this.log.info(`onStreamData(): Extron listening to remote devices: [${ext2.split('*')}]`);
                                 this.setDanteConnections(ext2.split('*'));
-                                for (const device of ext2.split('*')) this.getDevicePartnumber(device);
+                                if (ext2.length) {
+                                    for (const device of ext2.split('*')) this.getDevicePartnumber(device);
+                                }
                                 break;
 
                             case 'DANTE':
@@ -3654,12 +3658,21 @@ class Extron extends utils.Adapter {
     setDanteConnections(deviceList) {
         try {
             this.setState(`dante.connected`, JSON.stringify(deviceList), true);
-            for (const deviceName of deviceList) {
+            if (deviceList.length > 1) for (const deviceName of deviceList) {
                 this.danteDevices[deviceName].connectionState = 'CONNECTED';
                 //this.setState(`dante.${deviceName}.info.connection`, true, true);
             }
         } catch (err) {
             this.errorHandler(err, 'setDanteConnections');
+        }
+    }
+
+    /** check configured Dante connections
+     */
+    checkConfiguredRemoteDevices() {
+        for (const device of this.config.remoteDevices) {
+            this.log.debug(`checkConfiguredRemoteDevicves: set Dante connection for ${device.danteName} to ${device.deviceActive}`);
+            this.sendDanteConnection(device.danteName, device.deviceActive);
         }
     }
     /** END DANTE control messages */
@@ -4553,7 +4566,7 @@ class Extron extends utils.Adapter {
                                 sendBack.push({'label': this.devices[deviceKey].description[sysLang] || this.devices[deviceKey].description.en, 'value': deviceKey});
                             }
                         }
-                        this.log.debug(`send back getDeviceTypes: (lang: ${sysLang}) `);
+                        this.log.debug(`onMessage send back getDeviceTypes: (lang: ${sysLang}) `);
                         this.sendTo(obj.from, obj.command, sendBack, obj.callback);
                         break;
 
@@ -4564,7 +4577,7 @@ class Extron extends utils.Adapter {
                                 sendBack.push({'label': this.devices[deviceKey].description[sysLang] || this.devices[deviceKey].description.en, 'value': deviceKey});
                             }
                         }
-                        this.log.debug(`send back getRemoteDeviceTypes: (lang: ${sysLang}) `);
+                        this.log.debug(`onMessage send back getRemoteDeviceTypes: (lang: ${sysLang}) `);
                         this.sendTo(obj.from, obj.command, sendBack, obj.callback);
                         break;
 
@@ -4584,15 +4597,15 @@ class Extron extends utils.Adapter {
                         this.log.debug(`onMessage getRemoteDevices: ${JSON.stringify(obj)}`);
                         // mix native and newly discovered devices
                         // @ts-ignore
-                        this.log.debug(`this.danteDevices: ${JSON.stringify(this.danteDevices)}`);
+                        this.log.debug(`onMessage this.danteDevices: ${JSON.stringify(this.danteDevices)}`);
                         for (const device of Object.keys(this.danteDevices)) {
                             if (localRemoteDevices.some(item => item.danteName === this.danteDevices[device].danteName)) {
                                 // We found at least one object that we're looking for!
                                 // @ts-ignore
-                                this.log.debug(`Value already in remoteDevices: ${this.danteDevices[device].danteName}`);
+                                this.log.debug(`onMessage: Value already in remoteDevices: ${this.danteDevices[device].danteName}`);
                             } else {
                                 // @ts-ignore
-                                this.log.debug(`Pushing value : ${this.danteDevices[device].danteName} to remoteDevices`);
+                                this.log.debug(`onMessage: Pushing value : ${this.danteDevices[device].danteName} to remoteDevices`);
                                 localRemoteDevices.push(this.danteDevices[device]);
                             }
                         }
@@ -4605,7 +4618,7 @@ class Extron extends utils.Adapter {
                         if (obj.message.selectedDevice !== '') {
                             localRemoteDevices.splice(localRemoteDevices.findIndex(item => item.danteName === obj.message.selectedDevice), 1);
                         }
-                        this.log.debug(`slice: ${obj.message.selectedDevice} and send back: ${JSON.stringify(localRemoteDevices)}`);
+                        this.log.debug(`onMessage: slice: ${obj.message.selectedDevice} and send back: ${JSON.stringify(localRemoteDevices)}`);
                         this.sendTo(obj.from, obj.command, {'native': {'remoteDevices': localRemoteDevices}}, obj.callback);
                         break;
                 }
