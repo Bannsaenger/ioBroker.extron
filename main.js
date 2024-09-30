@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20240909 mschlgl
+ *      last edit 20240930 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -913,7 +913,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'GRPMD' :      // set Group fader value
-                                this.log.info(`onStreamData(): received group #${ext1} fader value:"${ext2}"`);
+                                this.log.info(`onStreamData(): received group #${ext1} ${this.groupTypes[Number(ext1)] == 12?'Mute':'fader'} value:"${ext2}"`);
                                 this.setGroupLevel(Number(ext1),Number(ext2));
                                 break;
 
@@ -2150,7 +2150,10 @@ class Extron extends utils.Adapter {
         try {
             const oid = this.id2oid(baseId);
             if (oid) {
-                this.streamSend(`WM${oid}*${Number(value)>0 ? '1' : '0'}AU\r`);
+                const sendData = `WM${oid}*${Number(value)>0 ? '1' : '0'}AU\r`;
+                const grpId = this.checkGrpMember(oid);
+                if (grpId && this.grpDelPnd[grpId]) this.queueGrpCmd(grpId, sendData);
+                else this.streamSend(sendData);
             }
         } catch (err) {
             this.errorHandler(err, 'sendMuteStatus');
@@ -2186,7 +2189,9 @@ class Extron extends utils.Adapter {
             const device = this.devices[this.config.device].short;
             if (oid) {
                 let sendData = `WG${oid}*${value.devValue}AU\r`;
-                this.streamSend(sendData);
+                const grpId = this.checkGrpMember(oid);
+                if (grpId && this.grpDelPnd[grpId]) this.queueGrpCmd(grpId, sendData);
+                else this.streamSend(sendData);
                 if ( device === 'sme211') { // on SME211 we have stereo controls
                     switch (Number(oid)) {
                         case 40000 :
@@ -2808,8 +2813,8 @@ class Extron extends utils.Adapter {
             await this.setObjectAsync(files._id, files);
             for (const userFile of userFileList) {                              // check each line
                 if (userFile.match(/(\d+\b Bytes Left)/g)) {
-                    this.fileList.freeSpace = Number(userFile.match(/\d+/g));
-                    this.log.debug(`freespace: ${this.fileList.freeSpace}`);
+                    this.fileList.freeSpace = Number(userFile.match(/\d+/));
+                    this.log.debug(`setUserFiles(): freespace ${this.fileList.freeSpace}`);
                 }
                 // @ts-ignore
                 this.file.fileName = userFile.match(/^(.+\.\w{3}\b)/g)?`${userFile.match(/^(.+\.\w{3}\b)/g)[0]}`:'';    // extract filename
@@ -2846,7 +2851,7 @@ class Extron extends utils.Adapter {
      * @param {string} cmd
      */
     queueGrpCmd(group, cmd) {
-        this.log.info(`queueGrpCmd(): pushing "${cmd}" to group #${group} buffer`);
+        this.log.info(`queueGrpCmd(): pushing "${cmd.replace(/[\r\n]/gm, '')}" to group #${group} buffer`);
         this.grpCmdBuf[group].push(cmd); // push command to buffer
     }
 
@@ -2859,6 +2864,26 @@ class Extron extends utils.Adapter {
         while (this.grpCmdBuf[group].length > 0) {
             this.streamSend(this.grpCmdBuf[group].shift());
         }
+    }
+
+    /**
+     * check group membership of given oid
+     * @param {string} oid
+     * @returns {number} grpId
+     */
+    checkGrpMember(oid) {
+        let grpId = 0;
+        let grpMembers = [];
+        for (let grpIdx=1; grpIdx<65; grpIdx++) {
+            grpId = 0;
+            //this.log.debug(`checkGrpMember(): ${grpIdx} ${this.groupMembers[grpIdx]}`);
+            grpMembers = this.groupMembers[grpIdx];
+            if (grpMembers.includes(oid)) {
+                grpId = grpIdx;
+                break;
+            }
+        }
+        return grpId;
     }
 
     /**
