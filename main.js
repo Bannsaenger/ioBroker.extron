@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20240930 mschlgl
+ *      last edit 20241007 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -65,8 +65,9 @@ class Extron extends utils.Adapter {
     initVars() {
         this.log.debug('initVars(): Extron initializing internal variables');
         this.sendBuffer = [];   // Send buffer (Array of commands to send)
-        this.grpCmdBuf = new Array(65);    // buffer for group command while a group deletion is pending
-        this.grpCmdBuf.fill([]);
+        this.fileBuffer = new Uint8Array; // buffer for file data
+        this.grpCmdBuf = new Array(65).fill([]);    // buffer for group command while a group deletion is pending
+        //this.grpCmdBuf.fill([]);
         // Status variables
         this.isDeviceChecked = false;   // will be true if device sends banner and will be verified
         this.isLoggedIn = false;        // will be true once telnet login completed
@@ -95,12 +96,12 @@ class Extron extends utils.Adapter {
         this.groupTypes.fill(0);
         this.groupMembers = new Array(65);  // prepare array to hold actual group members
         this.groupMembers.fill([]);
-        this.grpDelPnd = new Array(65); // prepare array to flag group deletions pending
-        this.grpDelPnd.fill(false);
+        this.grpDelPnd = new Array(65).fill(false); // prepare array to flag group deletions pending
+        //this.grpDelPnd.fill(false);
         this.fileSend = false;          // flag to signal a file is currently sended
         this.requestDir = false;        // flag to signal a list user files command has been issued and a directory list is to be received
         this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize': 0};         // file object
-        this.fileList = {'freeSpace' : 0, 'files' : [this.file]};              // array to hold current file list
+        this.fileList = {'freeSpace' : 0, 'files' : [this.file]};               // array to hold current file list
         this.stateBuf = [{'id': '', 'timestamp' : 0}];  // array to hold state changes with timestamp
         this.presetList = '';           // list of SMD202 preset channels
         this.requestPresets = false;    // flag to signal thet device preset list has been requested (applies to SMD202)
@@ -365,12 +366,25 @@ class Extron extends utils.Adapter {
                 data = `{dante@${device}:${data}}\r`;   // format DANTe relay message
             }
             if (this.streamAvailable) {
-                if (!data.match(/(Q|:Q\|)/)) this.log.debug(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.fileSend?'file data':this.decodeBufferToLog(data)}"`);
-                this.streamAvailable = this.stream.write(data);
+                this.setState('info.connection', true, true);
+                if (!this.fileSend) this.log.debug(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.decodeBufferToLog(data)}"`);
+                switch (this.config.type) {
+                    case 'ssh' :
+                        this.streamAvailable = this.stream.write(data);
+                        break;
+                    case 'telnet' :
+                        this.streamAvailable = this.net.write(data);
+                        break;
+                }
             } else {
-                const bufSize = this.sendBuffer.push(data);
-                this.setState(`${device != ''?device+'.':''}info.connection`, false, true);
-                this.log.warn(`streamSend(): Extron push data to the send buffer: "${this.fileSend?'file data':this.decodeBufferToLog(data)}" new buffersize:${bufSize}`);
+                this.setState('info.connection', false, true);
+                if (!this.fileSend) {
+                    const bufSize = this.sendBuffer.push(data);
+                    this.log.warn(`streamSend(): Extron push data to the send buffer: "${this.decodeBufferToLog(data)}" new buffersize:${bufSize}`);
+                } else {
+                    const bufSize = Array.from(this.fileBuffer).push(data);
+                    this.log.warn(`streamSend(): Extron push data to the file buffer: new buffersize:${bufSize}`);
+                }
             }
         } catch (err) {
             this.errorHandler(err, 'streamSend');
@@ -410,23 +424,26 @@ class Extron extends utils.Adapter {
                 return;
             }
             if (this.config.type === 'telnet') {
-                if (!this.isLoggedIn) {
-                    if (data.includes('Password:')) {
-                        this.log.info('onStreamData(): Extron received Telnet Password request');
-                        this.streamSend(`${this.config.pass}\r`);
-                        return;
-                    }
-                    if (data.includes('Login Administrator')) {
-                        this.isLoggedIn = true;
-                        this.log.info('onStreamData(): Extron Telnet logged in');
-                        this.setState('info.connection', true, true);
-                        if (!this.isVerboseMode) {          // enter the verbose mode
-                            this.sendVerboseMode();
-                            return;
-                        }
-                        return;
-                    }
+                //if (!this.isLoggedIn) {
+                if (data.toString().includes('Password:')) {
+                    this.isLoggedIn = false;
+                    this.isVerboseMode = false;
+                    this.setState('info.connection', false, true);
+                    this.log.info('onStreamData(): Extron received Telnet Password request');
+                    this.streamSend(`${this.config.pass}\r`);
+                    return;
                 }
+                if (data.toString().includes('Login Administrator')) {
+                    this.isLoggedIn = true;
+                    this.log.info('onStreamData(): Extron Telnet logged in');
+                    this.setState('info.connection', true, true);
+                    if (!this.isVerboseMode) {          // enter the verbose mode
+                        this.sendVerboseMode();
+                        return;
+                    }
+                    return;
+                }
+                //}
             }
 
             // check for DANTE control / setup messages returning a list of DANTE device names separated by \r\n
@@ -452,7 +469,7 @@ class Extron extends utils.Adapter {
                     this.log.info(`onStreamData(): received freespace: "${answer.match(/\d+/)}"`);
                     userFileList.push(answer);
                     this.requestDir = false;        // directory list has been received, clear flag
-                    this.fileList.freeSpace = 0;   // clear free space to be filled with new value from list
+                    this.fileList.freeSpace = Number(answer.match(/\d+/));   // set freeSpace in list
                     this.setUserFilesAsync(userFileList);        // call subroutine to set database values
                 } else if (this.requestPresets) {
                     this.presetList += answer;
@@ -1072,9 +1089,15 @@ class Extron extends utils.Adapter {
     async onStreamContinue() {
         try {
             this.log.debug('onStreamContinue(): Extron stream can continue');
-            this.setState('info.connection', true, true);
             this.streamAvailable = true;
-            while (this.sendBuffer.length && this.streamAvailable) this.streamSend(this.sendBuffer.shift());
+            this.setState('info.connection', true, true);
+            if (this.fileSend) {
+                this.log.debug(`onStreamContinue(): flushing sendBuffer "${this.sendBuffer.length}"`);
+                while (this.sendBuffer.length && this.streamAvailable) this.streamSend(this.sendBuffer.shift());
+            } else {
+                this.log.debug(`onStreamContinue(): flushing fileBuffer "${this.fileBuffer.byteLength}"`);
+                while (Array.from(this.fileBuffer).length && this.streamAvailable) this.streamSend(Array.from(this.fileBuffer).shift());
+            }
         } catch (err) {
             this.errorHandler(err, 'onStreamContinue');
         }
@@ -2741,6 +2764,7 @@ class Extron extends utils.Adapter {
      * cmd = +UF[fileSize]*2 [month] [day] [year] [hour] [minute] [second],[fileName]
      */
     loadUserFile(filePath) {
+        let fileExist = false;
         try {
             fs.accessSync(filePath);                            // check if given path is accessible
             const fileName = path.basename(filePath);           // extract filename
@@ -2753,19 +2777,26 @@ class Extron extends utils.Adapter {
             const hour = fileTimeStamp.slice(11,13);
             const minute = fileTimeStamp.slice(14,16);
             const second = fileTimeStamp.slice(17,19);
-            if (fileExt.toLowerCase() == 'raw') {
-                if (fileStats.size < this.fileList.freeSpace) {
-                    const streamData = `W+UF${fileStats.size}*2 ${month} ${day} ${year} ${hour} ${minute} ${second},${fileName}\r`;
-                    this.log.debug('loadUserFile(): starting file transmission');
-                    this.streamSend(streamData);    // issue upload command to device
-                    this.fileSend = true;           // flag file transmission
-                    fs.readFile(filePath, (err, data) => {
-                        if (err) throw err;
-                        this.streamSend(data);    // transmit file to device
-                    });
-                    this.fileSend = false;          // unflag file transmission
-                } else this.log.error(`loadUserFile(): filesize "${fileStats.size}" of "${fileName}" exceeds remaining freespace "${this.fileList.freeSpace}" on device`);
-            } else this.log.error(`loadUserFile(): ivalid filetype: ".${fileExt}"`);
+            for (const file of this.fileList.files) {
+                if (file.fileName == fileName) fileExist = true;
+            }
+            if (!fileExist) {
+                this.log.debug(`loadUserFile(): filetype: ${fileExt}`);
+                if (fileExt.toLowerCase() == '.raw') {
+                    if (fileStats.size < this.fileList.freeSpace) {
+                        const streamData = `W+UF${fileStats.size}*2 ${month} ${day} ${year} ${hour} ${minute} ${second},${fileName}\r`;
+                        this.log.debug('loadUserFile(): starting file transmission');
+                        this.streamSend(streamData);    // issue upload command to device
+                        this.fileSend = true;           // flag file transmission
+                        fs.readFile(filePath, (err, data) => {
+                            if (err) throw err;
+                            this.streamSend(data);    // transmit file to device
+                        });
+                        this.fileSend = false;          // unflag file transmission
+                        this.log.debug('loadUserFile(): file transmission completed');
+                    } else this.log.error(`loadUserFile(): filesize "${fileStats.size}" of "${fileName}" exceeds remaining freespace "${this.fileList.freeSpace}" on device`);
+                } else this.log.error(`loadUserFile(): invalid filetype: "${fileExt}"`);
+            } else this.log.error(`loadUserFile(): file ${fileName} already on device`);
         } catch (err) {
             this.fileSend = false;
             this.errorHandler(err, 'loadUserFile');
@@ -2851,7 +2882,7 @@ class Extron extends utils.Adapter {
      * @param {string} cmd
      */
     queueGrpCmd(group, cmd) {
-        this.log.info(`queueGrpCmd(): pushing "${cmd.replace(/[\r\n]/gm, '')}" to group #${group} buffer`);
+        this.log.info(`queueGrpCmd(): pushing "${this.decodeBufferToLog(cmd)}" to group #${group} buffer`);
         this.grpCmdBuf[group].push(cmd); // push command to buffer
     }
 
