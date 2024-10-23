@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "extron",
-        "version": "0.2.15",
+        "version": "0.3.0",
         "blockedVersions": [
             "0.2.11",
             "0.2.12",
@@ -181,9 +181,13 @@
         "pass": "",
         "pollDelay": 10000,
         "maxPollCount": 10,
+        "connectTimeout":3000,
         "reconnectDelay": 30000,
         "answerTimeout": 500,
         "inactivityTimeout": 100000,
+        "preCheckWithICMP":true,
+        "tmrRes": 100,
+        "tryICMPAfterRetries":2,
         "pushDeviceStatus": true,
         "stateDelay": 50,
         "remoteDevices": []

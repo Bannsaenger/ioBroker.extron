@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20241007 mschlgl
+ *      last edit 20241023 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -18,6 +18,8 @@ const fs = require('fs');
 // @ts-ignore
 const Client = require('ssh2').Client;
 const Net = require('net');
+// @ts-ignore
+const ping = require ('net-ping');
 // @ts-ignore
 const path = require('path');
 
@@ -67,18 +69,17 @@ class Extron extends utils.Adapter {
         this.sendBuffer = [];   // Send buffer (Array of commands to send)
         this.fileBuffer = new Uint8Array; // buffer for file data
         this.grpCmdBuf = new Array(65).fill([]);    // buffer for group command while a group deletion is pending
-        //this.grpCmdBuf.fill([]);
         // Status variables
         this.isDeviceChecked = false;   // will be true if device sends banner and will be verified
         this.isLoggedIn = false;        // will be true once telnet login completed
         this.isVerboseMode = false;     // will be true if verbose mode 3 is active
         this.initDone = false;          // will be true if all init is done
         this.versionSet = false;        // will be true if the version is once set in the db
-        this.device = {'model':'','name':'','version':'','description':''}; // will be filled according to device responses
+        this.device = {'model':'','name':'','version':'','description':'','connectionState':'NEW','ipAddress':this.config.host,'port':this.config.port,'active':true}; // will be filled according to device responses
         this.statusRequested = false;   // will be true once device status has been requested after init
         this.statusSent = false;        // will be true once database settings have been sent to device
         this.clientReady = false;       // will be true if device connection is ready
-        this.timers = {};               // Some timers and intervalls
+        //this.timers = {};               // Some timers and intervalls
         this.debugSSH = false;          // debug option for full ssh debug log on adapter.log.silly
         this.client = new Client();     // Create a ssh lient socket to connect to the device
         this.net = new Net.Socket({'readable':true,'writable' : true, 'allowHalfOpen' : false}); // Create a client socket to connect to the device
@@ -88,7 +89,6 @@ class Extron extends utils.Adapter {
         this.streamAvailable = true;    // if false wait for continue event
         this.stateList = [];            // will be filled with all existing states
         this.maxPollCount = typeof this.config.maxPollCount != 'undefined'?this.config.maxPollCount:10; // set maxPollCount if undefined set 10
-        //this.maxPollCount = 10;
         this.pollCount = 0;             // count sent status query
         this.playerLoaded = [false, false, false, false, false, false, false,false];    // remember which player has a file assigned
         this.auxOutEnabled = [false, false, false, false, false, false, false,false];   // remember which aux output is enabled
@@ -97,7 +97,6 @@ class Extron extends utils.Adapter {
         this.groupMembers = new Array(65);  // prepare array to hold actual group members
         this.groupMembers.fill([]);
         this.grpDelPnd = new Array(65).fill(false); // prepare array to flag group deletions pending
-        //this.grpDelPnd.fill(false);
         this.fileSend = false;          // flag to signal a file is currently sended
         this.requestDir = false;        // flag to signal a list user files command has been issued and a directory list is to be received
         this.file = {'fileName' : '', 'timeStamp' : '', 'fileSize': 0};         // file object
@@ -106,6 +105,119 @@ class Extron extends utils.Adapter {
         this.presetList = '';           // list of SMD202 preset channels
         this.requestPresets = false;    // flag to signal thet device preset list has been requested (applies to SMD202)
         this.danteDevices = {};           // store subdevices controlled via DANTE
+        this.tmrRes = this.config.tmrRes || 100;                            // timer resolution, default 100 ms
+        this.preCheckWithICMP = this.config.preCheckWithICMP === undefined ? true : this.config.preCheckWithICMP, // check the availability of the device with ping
+        this.tryICMPAfterRetries = this.config.tryICMPAfterRetries || 2;    // switch to ICMP (ping) availability check after n tries, -1 = off
+        this.connectTimeout = this.config.connectTimeout || 3000;             // time to wait for connection to complet in ms (defalt 3s)
+        this.reConnectTimeout = this.config.reconnectDelay || 10000;        // time to wait after a connection failure for a new attempt (default: 10 s)
+
+        // -------------------------------------------------------------------------------------
+        // create a ping session for connection checking
+        this.ping_options = {
+            networkProtocol: ping.NetworkProtocol.IPv4,
+            packetSize: 16,
+            retries: 1,
+            timeout: 1000,
+            ttl: 128
+        };
+        this.pingSession = ping.createSession(this.ping_options);
+
+        // ping session events
+        this.pingSession.on('close', this.onPingClose.bind(this));
+        this.pingSession.on('error', this.onPingError.bind(this));
+
+        // start central timer/interval handler
+        // @ts-ignore
+        this.centralIntervalTimer = setInterval(this.centralIntervalTimer.bind(this), this.tmrRes);
+
+    }
+
+    /**
+     * Intervaltimer tmrRes (default: 1) per Second to handle all timeouts and reconnets etc.
+     */
+    centralIntervalTimer() {
+        try {
+            // iterate through all devices
+            //for (const device of this.devices) {
+            const device = this.device;
+            switch (device.connectionState) {
+                case 'NEW':                                 // Initialize timers etc.
+                    if (this.preCheckWithICMP) {
+                        device.connectionState = 'ICMP_CHECKING';
+                        device.timeToWait = this.connectTimeout/this.tmrRes;
+                        this.pingSession.pingHost(device.ipAddress, this.onPingCallback.bind(this));
+                    } else {
+                        device.connectionState = 'CONNECTING';
+                        device.timeToWait = this.connectTimeout/this.tmrRes;
+                        device.connectionAttempt = this.tryICMPAfterRetries;
+                        this.clientConnect();
+                    }
+                    break;
+
+                case 'CONNECTED':                           // Handle timers for Alive and GetStatus
+                    if (device.timeoutPolling > 0) {
+                        device.timeoutPolling--;
+                    } else {
+                        device.timeoutPolling = this.config.pollDelay/this.tmrRes;
+                        this.queryStatus();
+                    }
+                    break;
+
+                case 'CLOSED':
+                case 'FAILED':
+                    device.timeToWait = 0;                  // handle closed or failed connections immediately
+                    device.connectionState = 'CONNECTING';
+                    break;
+
+                case 'CONNECTING':                          // Check whether the connection timneout has exeeded
+                    if (device.timeToWait > 0) {
+                        device.timeToWait--;
+                    } else {
+                        //if (this.callback) this.callback('OFFLINE', {'message': `Device ${device.ipAddress} is offline`, 'macAddress': device.device, 'senderIp': device.ipAddress});
+                        //if (device.net) device.net.destroy();
+                        //device.net = undefined;
+                        device.timeToWait = this.reConnectTimeout/this.tmrRes;
+                        if (device.connectionAttempt > 0) {
+                            device.connectionAttempt--;
+                            //this.log.warn(`noch ${device.connectionAttempt} übrig`)
+                            device.connectionState = 'RECONNECT_WAITING';
+                        } else {
+                            //this.log.warn(`gehe zu ICMP check`)
+                            device.connectionState = 'ICMP_CHECKING';
+                        }
+                    }
+                    break;
+
+                case 'RECONNECT_WAITING':                   // try to reconnect when timer expired
+                    if (device.timeToWait > 0) {
+                        device.timeToWait--;
+                    } else {
+                        device.connectionState = 'CONNECTING';
+                        device.timeToWait = this.connectTimeout/this.tmrRes;
+                        this.clientConnect();
+                    }
+                    break;
+
+                case 'ICMP_CHECKING':
+                    if (device.timeToWait > 0) {
+                        device.timeToWait--;
+                    } else {
+                        device.timeToWait = this.reConnectTimeout/this.tmrRes;
+                        this.pingSession.pingHost(device.ipAddress, this.onPingCallback.bind(this));
+                    }
+                    break;
+
+                case 'ICMP_AVAILABLE':
+                    device.connectionState = 'CONNECTING';
+                    device.timeToWait = this.connectTimeout/this.tmrRes;
+                    device.connectionAttempt = this.tryICMPAfterRetries;
+                    this.clientConnect();
+                    break;
+            }
+            //}
+        } catch(err) {
+            this.errorHandler(err, 'centralIntervalTimer');
+        }
     }
 
     /**
@@ -159,8 +271,8 @@ class Extron extends utils.Adapter {
 
                     case 'telnet' :
                         this.net.on('connectionAttempt',()=>{this.log.debug(`this.net.on: Telnet: connectionAttempt started`);});
-                        this.net.on('connectionAttemptTimeout',()=>{this.log.warn(`this.net.on: Telnet: connectionAttemptTimeout`);});
-                        this.net.on('connectionAttemptFailed',()=>{this.log.warn(`this.net.on: Telnet: connectionAttemptFailed`);});
+                        this.net.on('connectionAttemptTimeout',()=>{this.log.warn(`this.net.on: Telnet: connectionAttemptTimeout`);this.device.connectionState = 'FAILED';});
+                        this.net.on('connectionAttemptFailed',()=>{this.log.warn(`this.net.on: Telnet: connectionAttemptFailed`);this.device.connectionState = 'FAILED';});
                         this.net.on('timeout',()=>{this.log.warn(`this.net.on: Telnet: connection idle timeout`);});
                         this.net.on('connect',()=>{this.log.debug(`this.net.on: Telnet: connected`);});
                         this.net.on('ready', this.onClientReady.bind(this));
@@ -168,13 +280,14 @@ class Extron extends utils.Adapter {
                         this.net.on('end', this.onClientEnd.bind(this));
                         this.net.on('close', ()=>{
                             this.log.debug(`this.net.on: Telnet: socket closed`);
-                            this.clientReConnect();
+                            this.device.connectionState = 'CLOSED';
+                            //this.clientReConnect();
                         });
                         break;
                 }
                 this.log.info(`onReady(): Extron took ${Date.now() - startTime}ms to initialize and setup db`);
 
-                this.clientConnect();
+                //this.clientConnect();
             }
         } catch (err) {
             this.errorHandler(err, 'onReady');
@@ -217,14 +330,14 @@ class Extron extends utils.Adapter {
      */
     clientReConnect() {
         // clear poll timer
-        clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
+        //clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
         // Status variables to be reset
         this.setState('info.connection', false, true);
         this.isLoggedIn = false;        // will be true once telnet login completed
         this.isVerboseMode = false;     // will be true if verbose mode 3 is active
         this.isDeviceChecked = false;   // will be true if device sends banner and will be verified
         this.log.info(`clientReConnect(): reconnecting after ${this.config.reconnectDelay}ms`);
-        this.timers.timeoutReconnectClient = setTimeout(this.clientConnect.bind(this),this.config.reconnectDelay);
+        //this.timers.timeoutReconnectClient = setTimeout(this.clientConnect.bind(this),this.config.reconnectDelay);
     }
 
     /**
@@ -258,14 +371,6 @@ class Extron extends utils.Adapter {
                             // @ts-ignore
                             this.log.info('onClientReady(): Extron shell established channel');
                             this.stream = channel;
-                            // @ts-ignore
-                            this.stream.on('error', this.onStreamError.bind(this));
-                            // @ts-ignore
-                            this.stream.on('close', this.onStreamClose.bind(this));
-                            // @ts-ignore
-                            this.stream.on('data', this.onStreamData.bind(this));
-                            // @ts-ignore
-                            this.stream.on('drain', this.onStreamContinue.bind(this));
                         } catch (err) {
                             // @ts-ignore
                             this.errorHandler(err, 'onClientReady');
@@ -274,21 +379,24 @@ class Extron extends utils.Adapter {
                     break;
                 case 'telnet' :
                     this.log.info('onClientReady(): Extron established Telnet connection');
-                    this.stream.on('error', this.onStreamError.bind(this));
-                    // @ts-ignore
-                    this.stream.on('close', this.onStreamClose.bind(this));
-                    // @ts-ignore
-                    this.stream.on('data', this.onStreamData.bind(this));
-                    // @ts-ignore
-                    this.stream.on('drain', this.onStreamContinue.bind(this));
                     break;
             }
+            this.stream.on('error', this.onStreamError.bind(this));
+            // @ts-ignore
+            this.stream.on('close', this.onStreamClose.bind(this));
+            // @ts-ignore
+            this.stream.on('data', this.onStreamData.bind(this));
+            // @ts-ignore
+            this.stream.on('drain', this.onStreamContinue.bind(this));
             // Set the connection indicator after authentication and an open stream
             // @ts-ignore
             this.log.info('onClientReady(): Extron connected');
+            this.device.connectionState = 'CONNECTED';
+            this.device.timeToWait = 0;
+            this.device.timeoutPolling = 0;      // next timercycle there will be a polling
             // @ts-ignore
             // this.setState('info.connection', true, true);
-            this.timers.timeoutQueryStatus = setTimeout(this.queryStatus.bind(this), this.config.pollDelay);    // start polling the device
+            //this.timers.timeoutQueryStatus = setTimeout(this.queryStatus.bind(this), this.config.pollDelay);    // start polling the device
         } catch (err) {
             this.errorHandler(err, 'onClientReady');
         }
@@ -320,10 +428,12 @@ class Extron extends utils.Adapter {
             this.statusRequested = false;       // will be true if device status has been requested after init
             this.statusSent = false;          // will be true once database settings have been sent to device
             this.stream = undefined;
+            this.device.connectionState = 'CLOSED';
         } catch (err) {
             this.errorHandler(err, 'onClientClose');
         }
     }
+
     /**
      * called if the socket is disconnected
      */
@@ -331,14 +441,17 @@ class Extron extends utils.Adapter {
         try {
             this.log.info('onClientEnd(): Extron client socket got disconnected');
             this.setState('info.connection', false, true);
+            this.device.connectionState = 'CLOSED';
         } catch (err) {
             this.errorHandler(err, 'onClientEnd');
         }
     }
+
     /**
      * called if client receives an error
      * @param {any} err
      */
+
     onClientError(err) {
         switch (this.config.type) {
             case 'ssh' :
@@ -350,8 +463,53 @@ class Extron extends utils.Adapter {
                 }
                 break;
         }
+        this.device.connectionState = 'FAILED';
         this.log.error(`onClientError(): error detected ${err}`);
         this.errorHandler(err, 'onClientError');
+    }
+
+    /**
+     * Is called if a session error occurs
+     * @param {any} err Error
+     */
+    onPingError(err) {
+        try {
+            this.log.error(`ICMP session Server got Error: <${err.toString()}> closing server.`);
+            this.pingSession.close();
+        } catch(err) {
+            this.errorHandler(err, 'onPingError');
+        }
+    }
+
+    /**
+     * Is called when the session is closed via session.close
+     */
+    onPingClose() {
+        this.log.info('onPingClose(): ICMP session is closed');
+    }
+
+    /**
+     * Is used as callback for session.ping
+     *  @param {Error} error  Instance of the Error class or a sub-class, or null if no error occurred
+     *  @param {any}   target The target parameter as specified in the request still be the target host and NOT the responding gateway
+     *  @param {Date}  sent   An instance of the Date class specifying when the first ping was sent for this request (refer to the Round Trip Time section for more information)
+     *  @param {Date}  rcvd   An instance of the Date class specifying when the request completed (refer to the Round Trip Time section for more information)
+     */
+    onPingCallback(error, target, sent, rcvd) {
+        try {
+            // @ts-ignore
+            const ms = rcvd - sent;
+            if (error)
+                this.log.debug(`ping: ${target}: ${error.toString()}`);
+            else {
+                this.log.debug(`ping: ${target}: Alive (ms=${ms})`);
+                //const device = this.devices.find(item => item.ipAddress === target);
+                this.device.connectionState = 'ICMP_AVAILABLE';
+                // reconnect is done in the timer routine
+            }
+        } catch(err) {
+            this.errorHandler(err, 'onPingCallback');
+        }
     }
 
     /**
@@ -368,14 +526,15 @@ class Extron extends utils.Adapter {
             if (this.streamAvailable) {
                 this.setState('info.connection', true, true);
                 if (!this.fileSend) this.log.debug(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.decodeBufferToLog(data)}"`);
-                switch (this.config.type) {
+                this.streamAvailable = this.stream.write(data);
+                /*switch (this.config.type) {
                     case 'ssh' :
                         this.streamAvailable = this.stream.write(data);
                         break;
                     case 'telnet' :
                         this.streamAvailable = this.net.write(data);
                         break;
-                }
+                }*/
             } else {
                 this.setState('info.connection', false, true);
                 if (!this.fileSend) {
@@ -388,7 +547,8 @@ class Extron extends utils.Adapter {
             }
         } catch (err) {
             this.errorHandler(err, 'streamSend');
-            this.clientReConnect();
+            this.device.connectionState = 'FAILED';
+            //this.clientReConnect();
         }
     }
 
@@ -494,7 +654,7 @@ class Extron extends utils.Adapter {
                         this.log.debug(`onStreamData(): ${dante?'"'+danteDevice+'" ':''}command "${command}", ext1 "${ext1}", ext2 "${ext2}`);
 
                         this.pollCount = 0;     // reset pollcounter as valid data has been received
-                        this.timers.timeoutQueryStatus.refresh();   // refresh poll timer
+                        //this.timers.timeoutQueryStatus.refresh();   // refresh poll timer
 
                         switch (command) {
                             case 'E':
@@ -1110,6 +1270,7 @@ class Extron extends utils.Adapter {
     onStreamError(err) {
         this.errorHandler(err, 'onStreamError');
         this.log.warn('onStreamError(): Extron is calling clientReConnect');
+        this.device.connectionState = 'FAILED';
         //this.clientReConnect();
     }
 
@@ -1171,7 +1332,7 @@ class Extron extends utils.Adapter {
                     this.streamSend('2I');      // query Description
                     this.streamSend('WCN\r');   // query deviceName
                     this.initDone = true;
-                    this.timers.timeoutQueryStatus.refresh();
+                    //this.timers.timeoutQueryStatus.refresh();
                     if (this.config.pushDeviceStatus === true) {
                         await this.setDeviceStatusAsync();
                     } else {
@@ -1208,15 +1369,16 @@ class Extron extends utils.Adapter {
             if (this.pollCount > this.maxPollCount) {
                 this.log.warn('queryStatus(): maxPollCount exceeded, closing connection');
                 this.pollCount = 0;
-                switch (this.config.type) {
+                /*switch (this.config.type) {
                     case 'telnet':
                         this.net.destroy();     // close the connection
                         break;
                     case 'ssh' :
                         break;
-                }
+                }*/
+                this.device.connectionState = 'FAILED';
             } else {
-                if (typeof this.timers.timeoutQueryStatus !== 'undefined') this.timers.timeoutQueryStatus.refresh();
+                //if (typeof this.timers.timeoutQueryStatus !== 'undefined') this.timers.timeoutQueryStatus.refresh();
                 if (!this.fileSend) {
                     if (this.pollCount) this.log.debug(`queryStatus(): Extron send query poll #${this.pollCount}`);
                     this.streamSend('Q');
@@ -4247,10 +4409,11 @@ class Extron extends utils.Adapter {
             // clearTimeout(timeout1);
             // clearTimeout(timeout2);
             // ...
-            this.log.debug('onUnload(): calling clearTimeout()');
-            clearTimeout(this.timers.timeoutQueryStatus); // clear the query timer
-            clearTimeout(this.timers.timeoutReconnectClient); // clear reconnect timer
-
+            this.log.debug('onUnload(): calling clearInterval()');
+            //clearTimeout(this.timers.timeoutQueryStatus); // clear the query timer
+            //clearTimeout(this.timers.timeoutReconnectClient); // clear reconnect timer
+            // @ts-ignore
+            clearInterval(this.centralIntervalTimer);
             // close client connection
             switch (this.config.type) {
                 case 'ssh' :

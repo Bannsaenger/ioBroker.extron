@@ -1,6 +1,6 @@
 {
   "name": "iobroker.extron",
-  "version": "0.2.15",
+  "version": "0.3.0",
   "description": "Extron SIS adapter",
   "author": "Bannsaenger <bannsaenger@gmx.de>",
   "homepage": "https://github.com/Bannsaenger/ioBroker.extron",
@@ -19,7 +19,8 @@
   "dependencies": {
     "@iobroker/adapter-core": "^3.1.6",
     "@types/ssh2": "^1.15.0",
-    "ssh2": "^1.15.0"
+    "ssh2": "^1.15.0",
+    "net-ping": "^1.2.4"
   },
   "devDependencies": {
     "@alcalzone/release-script": "^3.8.0",
