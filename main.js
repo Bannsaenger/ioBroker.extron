@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20241023 mschlgl
+ *      last edit 20241128 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -203,6 +203,7 @@ class Extron extends utils.Adapter {
                         device.timeToWait--;
                     } else {
                         device.timeToWait = this.reConnectTimeout/this.tmrRes;
+                        this.log.debug(`centralIntervalTimer(): pinging ${device.ipAddress}`);
                         this.pingSession.pingHost(device.ipAddress, this.onPingCallback.bind(this));
                     }
                     break;
@@ -1062,6 +1063,11 @@ class Extron extends utils.Adapter {
 
                             // End SMD202 specific commands
                             // Begin FIle transmission commands
+                            case 'DEL' :
+                                this.log.info(`onStreamData(): received file deletion confirmation command "${ext1}" name: "${ext2}"`);
+                                this.setState('fs.del','',true);    // clear filename for deletion
+                                this.setState('fs.dir',true,false); // request directory update
+                                break;
                             case 'UPL' :
                                 this.fileSend = false;   // reset file transmission flag
                                 this.log.info(`onStreamData(): received upload file confirmation command size: "${ext1}" name: "${ext2}"`);
@@ -3289,6 +3295,7 @@ class Extron extends utils.Adapter {
             }
         } else {
             this.queueGrpCmd(group,cmd); // push command to buffer
+            this.setGroupType(group,type); // already store new type value
         }
     }
 
@@ -4459,7 +4466,7 @@ class Extron extends utils.Adapter {
                     const idArray = id.split('.');
                     const dante = idArray[1] == 'dante';
                     const device = !dante ? this.devices[this.config.device].short : idArray[2];
-                    const idType = !dante ? idArray[3] : idArray[5];
+                    const idType = !dante ? idArray[2] : idArray[4];
                     const idGrp = Number(!dante ? idArray[3]: idArray[5]);
                     const idBlock = !dante ? idArray[5] : idArray[7];
                     const stateName = id.slice(id.lastIndexOf('.') + 1);
@@ -4476,7 +4483,7 @@ class Extron extends utils.Adapter {
                                     this.sendMute(Number(state.val));
                                     break;
                                 }
-                                if (!dante ? idArray[2] : idArray[4] === 'connections') {
+                                if (idType === 'connections') {
                                     this.sendVideoMute(id, state.val);
                                     break;
                                 }
@@ -4523,7 +4530,7 @@ class Extron extends utils.Adapter {
                                     stateTime.timestamp = timeStamp;    // update stored timestamp
                                     if (device === 'smd202') {
                                         this.sendVol(this.calculateFaderValue(`${state.val}`,'linAtt'));
-                                    } else if (!dante ?idArray[2] : idArray[4] === 'groups') {
+                                    } else if (idType === 'groups') {
                                         this.sendGroupLevel(idGrp, Number(state.val));
                                     } else {
                                         if (calcMode === 'linDig') {
@@ -4563,7 +4570,7 @@ class Extron extends utils.Adapter {
                                 }
                                 if (device === 'smd202') {
                                     this.sendVol(this.calculateFaderValue(`${state.val}`,'logAtt'));
-                                } else if (!dante ? idArray[2]: idArray[4] === 'groups') {
+                                } else if (idType === 'groups') {
                                     this.sendGroupLevel(idGrp, Number(state.val));
                                 } else {
                                     if (calcMode === 'logDig') {
@@ -4631,6 +4638,10 @@ class Extron extends utils.Adapter {
                                 this.sendStreamMode(Number(state.val));
                                 break;
 
+                            case 'del' :
+                                this.eraseUserFile(`${state.val}`);
+                                break;
+
                             case 'dir' :
                                 this.listUserFiles();
                                 break;
@@ -4641,7 +4652,7 @@ class Extron extends utils.Adapter {
 
                             case 'name' :
                                 if (this.checkName(`${state.val}`)) {
-                                    switch (!dante ?idArray[2]:idArray[4]) {
+                                    switch (idType) {
                                         case 'groups' :
                                             this.sendGroupName(idGrp, `${state.val}`);
                                             break;
@@ -4701,7 +4712,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'connection' :
-                                if (idArray[1] == 'dante') this.sendDanteConnection(device, Number(state.val));
+                                if (dante) this.sendDanteConnection(device, Number(state.val));
                                 break;
 
                             case 'available' :

@@ -3491,6 +3491,19 @@
             "native": {}
         },
         {
+            "_id": "fs.del",
+            "type": "state",
+            "common": {
+                "role": "media.url",
+                "name": "file to be deleted",
+                "type": "string",
+                "read": true,
+                "write": true,
+                "def": ""
+                },
+            "native": {}
+        },
+        {
             "_id": "fs.freespace",
             "type": "state",
             "common": {
