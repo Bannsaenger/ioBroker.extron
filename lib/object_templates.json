@@ -3530,6 +3530,19 @@
             "native": {}
         },
         {
+            "_id": "fs.filenames",
+            "type": "state",
+            "common": {
+                "role": "list",
+                "name": "list of filenames in user flash",
+                "type": "json",
+                "read": true,
+                "write": true,
+                "def": ""
+                },
+            "native": {}
+        },
+        {
             "_id": "fs.files",
             "type": "folder",
             "common": {

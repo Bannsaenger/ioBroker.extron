@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20241128 mschlgl
+ *      last edit 20241129 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -3002,6 +3002,7 @@ class Extron extends utils.Adapter {
      * @param {Array} userFileList
      */
     async setUserFilesAsync(userFileList) {
+        const filenames = [];
         try {
             let i = 0;
             userFileList.sort();    // sort list alphabetically to resemble DSP configurator display
@@ -3023,6 +3024,7 @@ class Extron extends utils.Adapter {
                 this.file.fileSize = userFile.match(/(\d+)$/g)?Number(userFile.match(/(\d+)$/g)[0]):0; // extract filesize
                 if (this.file.fileName.match(/.raw$/)) {        // check if AudioFile
                     i++;
+                    filenames.push(this.file.fileName);         // add to list of filenames
                     this.fileList.files[i] = this.file;         // add to filelist array
                     this.log.info(`setUserFile(): creating file object for: ${this.file.fileName}`);
                     await this.setObjectAsync(`fs.files.${i}`, this.objectTemplates.file.channel);
@@ -3031,6 +3033,7 @@ class Extron extends utils.Adapter {
                     this.log.debug(`setUserFiles(): Object "fs.files.${i}.filename ${this.file.fileName}" updated`);
                 }
             }
+            this.setState('fs.filenames', JSON.stringify(filenames), true);
             this.setState(`fs.filecount`, i, true);
             this.setState('fs.freespace',this.fileList.freeSpace,true);
             this.setState('fs.dir',false,true);
