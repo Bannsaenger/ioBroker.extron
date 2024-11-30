@@ -17,7 +17,7 @@
     "node": ">= 18"
   },
   "dependencies": {
-    "@iobroker/adapter-core": "^3.1.6",
+    "@iobroker/adapter-core": "^3.2.2",
     "@types/ssh2": "^1.15.0",
     "ssh2": "^1.15.0",
     "net-ping": "^1.2.4"
