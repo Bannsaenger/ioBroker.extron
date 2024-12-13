@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20241129 mschlgl
+ *      last edit 20241213 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -74,7 +74,6 @@ class Extron extends utils.Adapter {
         this.isLoggedIn = false;        // will be true once telnet login completed
         this.isVerboseMode = false;     // will be true if verbose mode 3 is active
         this.initDone = false;          // will be true if all init is done
-        this.versionSet = false;        // will be true if the version is once set in the db
         this.device = {'model':'','name':'','version':'','description':'','connectionState':'NEW','ipAddress':this.config.host,'port':this.config.port,'active':true}; // will be filled according to device responses
         this.statusRequested = false;   // will be true once device status has been requested after init
         this.statusSent = false;        // will be true once database settings have been sent to device
@@ -128,7 +127,7 @@ class Extron extends utils.Adapter {
 
         // start central timer/interval handler
         // @ts-ignore
-        this.centralIntervalTimer = setInterval(this.centralIntervalTimer.bind(this), this.tmrRes);
+        //this.centralIntervalTimer = setInterval(this.centralIntervalTimer.bind(this), this.tmrRes);
 
     }
 
@@ -288,7 +287,9 @@ class Extron extends utils.Adapter {
                 }
                 this.log.info(`onReady(): Extron took ${Date.now() - startTime}ms to initialize and setup db`);
 
-                //this.clientConnect();
+                // start central timer/interval handler
+                // @ts-ignore
+                this.centralIntervalTimer = setInterval(this.centralIntervalTimer.bind(this), this.tmrRes);
             }
         } catch (err) {
             this.errorHandler(err, 'onReady');
@@ -425,7 +426,6 @@ class Extron extends utils.Adapter {
             this.isDeviceChecked = false;       // will be true if device sends banner and will be verified
             this.isVerboseMode = false;         // will be true if verbose mode 3 is active
             this.initDone = false;              // will be true if all init is done
-            this.versionSet = false;            // will be true if the version is once set in the db
             this.statusRequested = false;       // will be true if device status has been requested after init
             this.statusSent = false;          // will be true once database settings have been sent to device
             this.stream = undefined;
@@ -676,12 +676,9 @@ class Extron extends utils.Adapter {
                                         break;
                                     case '01' :
                                         this.log.debug(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}firmware version: "${ext2}"`);
-                                        if (!this.versionSet) {
-                                            if (!dante) this.versionSet = true;
-                                            if (!dante) this.device.version = `${ext2}`;
-                                            this.setState(`${dante?'dante.'+danteDevice:'device'}.version`, ext2, true);
-                                            this.log.info(`onStreamData(): set ${dante?'dante.'+danteDevice:'device'}.version: "${ext2}"`);
-                                        }
+                                        if (!dante) this.device.version = `${ext2}`;
+                                        this.setState(`${dante?'dante.'+danteDevice:'device'}.version`, ext2, true);
+                                        this.log.debug(`onStreamData(): set ${dante?'dante.'+danteDevice:'device'}.version: "${ext2}"`);
                                         break;
 
                                     case '02' :
@@ -717,7 +714,7 @@ class Extron extends utils.Adapter {
                                         this.setState(`${dante?'dante.'+danteDevice:'device'}.model`, ext2, true);
                                         break;
                                     case '02' :
-                                        this.log.info(`onStreamData(): received ${dante?'dante.'+danteDevice:'device'} model description: "${ext2}"`);
+                                        this.log.info(`onStreamData(): received ${dante?'dante.'+danteDevice:'device'}  description: "${ext2}"`);
                                         if (!dante) this.device.description = `${ext2}`;
                                         this.setState(`${dante?'dante.'+danteDevice:'device'}.description`, ext2, true);
                                         break;
@@ -1330,13 +1327,13 @@ class Extron extends utils.Adapter {
                 this.danteDevices[device].isVerboseMode = true;
             }
             else {
-                this.log.warn('setVerboseMode(): Extron device set verbose mode');
+                this.log.info('setVerboseMode(): Extron device set verbose mode');
                 this.isVerboseMode = true;
                 if (!this.initDone) {
-                    this.streamSend('Q');       // query Version
-                    this.streamSend('1I');      // query Model
-                    this.streamSend('2I');      // query Description
-                    this.streamSend('WCN\r');   // query deviceName
+                    this.streamSend('Q');   // query Version
+                    this.getModel();        // query Model
+                    this.getDescription();  // query Description
+                    this.getDeviceName();   // query deviceName
                     this.initDone = true;
                     //this.timers.timeoutQueryStatus.refresh();
                     if (this.config.pushDeviceStatus === true) {
@@ -1349,6 +1346,34 @@ class Extron extends utils.Adapter {
             }
         } catch (err) {
             this.errorHandler(err, 'setVerboseMode');
+        }
+    }
+
+    /**
+     * called to request device model
+     * @param {string | void} device
+     * cmd = 1I
+     */
+    getModel(device = '') {
+        try {
+            this.log.debug(`getModel(): requesting ${device} model`);
+            this.streamSend('1I\r', device);
+        } catch (err) {
+            this.errorHandler(err, 'getModel');
+        }
+    }
+
+    /**
+     * called to request devicename
+     * @param {string | void} device
+     * cmd = CN
+     */
+    getDeviceName(device = '') {
+        try {
+            this.log.debug(`getDeviceName(): requesting ${device} name`);
+            this.streamSend('WCN\r', device);
+        } catch (err) {
+            this.errorHandler(err, 'getDeviceName');
         }
     }
 
@@ -4458,6 +4483,7 @@ class Extron extends utils.Adapter {
                     this.log.info(`onStateChange(): Extron state ${id} changed: ${state.val} (ack = ${state.ack})`);
                     // extron.[n].[idType].[grpId].[number].[block]
                     //   0     1    2     3       4        5
+                    // extron.[n].device.name
                     // extron.[n].in.Inputs.01.preMix
                     // extron.[n].in.auxInputs.01.mixPoints.A01.gain.level
                     // extron.[n].out.outputs.01.attenuation.level
@@ -4656,7 +4682,11 @@ class Extron extends utils.Adapter {
                             case 'name' :
                                 if (this.checkName(`${state.val}`)) {
                                     switch (idType) {
-                                        case 'groups' :
+                                        case 'device':
+                                            this.getDeviceName();
+                                            break;
+
+                                        case 'groups':
                                             this.sendGroupName(idGrp, `${state.val}`);
                                             break;
 
@@ -4724,6 +4754,18 @@ class Extron extends utils.Adapter {
 
                             case 'connected' :
                                 this.listDanteConnections();
+                                break;
+
+                            case 'description':
+                                this.getDescription();
+                                break;
+
+                            case 'model':
+                                this.getModel();
+                                break;
+
+                            case 'version':
+                                this.queryStatus();
                                 break;
 
                             default :
