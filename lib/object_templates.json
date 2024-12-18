@@ -33,6 +33,18 @@
             "native": {}
         },
         {
+            "_id": "device.pno",
+            "type": "state",
+            "common": {
+                "role": "value",
+                "name": "As received by N",
+                "type": "string",
+                "read": true,
+                "write": true
+            },
+            "native": {}
+        },
+        {
             "_id": "device.description",
             "type": "state",
             "common": {
@@ -3535,47 +3547,14 @@
             "common": {
                 "role": "list",
                 "name": "list of filenames in user flash",
-                "type": "json",
+                "type": "array",
                 "read": true,
                 "write": true,
                 "def": ""
                 },
             "native": {}
-        },
-        {
-            "_id": "fs.files",
-            "type": "folder",
-            "common": {
-                "name": "User Flash Files"
-            },
-            "native": {}
         }
     ],
-    "file" : {
-        "channel": {
-            "_id":"0",
-            "type": "channel",
-            "common":{
-                "role":"media.channel",
-                "name":"file"
-            },
-            "native":{}
-        },
-        "filename": {
-            "_id": "filename",
-            "type": "state",
-            "common": {
-                "role": "media.link",
-                "name": "filename",
-                "type": "string",
-                "read": true,
-                "write": false,
-                "def": ""
-            },
-            "native": {}
-        },
-        "native": {}
-    },
     "danterelay" : [
         {
             "_id": "dante",
@@ -3591,8 +3570,8 @@
             "common": {
                 "name": "available",
                 "desc": "as received by AEXPR",
-                "role": "value",
-                "type": "json",
+                "role": "list",
+                "type": "array",
                 "read": true,
                 "write": true,
                 "def" : "[]"
@@ -3605,8 +3584,8 @@
             "common": {
                 "name": "connected",
                 "desc": "as received by LEXPR",
-                "role": "value",
-                "type": "json",
+                "role": "list",
+                "type": "array",
                 "read": true,
                 "write": true,
                 "def": "[]"

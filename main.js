@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20241213 mschlgl
+ *      last edit 20241217 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -59,6 +59,83 @@ class Extron extends utils.Adapter {
         // this.on('objectChange', this.onObjectChange.bind(this));
         this.on('message', this.onMessage.bind(this));
         this.on('unload', this.onUnload.bind(this));
+    }
+
+    /**
+     * Is called when databases are connected and adapter received configuration.
+     */
+    async onReady() {
+        try {
+            // Initialize your adapter here
+            const startTime = Date.now();
+
+            // read Objects template for object generation
+            this.objectTemplates = JSON.parse(fs.readFileSync(__dirname + '/lib/object_templates.json', 'utf8'));
+            // read devices for device check
+            this.devices = JSON.parse(fs.readFileSync(__dirname + '/lib/device_mapping.json', 'utf8'));
+
+            this.initVars();
+
+            // Reset the connection indicator during startup
+            this.setState('info.connection', false, true);
+
+            // Check whether the device type is already chosen. If not, skip the initialisation process and run in offline mode
+            // only for the messageBox
+            if (this.config.device === '') {
+                this.log.warn(`No device type specified. Running in Offline Mode`);
+            } else {
+
+                // The adapters config (in the instance object everything under the attribute "native") is accessible via
+                // this.config:
+                this.log.info('onReady(): configured host/port: ' + this.config.host + ':' + this.config.port);
+
+                /*
+                * For every state in the system there has to be also an object of type state
+                */
+                await this.setInstanceNameAsync();
+                await this.createDatabaseAsync();
+                await this.createStatesListAsync();
+
+                // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
+                // this.subscribeStates('testVariable');
+                this.subscribeStates('*');  // subscribe to all states
+
+                // Client callbacks
+                switch (this.config.type) {
+                    case 'ssh' :
+                        this.client.on('keyboard-interactive', this.onClientKeyboard.bind(this));
+                        this.client.on('ready', this.onClientReady.bind(this));
+                        //this.client.on('banner', this.onClientBanner.bind(this));
+                        this.client.on('close', this.onClientClose.bind(this));
+                        this.client.on('error', this.onClientError.bind(this));
+                        this.client.on('end', this.onClientEnd.bind(this));
+                        break;
+
+                    case 'telnet' :
+                        this.net.on('connectionAttempt',()=>{this.log.debug(`this.net.on: Telnet: connectionAttempt started`);});
+                        this.net.on('connectionAttemptTimeout',()=>{this.log.warn(`this.net.on: Telnet: connectionAttemptTimeout`);this.device.connectionState = 'FAILED';});
+                        this.net.on('connectionAttemptFailed',()=>{this.log.warn(`this.net.on: Telnet: connectionAttemptFailed`);this.device.connectionState = 'FAILED';});
+                        this.net.on('timeout',()=>{this.log.warn(`this.net.on: Telnet: connection idle timeout`);});
+                        this.net.on('connect',()=>{this.log.debug(`this.net.on: Telnet: connected`);});
+                        this.net.on('ready', this.onClientReady.bind(this));
+                        this.net.on('error', this.onClientError.bind(this));
+                        this.net.on('end', this.onClientEnd.bind(this));
+                        this.net.on('close', ()=>{
+                            this.log.debug(`this.net.on: Telnet: socket closed`);
+                            this.device.connectionState = 'CLOSED';
+                            //this.clientReConnect();
+                        });
+                        break;
+                }
+                this.log.info(`onReady(): Extron took ${Date.now() - startTime}ms to initialize and setup db`);
+
+                // start central timer/interval handler
+                // @ts-ignore
+                this.centralIntervalTimer = setInterval(this.centralIntervalTimer.bind(this), this.tmrRes);
+            }
+        } catch (err) {
+            this.errorHandler(err, 'onReady');
+        }
     }
 
     /**
@@ -220,81 +297,6 @@ class Extron extends utils.Adapter {
         }
     }
 
-    /**
-     * Is called when databases are connected and adapter received configuration.
-     */
-    async onReady() {
-        try {
-            // Initialize your adapter here
-            const startTime = Date.now();
-            this.initVars();
-
-            // Reset the connection indicator during startup
-            this.setState('info.connection', false, true);
-
-            // read Objects template for object generation
-            this.objectTemplates = JSON.parse(fs.readFileSync(__dirname + '/lib/object_templates.json', 'utf8'));
-            // read devices for device check
-            this.devices = JSON.parse(fs.readFileSync(__dirname + '/lib/device_mapping.json', 'utf8'));
-
-            // Check whether the device type is already chosen. If not, skip the initialisation process and run in offline mode
-            // only for the messageBox
-            if (this.config.device === '') {
-                this.log.warn(`No device type specified. Running in Offline Mode`);
-            } else {
-
-                // The adapters config (in the instance object everything under the attribute "native") is accessible via
-                // this.config:
-                this.log.info('onReady(): configured host/port: ' + this.config.host + ':' + this.config.port);
-
-                /*
-                * For every state in the system there has to be also an object of type state
-                */
-                await this.setInstanceNameAsync();
-                await this.createDatabaseAsync();
-                await this.createStatesListAsync();
-
-                // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
-                // this.subscribeStates('testVariable');
-                this.subscribeStates('*');  // subscribe to all states
-
-                // Client callbacks
-                switch (this.config.type) {
-                    case 'ssh' :
-                        this.client.on('keyboard-interactive', this.onClientKeyboard.bind(this));
-                        this.client.on('ready', this.onClientReady.bind(this));
-                        //this.client.on('banner', this.onClientBanner.bind(this));
-                        this.client.on('close', this.onClientClose.bind(this));
-                        this.client.on('error', this.onClientError.bind(this));
-                        this.client.on('end', this.onClientEnd.bind(this));
-                        break;
-
-                    case 'telnet' :
-                        this.net.on('connectionAttempt',()=>{this.log.debug(`this.net.on: Telnet: connectionAttempt started`);});
-                        this.net.on('connectionAttemptTimeout',()=>{this.log.warn(`this.net.on: Telnet: connectionAttemptTimeout`);this.device.connectionState = 'FAILED';});
-                        this.net.on('connectionAttemptFailed',()=>{this.log.warn(`this.net.on: Telnet: connectionAttemptFailed`);this.device.connectionState = 'FAILED';});
-                        this.net.on('timeout',()=>{this.log.warn(`this.net.on: Telnet: connection idle timeout`);});
-                        this.net.on('connect',()=>{this.log.debug(`this.net.on: Telnet: connected`);});
-                        this.net.on('ready', this.onClientReady.bind(this));
-                        this.net.on('error', this.onClientError.bind(this));
-                        this.net.on('end', this.onClientEnd.bind(this));
-                        this.net.on('close', ()=>{
-                            this.log.debug(`this.net.on: Telnet: socket closed`);
-                            this.device.connectionState = 'CLOSED';
-                            //this.clientReConnect();
-                        });
-                        break;
-                }
-                this.log.info(`onReady(): Extron took ${Date.now() - startTime}ms to initialize and setup db`);
-
-                // start central timer/interval handler
-                // @ts-ignore
-                this.centralIntervalTimer = setInterval(this.centralIntervalTimer.bind(this), this.tmrRes);
-            }
-        } catch (err) {
-            this.errorHandler(err, 'onReady');
-        }
-    }
 
     /**
      * try to connect to the device
@@ -325,21 +327,6 @@ class Extron extends utils.Adapter {
         } catch (err) {
             this.errorHandler(err, 'clientConnect');
         }
-    }
-
-    /**
-     * reconnect Client after error
-     */
-    clientReConnect() {
-        // clear poll timer
-        //clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
-        // Status variables to be reset
-        this.setState('info.connection', false, true);
-        this.isLoggedIn = false;        // will be true once telnet login completed
-        this.isVerboseMode = false;     // will be true if verbose mode 3 is active
-        this.isDeviceChecked = false;   // will be true if device sends banner and will be verified
-        this.log.info(`clientReConnect(): reconnecting after ${this.config.reconnectDelay}ms`);
-        //this.timers.timeoutReconnectClient = setTimeout(this.clientConnect.bind(this),this.config.reconnectDelay);
     }
 
     /**
@@ -448,11 +435,26 @@ class Extron extends utils.Adapter {
         }
     }
 
+
+    /**
+     * reconnect Client after error
+     */
+    clientReConnect() {
+        // clear poll timer
+        //clearTimeout(this.timers.timeoutQueryStatus); // stop the query timer
+        // Status variables to be reset
+        this.setState('info.connection', false, true);
+        this.isLoggedIn = false;        // will be true once telnet login completed
+        this.isVerboseMode = false;     // will be true if verbose mode 3 is active
+        this.isDeviceChecked = false;   // will be true if device sends banner and will be verified
+        this.log.info(`clientReConnect(): reconnecting after ${this.config.reconnectDelay}ms`);
+        //this.timers.timeoutReconnectClient = setTimeout(this.clientConnect.bind(this),this.config.reconnectDelay);
+    }
+
     /**
      * called if client receives an error
      * @param {any} err
      */
-
     onClientError(err) {
         switch (this.config.type) {
             case 'ssh' :
@@ -731,7 +733,7 @@ class Extron extends utils.Adapter {
 
                             case 'PNO':            // received Part Number
                                 this.log.info(`onStreamData(): received ${dante?`dante ${danteDevice} `:'device '}partnumber: "${ext1}"`);
-                                this.setDevicePartnumber(danteDevice, ext1);
+                                this.setDevicePartnumber(dante?danteDevice:'', ext1);
                                 break;
 
                             // DSP SIS commands
@@ -1323,11 +1325,11 @@ class Extron extends utils.Adapter {
     async setVerboseMode(device = '') {
         try {
             if (device != '') {
-                this.log.info(`setVerboseMode(): DANTE device "${device}" set verbose mode`);
+                this.log.debug(`setVerboseMode(): DANTE device "${device}" set verbose mode`);
                 this.danteDevices[device].isVerboseMode = true;
             }
             else {
-                this.log.info('setVerboseMode(): Extron device set verbose mode');
+                this.log.debug('setVerboseMode(): Extron device set verbose mode');
                 this.isVerboseMode = true;
                 if (!this.initDone) {
                     this.streamSend('Q');   // query Version
@@ -1849,7 +1851,7 @@ class Extron extends utils.Adapter {
                             default :
                                 this.log.warn(`getDeviceStatus(): idType "${idType}" unknown`);
                         } */
-                        if (! ['device','info'].includes(idArray[2])) { // sections don't need to be handled here
+                        if (! ['device','info'].includes(idArray[2])) { // those sections don't need to be handled here
                             switch (stateName) {
                                 case 'mute' :
                                     if (device === 'smd202') this.getMute();
@@ -1899,10 +1901,11 @@ class Extron extends utils.Adapter {
                                     this.getVideoFile();
                                     break;
 
+                                case 'filenames':
                                 case 'filecount':
                                 case 'freespace':
                                 case 'upl':
-                                case 'deleted':
+                                case 'del':
                                     break;  // will be handled when processing 'dir' state
 
                                 case 'loopmode' :
@@ -1961,6 +1964,9 @@ class Extron extends utils.Adapter {
                                     if (idType ==='groups') {
                                         this.getGroupName(grpId);
                                     } else this.getIOName(id);
+                                    break;
+
+                                case 'deleted': // no need to handle this here
                                     break;
 
                                 case 'upperLimit' :
@@ -2283,11 +2289,16 @@ class Extron extends utils.Adapter {
      * @param {string} partNumber
      */
     setDevicePartnumber(deviceName, partNumber) {
-        // () => for (const device of this.devices) if (device.pno == partNumber) return device.model;
-        this.danteDevices[deviceName].pno = partNumber;
-        this.danteDevices[deviceName].deviceType = Object.keys(this.devices).find(device => this.devices[device].pno == partNumber);
-        this.danteDevices[deviceName].remoteDeviceType = Object.keys(this.devices).find(device => this.devices[device].pno == partNumber);
-        this.danteDevices[deviceName].model = this.devices[this.danteDevices[deviceName].deviceType].model;
+        if (deviceName != '') {
+            // () => for (const device of this.devices) if (device.pno == partNumber) return device.model;
+            this.danteDevices[deviceName].pno = partNumber;
+            this.danteDevices[deviceName].deviceType = Object.keys(this.devices).find(device => this.devices[device].pno == partNumber);
+            this.danteDevices[deviceName].remoteDeviceType = Object.keys(this.devices).find(device => this.devices[device].pno == partNumber);
+            this.danteDevices[deviceName].model = this.devices[this.danteDevices[deviceName].deviceType].model;
+        } else {
+            this.device.pno = partNumber;
+            this.setState('device.pno', partNumber, true);
+        }
     }
 
     /** END device config control */
@@ -3031,11 +3042,13 @@ class Extron extends utils.Adapter {
         try {
             let i = 0;
             userFileList.sort();    // sort list alphabetically to resemble DSP configurator display
+            /**
             this.log.info(`setUserFile(): deleting file objects...`);
             const files = this.objectTemplates.userflash.find(element => element._id === 'fs.files');
             await this.delObjectAsync(files._id,{recursive:true}); // delete files recursively
             this.log.info(`setUserFile(): create files folder object...`);
             await this.setObjectAsync(files._id, files);
+            **/
             for (const userFile of userFileList) {                              // check each line
                 if (userFile.match(/(\d+\b Bytes Left)/g)) {
                     this.fileList.freeSpace = Number(userFile.match(/\d+/));
@@ -3051,11 +3064,13 @@ class Extron extends utils.Adapter {
                     i++;
                     filenames.push(this.file.fileName);         // add to list of filenames
                     this.fileList.files[i] = this.file;         // add to filelist array
+                    /**
                     this.log.info(`setUserFile(): creating file object for: ${this.file.fileName}`);
                     await this.setObjectAsync(`fs.files.${i}`, this.objectTemplates.file.channel);
                     await this.setObjectAsync(`fs.files.${i}.filename`, this.objectTemplates.file.filename);
                     this.setState(`fs.files.${i}.filename`, this.file.fileName, true);
                     this.log.debug(`setUserFiles(): Object "fs.files.${i}.filename ${this.file.fileName}" updated`);
+                    **/
                 }
             }
             this.setState('fs.filenames', JSON.stringify(filenames), true);

@@ -150,6 +150,7 @@
         "dataSource": "push",
         "tier": 3,
         "compact": true,
+        "message": true,
         "messagebox": true,
         "dependencies": [
             {
