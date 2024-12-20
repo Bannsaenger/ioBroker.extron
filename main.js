@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20241217 mschlgl
+ *      last edit 20241220 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -180,6 +180,8 @@ class Extron extends utils.Adapter {
         this.stateBuf = [{'id': '', 'timestamp' : 0}];  // array to hold state changes with timestamp
         this.presetList = '';           // list of SMD202 preset channels
         this.requestPresets = false;    // flag to signal thet device preset list has been requested (applies to SMD202)
+        this.deviceList = '';           // list of DANTE devices as reported
+        this.rcvDanteDeviceList = false;   // flag on receiving DANTE device list
         this.danteDevices = {};           // store subdevices controlled via DANTE
         this.tmrRes = this.config.tmrRes || 100;                            // timer resolution, default 100 ms
         this.preCheckWithICMP = this.config.preCheckWithICMP === undefined ? true : this.config.preCheckWithICMP, // check the availability of the device with ping
@@ -567,8 +569,9 @@ class Extron extends utils.Adapter {
         this.streamAvailable = true;    // if we receive data the stream is available
         if (this.fileSend) return; // do nothing during file transmission
         try {
-            this.log.debug(`onStreamData(): received data: "${this.decodeBufferToLog(data)}"`);
+            this.log.debug(`onStreamData(): received buffer: "${this.decodeBufferToLog(data)}"`);
             data = data.toString();     // convert buffer to String
+            //this.log.debug(`onStreamData(): received data: "${this.decodeBufferToLog(data)}"`);
 
             if (!this.isDeviceChecked) {        // the first data has to be the banner with device info
                 if (data.includes(this.devices[this.config.device].pno)) {
@@ -587,8 +590,7 @@ class Extron extends utils.Adapter {
                 return;
             }
             if (this.config.type === 'telnet') {
-                //if (!this.isLoggedIn) {
-                if (data.toString().includes('Password:')) {
+                if (data.includes('Password:')) {
                     this.isLoggedIn = false;
                     this.isVerboseMode = false;
                     this.setState('info.connection', false, true);
@@ -596,54 +598,53 @@ class Extron extends utils.Adapter {
                     this.streamSend(`${this.config.pass}\r`);
                     return;
                 }
-                if (data.toString().includes('Login Administrator')) {
+                if (data.includes('Login Administrator')) {
                     this.isLoggedIn = true;
                     this.log.info('onStreamData(): Extron Telnet logged in');
                     this.setState('info.connection', true, true);
-                    if (!this.isVerboseMode) {          // enter the verbose mode
-                        this.sendVerboseMode();
-                        return;
-                    }
+                    if (!this.isVerboseMode) this.sendVerboseMode();         // enter the verbose mode
                     return;
                 }
-                //}
             }
-
-            // check for DANTE control / setup messages returning a list of DANTE device names separated by \r\n
-            if  (data.match(/(Expr[al]) ([\w-]*[\s\S]*)\r\n/im)) {
-                data = data.replace(/[\n]/gm,'*');      // change device list separator from "\n" to "*"
-                data = data.replace('*\r*', '\r\n');     // restore end of message
-                this.log.debug(`onStreamData(): received DANTE control message: "${this.decodeBufferToLog(data)}"`);
+            const deviceMatch = data.match(/(?:Expr[al]) ((.+\r\n)+)\r\n/gim);  // check for multiline devicelist
+            if (deviceMatch) {
+                this.log.debug(`onStreamData(): deviceMatch ${JSON.stringify(deviceMatch)}`);
+                for (const matchLst of deviceMatch) {
+                    this.log.debug(`onStreamData(): matchLst: ${matchLst}`);
+                    let  replaceLst = matchLst.replace(/\r\n/g, '*');   // reformat devicelist
+                    replaceLst = replaceLst.replace('**', '\r\n');      // to a single line item
+                    this.log.debug(`onStreamData(): replaceLst: ${replaceLst}`);
+                    data = data.replace(matchLst,replaceLst);   // replace multiline devicelist with single line item
+                }
             }
-
             // iterate through multiple answers connected via [LF]
-            for (const cmdPart of data.split('\n')) {
+            const answers = data.split('\n');
+            this.log.debug(`onStreamData(): received answers: ${JSON.stringify(answers)}`);
+            for (let answer of answers) {
+                answer = answer.replace(/[\r\n]/gm, ''); // remove [CR] and [LF] from string
 
-                const answer = cmdPart.replace(/[\r\n]/gm, ''); // remove [CR] and [LF] from string
-                /** Error handling
-                if (answer.match(/^E\d\d/gim)) {    // received an error
-                    throw { 'message': 'Error response from device', 'stack'  : errCodes[answer] };
-                }**/
-
-                if (this.requestDir && answer.match(/\.\w{3} /)) {
-                    this.log.info(`onStreamData(): received file data: "${answer}"`);
-                    userFileList.push(answer);
-                } else if (this.requestDir && answer.includes('Bytes Left')) {
-                    this.log.info(`onStreamData(): received freespace: "${answer.match(/\d+/)}"`);
-                    userFileList.push(answer);
-                    this.requestDir = false;        // directory list has been received, clear flag
-                    this.fileList.freeSpace = Number(answer.match(/\d+/));   // set freeSpace in list
-                    this.setUserFilesAsync(userFileList);        // call subroutine to set database values
-                } else if (this.requestPresets) {
+                if (answer.match(/\.\w{3} /) || this.requestDir) {
+                    if (answer.endsWith('Bytes Left')) {
+                        this.log.info(`onStreamData(): received freespace: "${answer.match(/\d+/)}"`);
+                        this.requestDir = false;        // directory list has been received, clear flag
+                        this.fileList.freeSpace = Number(answer.match(/\d+/));   // set freeSpace in list
+                        this.setUserFilesAsync(userFileList);        // call subroutine to set database values
+                    } else {
+                        this.requestDir = true;
+                        this.log.info(`onStreamData(): received file data: "${answer}"`);
+                        userFileList.push(answer);
+                    }
+                } else if (answer.startsWith('TvprG') || this.requestPresets) {
+                    this.requestPresets = true;
                     this.presetList += answer;
                     if (answer.match(/"name":".*"\}\]$/)) {
-                        this.log.debug(`onStreamData: end of presetList detected`);
+                        this.log.debug(`onStreamData(): end of presetList detected`);
                         this.requestPresets = false;
                         this.presetList = this.presetList.match(/(?!TvprG)(\[\{".*"\}\])/)[0];
                         this.setPresets(this.presetList);
                     }
-                } else
-                {   // lookup the command
+                } else {
+                    // lookup the command
                     // const matchArray = answer.match(/([A-Z][a-z]+[A-Z]|\w{3})(\d*)\*?,? ?(.*)/i);    // initial separation detecting eg. "DsG60000*-10"
                     const matchArray = answer.match(/({(dante)@(.*)})?([A-Z][a-z]{1,3}[A-Z]|E|\w{3})([\w-]*|\d*),?\*? ?(.*)/i); // extended to detect DANTE remote responses eg. "{dante@AXI44-92efe7}DsG60000*-10"
                     if (matchArray) {       // if any match
@@ -654,7 +655,7 @@ class Extron extends utils.Adapter {
                         const ext1 = matchArray[5] ? matchArray[5] : '';
                         const ext2 = matchArray[6] ? matchArray[6] : '';
 
-                        this.log.debug(`onStreamData(): ${dante?'"'+danteDevice+'" ':''}command "${command}", ext1 "${ext1}", ext2 "${ext2}`);
+                        this.log.debug(`onStreamData(): ${dante?'"'+danteDevice+'" ':''}command "${command}", ext1 "${ext1}", ext2 "${ext2}"`);
 
                         this.pollCount = 0;     // reset pollcounter as valid data has been received
                         //this.timers.timeoutQueryStatus.refresh();   // refresh poll timer
@@ -1076,7 +1077,7 @@ class Extron extends utils.Adapter {
 
                             case 'WDF' :
                                 this.log.info(`onStreamData(): received list directory command`);
-                                this.requestDir = true;     // set directory transmission flag
+                                //this.requestDir = true;     // set directory transmission flag
                                 break;
 
                             case 'W+UF' :
@@ -1187,7 +1188,7 @@ class Extron extends utils.Adapter {
                         }
                     } else {
                         if ((answer != 'Q') && (answer != '') && (this.fileSend === false) && !(answer.match(/\d\*\d\w+/)) && !(answer.match(/\d\w/))) {
-                            this.log.warn('onStreamData(): Extron received data which cannot be handled "' + cmdPart + '"');
+                            this.log.warn('onStreamData(): Extron received data which cannot be handled "' + answer + '"');
                         }
                     }
                 }
@@ -1332,10 +1333,11 @@ class Extron extends utils.Adapter {
                 this.log.debug('setVerboseMode(): Extron device set verbose mode');
                 this.isVerboseMode = true;
                 if (!this.initDone) {
-                    this.streamSend('Q');   // query Version
-                    this.getModel();        // query Model
-                    this.getDescription();  // query Description
-                    this.getDeviceName();   // query deviceName
+                    this.streamSend('Q');       // query Version
+                    this.getModel();            // query Model
+                    this.getDescription();      // query Description
+                    this.getDeviceName();       // query deviceName
+                    this.getDevicePartnumber(); // query partnumber
                     this.initDone = true;
                     //this.timers.timeoutQueryStatus.refresh();
                     if (this.config.pushDeviceStatus === true) {
@@ -2272,11 +2274,12 @@ class Extron extends utils.Adapter {
     /**
      * request device part number
      * cmd = N
-     * @param {string | void} deviceName
+     * @param {string | void} device
      */
-    getDevicePartnumber(deviceName = '') {
+    getDevicePartnumber(device = '') {
         try {
-            this.streamSend(`N\r`, deviceName);
+            this.log.debug(`getPno(): requesting ${device} partnumber`);
+            this.streamSend(`N\r`, device);
         } catch (err) {
             this.errorHandler(err, 'getDevicePartnumber');
         }
@@ -3027,7 +3030,7 @@ class Extron extends utils.Adapter {
     listUserFiles() {
         try {
             this.streamSend(`WDF\r`);
-            this.requestDir = true;     // flag directory request
+            //this.requestDir = true;     // flag directory request
         } catch (err) {
             this.requestDir = false;    // unflag directory request
             this.errorHandler(err, 'listUserFiles');
@@ -3678,7 +3681,6 @@ class Extron extends utils.Adapter {
     getPresets() {
         try {
             this.presetList = '';
-            this.requestPresets = true;
             this.streamSend('WGTVPR\r');
         } catch (err) {
             this.errorHandler(err, 'getPresets');
@@ -4772,11 +4774,15 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'description':
-                                this.getDescription();
+                                this.getDescription(dante?device:'');
                                 break;
 
                             case 'model':
                                 this.getModel();
+                                break;
+
+                            case 'pno':
+                                this.getDevicePartnumber(dante?device:'');
                                 break;
 
                             case 'version':
