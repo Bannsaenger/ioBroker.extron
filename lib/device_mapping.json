@@ -90,7 +90,12 @@
         "objects" : [
             "common",
             "smd202"
-        ]
+        ],
+        "fs" :{
+            "files": {
+                "name" : "Flash Memory"
+            }
+        }
     },
     "SME211" : {
         "model" : "SME 211",

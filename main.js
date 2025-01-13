@@ -1056,6 +1056,7 @@ class Extron extends utils.Adapter {
                             case 'SUBTE':
                                 break;
 
+                            case 'STRM' :
                             case 'STRMY' :
                                 this.log.info(`onStreamData(): received streammode "${ext1}"`);
                                 this.setStreamMode(`ply.players.1.common.`,Number(ext1));
@@ -3045,13 +3046,6 @@ class Extron extends utils.Adapter {
         try {
             let i = 0;
             userFileList.sort();    // sort list alphabetically to resemble DSP configurator display
-            /**
-            this.log.info(`setUserFile(): deleting file objects...`);
-            const files = this.objectTemplates.userflash.find(element => element._id === 'fs.files');
-            await this.delObjectAsync(files._id,{recursive:true}); // delete files recursively
-            this.log.info(`setUserFile(): create files folder object...`);
-            await this.setObjectAsync(files._id, files);
-            **/
             for (const userFile of userFileList) {                              // check each line
                 if (userFile.match(/(\d+\b Bytes Left)/g)) {
                     this.fileList.freeSpace = Number(userFile.match(/\d+/));
@@ -3063,17 +3057,10 @@ class Extron extends utils.Adapter {
                 this.file.timeStamp = userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)?`${userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)[0]}`:''; //extract timestamp
                 // @ts-ignore
                 this.file.fileSize = userFile.match(/(\d+)$/g)?Number(userFile.match(/(\d+)$/g)[0]):0; // extract filesize
-                if (this.file.fileName.match(/.raw$/)) {        // check if AudioFile
+                if (this.devices[this.config.device].short !== 'dmp' || this.file.fileName.match(/.raw$/)) {        // if DMP only accept .raw AudioFiles
                     i++;
                     filenames.push(this.file.fileName);         // add to list of filenames
                     this.fileList.files[i] = this.file;         // add to filelist array
-                    /**
-                    this.log.info(`setUserFile(): creating file object for: ${this.file.fileName}`);
-                    await this.setObjectAsync(`fs.files.${i}`, this.objectTemplates.file.channel);
-                    await this.setObjectAsync(`fs.files.${i}.filename`, this.objectTemplates.file.filename);
-                    this.setState(`fs.files.${i}.filename`, this.file.fileName, true);
-                    this.log.debug(`setUserFiles(): Object "fs.files.${i}.filename ${this.file.fileName}" updated`);
-                    **/
                 }
             }
             this.setState('fs.filenames', JSON.stringify(filenames), true);
@@ -3800,12 +3787,12 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'sendVol');
         }
     }
-    /** END SMD 2020 Video Player Control */
+    /** END SMD 202 Video Player Control */
 
     /** BEGIN SME211 stream control */
     /** send streaming mode to device
      * @param {number} mode
-     *  cmd = Y[0/1]STRM
+     *  cmd = Y[0/1/2]STRM
     */
     sendStreamMode(mode) {
         try {
