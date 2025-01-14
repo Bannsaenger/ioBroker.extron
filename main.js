@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20241220 mschlgl
+ *      last edit 20250114 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -973,6 +973,12 @@ class Extron extends utils.Adapter {
                                 this.setRepeatMode(ext1, ext2);
                                 break;
 
+                            case 'IN0':            // received HDMI Input Signal status change
+                                if (device === 'sme211') {
+                                    this.log.info(`onStreamData(): received HDMI input signal change: "${ext2}"`);
+                                    this.setState('player.hdmistatus',Number(ext2), true);
+                                }
+                                break;
                             case 'IN1':             // received a tie command from CrossPoint
                             case 'IN2':
                             case 'IN3':
@@ -991,9 +997,13 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'VMT':             // received a video mute
-                                this.log.info(`onStreamData(): received video mute for output "${ext1}" value "${ext2}"`);
-                                if (device === 'sme211') this.setState(`connections.1.mute`, Number(ext1), true);
-                                else this.setState(`connections.${ext1}.mute`, Number(ext2), true);
+                                if (device === 'sme211') {
+                                    this.log.info(`onStreamData(): received video mute change "${ext1}"`);
+                                    this.setState(`connections.1.mute`, Number(ext1), true);
+                                } else {
+                                    this.log.info(`onStreamData(): received video mute change for output "${ext1}" value "${ext2}"`);
+                                    this.setState(`connections.${ext1}.mute`, Number(ext2), true);
+                                }
                                 break;
 
                             // Begin SMD202 specific commands
@@ -1056,13 +1066,20 @@ class Extron extends utils.Adapter {
                             case 'SUBTE':
                                 break;
 
+                            // End SMD202 specific commands
+                            // SME211 specific commands
                             case 'STRM' :
                             case 'STRMY' :
                                 this.log.info(`onStreamData(): received streammode "${ext1}"`);
-                                this.setStreamMode(`ply.players.1.common.`,Number(ext1));
+                                this.setStreamMode(`player.`,Number(ext1));
                                 break;
 
-                            // End SMD202 specific commands
+                            case 'STRCE':
+                                this.log.info(`onStreamData(): received stream state change "${ext1}", "${ext2}"`);
+                                this.setStreamState(Number(ext1), Number(ext2));
+                                break;
+
+                            // end SME211 specific commands
                             // Begin FIle transmission commands
                             case 'DEL' :
                                 this.log.info(`onStreamData(): received file deletion confirmation command "${ext1}" name: "${ext2}"`);
@@ -1511,8 +1528,14 @@ class Extron extends utils.Adapter {
                     await this.setObjectAsync(`${baseId}${element._id}`, element);
                 }
             }
+            // if sme211 : create streaming player
+            if (deviceType === 'sme211') {
+                for (const element of this.objectTemplates[this.devices[device].objects[1]].players) {
+                    await this.setObjectAsync(`${baseId}${element._id}`, element);
+                }
+            }
             // if we have a user filesystem on the device
-            if (this.devices[device] && this.devices[device].fs) {
+            if (this.devices[device] && this.devices[device].objects.includes('userflash')) {
                 this.log.info(`createDatabaseAsync(): set user fileSystem`);
                 for (const element of this.objectTemplates.userflash) {
                     await this.setObjectAsync(`${baseId}${element._id}`, element);
@@ -1790,7 +1813,7 @@ class Extron extends utils.Adapter {
                     //const id = stateList[index];
                     this.log.debug(`getDeviceStatus(): ${id}`);
                     // extron.[n].[idType].[grpId].[number].[block]
-                    //   0     1    2     3       4        5
+                    //   0     1     2        3       4        5
                     // extron.[n].in.auxInputs.01.mixPoints.A01
                     // extron.[n].out.outputs.01.attenuation.level
                     // extron.[n].groups.[n].level
@@ -1807,53 +1830,6 @@ class Extron extends utils.Adapter {
 
                     if (typeof baseId !== 'undefined' && baseId !== null) {
                         // @ts-ignore
-                        /**
-                        switch (idType) {
-                            case 'device':
-                                switch (stateName) {
-                                default :
-                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
-                                }
-                                break;
-                            case 'in':
-                                switch (stateName) {
-                                default :
-                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
-                                }
-                                break;
-                            case 'out':
-                                switch (stateName) {
-                                default :
-                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
-                                }
-                                break;
-                            case 'groups':
-                                switch (stateName) {
-                                default :
-                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
-                                }
-                                break;
-                            case 'player':
-                                switch (stateName) {
-                                default :
-                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
-                                }
-                                break;
-                            case 'dante':
-                                switch (stateName) {
-                                default :
-                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
-                                }
-                                break;
-                            case 'fs':
-                                switch (stateName) {
-                                default :
-                                    this.log.warn(`getDeviceStatus(): stateName "${stateName}" unknown`);
-                                }
-                                break
-                            default :
-                                this.log.warn(`getDeviceStatus(): idType "${idType}" unknown`);
-                        } */
                         if (! ['device','info'].includes(idArray[2])) { // those sections don't need to be handled here
                             switch (stateName) {
                                 case 'mute' :
@@ -1924,13 +1900,23 @@ class Extron extends utils.Adapter {
                                     break;
 
                                 case 'status' :
-                                    dynamics = await this.getStateAsync(`${baseId}.type`);
-                                    if (dynamics) {
-                                        //this.log.info(`getDeviceStatus(): "${baseId}.type": ${dynamics.val}`);
-                                        if ( Number(dynamics.val) != 0) {
-                                            this.getDspBlockStatus(id);
-                                        } else this.log.info(`getDeviceStatus(): "${baseId}" not configured`);
+                                    if (device === 'sme211') {
+                                        // extron.[n].player.stream.[m].status
+                                        //    0    1     2     3     4     5
+                                        this.getStreamState(Number(idArray[4]));
+                                    } else {
+                                        dynamics = await this.getStateAsync(`${baseId}.type`);
+                                        if (dynamics) {
+                                            //this.log.info(`getDeviceStatus(): "${baseId}.type": ${dynamics.val}`);
+                                            if ( Number(dynamics.val) != 0) {
+                                                this.getDspBlockStatus(id);
+                                            } else this.log.info(`getDeviceStatus(): "${baseId}" not configured`);
+                                        }
                                     }
+                                    break;
+
+                                case 'hdmistatus' :
+                                    this.getHDMIStatus();
                                     break;
 
                                 case 'threshold':
@@ -3528,8 +3514,6 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'getVideoMute');
         }
     }
-
-
     /** END CP82 Video control */
 
     /** BEGIN SMD202 Video Player control */
@@ -3764,7 +3748,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'getVol');
         }
     }
-    /** set output volume level in datase
+    /** set output volume level in database
      * @param {string} id
      * @param {string | any} volume
      */
@@ -3822,6 +3806,54 @@ class Extron extends utils.Adapter {
             this.streamSend('WYSTRM\r');
         } catch (err) {
             this.errorHandler(err, 'getStreamMode');
+        }
+    }
+
+    /** send stream state to device
+     * @param {number} stream
+     * @param {number} state
+     *  cmd = E[11/12/13/21/22/23]STRC
+    */
+    sendStreamState(stream, state) {
+        try {
+            this.streamSend(`WE${stream}*${state}STRC\r`);
+        } catch (err) {
+            this.errorHandler(err, 'sendStreamState');
+        }
+    }
+
+    /** set stream state in database
+     * @param {number} stream
+     * @param {number} state
+    */
+    setStreamState(stream, state) {
+        try {
+            this.setState(`player.stream.${stream}.status`, state, true);
+        } catch (err) {
+            this.errorHandler(err, 'setStreamState');
+        }
+    }
+
+    /** get stream state from device
+     * @param {number} stream
+     *  cmd = E[11/12/13/21/22/23]STRC
+    */
+    getStreamState(stream) {
+        try {
+            this.streamSend(`WE${stream}STRC\r`);
+        } catch (err) {
+            this.errorHandler(err, 'getStreamState');
+        }
+    }
+
+    /** get HDMI input signal status from device
+     *  cmd = 0LS
+    */
+    getHDMIStatus() {
+        try {
+            this.streamSend('W0LS\r');
+        } catch (err) {
+            this.errorHandler(err, 'getHDMIStatus');
         }
     }
     /** END SME 211 stream control */
@@ -3948,7 +3980,11 @@ class Extron extends utils.Adapter {
             if (oid.length < 2) {
                 retId = `ply.players.${oid}.common.`;
             } else if (oid.length < 3) {
-                retId = `groups.${oid}.`;
+                if (device == 'sme211') {
+                    // extron.[n].player.stream.[m].status
+                    //    0    1     2     3     4     5     6
+                    retId = `player.stream.${oid}.status`;
+                } else retId = `groups.${oid}.`;
             }
             else {
                 const whatstr = oid.slice(0,1);
@@ -4195,6 +4231,7 @@ class Extron extends utils.Adapter {
         const device = this.devices[this.config.device].short;
         let retOid = '';
         const idArray = id.split('.');
+        // extron.[n].ply.players.[number].common.[...]
         // extron.[n].[fld].[type].[number].[block]
         //   0     1    2     3       4        5
         // extron.[n].in.auxInputs.01.mixPoints.A01
@@ -4215,7 +4252,11 @@ class Extron extends utils.Adapter {
         }
 
         try {
-            if (idType === 'players') {
+            if (idType === 'stream') {
+                // extron.[n].player.stream.[m].status
+                //    0    1     2     3     4     5     6
+                retOid = `${idNumber}`;
+            } else if (idType === 'players') {
                 retOid = `${idNumber}`;
             }
             else if ((!dante ? idArray[2] : idArray[4]) === 'groups') {
@@ -4613,7 +4654,10 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'status' :
-                                this.sendDspBlockStatus(id, state.val);
+                                if (device === 'sme211') {
+                                    this.sendStreamState(Number(idArray[4]), Number(state.val));
+                                } else
+                                    this.sendDspBlockStatus(id, state.val);
                                 break;
 
                             case 'threshold':
@@ -4669,6 +4713,10 @@ class Extron extends utils.Adapter {
 
                             case 'streammode' :
                                 this.sendStreamMode(Number(state.val));
+                                break;
+
+                            case 'hdmistatus' :
+                                this.getHDMIStatus();
                                 break;
 
                             case 'del' :

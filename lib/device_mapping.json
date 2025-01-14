@@ -89,13 +89,9 @@
         "connectionType": "network",
         "objects" : [
             "common",
-            "smd202"
-        ],
-        "fs" :{
-            "files": {
-                "name" : "Flash Memory"
-            }
-        }
+            "smd202",
+            "userflash"
+        ]
     },
     "SME211" : {
         "model" : "SME 211",
@@ -117,25 +113,14 @@
         "connectionType": "network",
         "objects" : [
             "common",
-            "sme211"
+            "sme211",
+            "userflash"
         ],
         "in" : {
             "inputs" : {
                 "name" : "Inputs",
                 "short" : "I",
                 "amount" : 4
-            }
-        },
-        "ply" : {
-            "players": {
-                "name" : "Video Player",
-                "short" : "P",
-                "amount" : 1
-            }
-        },
-        "fs" :{
-            "files": {
-                "name" : "Flash Memory"
             }
         }
     },
@@ -160,7 +145,8 @@
         "objects" : [
             "common",
             "dmp128",
-            "danterelay"
+            "danterelay",
+            "userflash"
         ],
         "in" : {
             "inputs" : {
@@ -226,11 +212,6 @@
                 "amount" : 8
             }
         },
-        "fs" :{
-            "files": {
-                "name" : "Flash Memory"
-            }
-        },
         "grp" : {
             "groups" : {
                 "name" : "Group",
@@ -260,7 +241,8 @@
         "objects" : [
             "common",
             "dmp",
-            "danterelay"
+            "danterelay",
+            "userflash"
         ],
         "in" : {
             "inputs" : {
@@ -319,11 +301,6 @@
                 "amount" : 8
             }
         },
-        "fs" :{
-            "files": {
-                "name" : "Flash Memory"
-            }
-        },
         "grp" : {
             "groups" : {
                 "name" : "Groups",
@@ -353,7 +330,8 @@
         "objects" : [
             "common",
             "dmp",
-            "danterelay"
+            "danterelay",
+            "userflash"
         ],
         "in" : {
             "inputs" : {
@@ -410,11 +388,6 @@
                 "name" : "Audio Player",
                 "short" : "P",
                 "amount" : 8
-            }
-        },
-        "fs" :{
-            "files": {
-                "name" : "Flash Memory"
             }
         },
         "grp" : {

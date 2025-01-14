@@ -2682,27 +2682,116 @@
         },   
         "players": [
             {
-                "_id": "common",
-                "type": "channel",
-                "common": {
-                    "role": "player.channel",
-                    "name": "Common player parameters"
-                },
-                "native": {}
-            },
-            {
-                "_id": "common.streammode",
+                "_id": "player.streammode",
                 "type": "state",
                 "common": {
                     "role" : "media.state",
                     "name" : "if true the player is playing",
                     "type" : "number",
-                    "states" : {"0":"stop", "1":"play", "2":"pause"},
+                    "states" : {"0":"stop", "1":"play", "2":"pause", "3":"waiting"},
                     "read" : true,
                     "write" : true,
                     "def" : 0
                 },
                 "native" : {}
+            },
+            {
+                "_id": "player.hdmistatus",
+                "type": "state",
+                "common": {
+                    "role" : "media.state",
+                    "name" : "HDMI input signal status",
+                    "type" : "number",
+                    "states" : {"0":"off", "1":"on"},
+                    "read" : true,
+                    "write" : true,
+                    "def" : 0
+                },
+                "native" : {}
+            },
+            {
+                "_id": "player.stream.11.status",
+                "type": "state",
+                "common": {
+                    "role" : "media.state",
+                    "name" : "encoder 1 RTSP stream",
+                    "type": "number",
+                    "states" : {"0":"disabled", "1":"enabled"},
+                    "read" : true,
+                    "write" : true,
+                    "def" : 0
+                },
+                "native":{}
+            },
+            {
+                "_id": "player.stream.12.status",
+                "type": "state",
+                "common": {
+                    "role" : "media.state",
+                    "name" : "encoder 1 RTP stream",
+                    "type": "number",
+                    "states" : {"0":"disabled", "1":"enabled"},
+                    "read" : true,
+                    "write" : true,
+                    "def" : 0
+                },
+                "native":{}
+            },
+            {
+                "_id": "player.stream.13.status",
+                "type": "state",
+                "common": {
+                    "role" : "media.state",
+                    "name" : "encoder 1 RTMP stream",
+                    "type": "number",
+                    "states" : {"0":"disabled", "1":"enabled"},
+                    "read" : true,
+                    "write" : true,
+                    "def" : 0
+                },
+                "native":{}
+            },
+            {
+                "_id": "player.stream.21.status",
+                "type": "state",
+                "common": {
+                    "role" : "media.state",
+                    "name" : "encoder 2 RTSP stream",
+                    "type": "number",
+                    "states" : {"0":"disabled", "1":"enabled"},
+                    "read" : true,
+                    "write" : true,
+                    "def" : 0
+                },
+                "native":{}
+            },
+            {
+                "_id": "player.stream.22.status",
+                "type": "state",
+                "common": {
+                    "role" : "media.state",
+                    "name" : "encoder 2 RTP stream",
+                    "type": "number",
+                    "states" : {"0":"disabled", "1":"enabled"},
+                    "read" : true,
+                    "write" : true,
+                    "def" : 0
+                },
+                "native":{}
+            },
+            {
+                "_id": "player.stream.23.status",
+                "type": "state",
+                "common": {
+                    "role" : "media.state",
+                    "name" : "encoder 2 RTMP stream",
+                    "type": "number",
+                    "states" : {"0":"disabled", "1":"enabled"},
+                    "read" : true,
+                    "write" : true,
+                    "def" : 0
+                },
+                "native":{}
             }
         ]
     },
