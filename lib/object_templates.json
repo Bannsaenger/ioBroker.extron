@@ -2503,9 +2503,9 @@
                 "_id" : "player.presets",
                 "type" : "state",
                 "common" : {
-                    "role" : "value",
+                    "role" : "list",
                     "name" : "preset list",
-                    "type" : "string",
+                    "type" : "array",
                     "read" : true,
                     "write" : true,
                     "def" : ""
@@ -3559,7 +3559,7 @@
     "userflash" : [
         {
             "_id": "fs",
-            "type": "folder",
+            "type": "channel",
             "common": {
                 "name": "User Filesystem"
             },

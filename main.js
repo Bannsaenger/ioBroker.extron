@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20250114 mschlgl
+ *      last edit 20250116 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -93,6 +93,7 @@ class Extron extends utils.Adapter {
                 * For every state in the system there has to be also an object of type state
                 */
                 await this.setInstanceNameAsync();
+                await this.createDeviceCommonAsync();
                 await this.createDatabaseAsync();
                 await this.createStatesListAsync();
 
@@ -680,8 +681,8 @@ class Extron extends utils.Adapter {
                                     case '01' :
                                         this.log.debug(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}firmware version: "${ext2}"`);
                                         if (!dante) this.device.version = `${ext2}`;
-                                        this.setState(`${dante?'dante.'+danteDevice:'device'}.version`, ext2, true);
-                                        this.log.debug(`onStreamData(): set ${dante?'dante.'+danteDevice:'device'}.version: "${ext2}"`);
+                                        this.setState(`${dante?'dante.'+danteDevice+'.device':'device'}.version`, ext2, true);
+                                        this.log.debug(`onStreamData(): set ${dante?`dante.${danteDevice}.version`:'device'}.version: "${ext2}"`);
                                         break;
 
                                     case '02' :
@@ -714,12 +715,12 @@ class Extron extends utils.Adapter {
                                     case '01' :
                                         this.log.info(`onStreamData(): received ${dante?'dante.'+danteDevice:'device'} model: "${ext2}"`);
                                         if (!dante) this.device.model = `${ext2}`;
-                                        this.setState(`${dante?'dante.'+danteDevice:'device'}.model`, ext2, true);
+                                        this.setState(`${dante?'dante.'+danteDevice+'.device':'device'}.model`, ext2, true);
                                         break;
                                     case '02' :
                                         this.log.info(`onStreamData(): received ${dante?'dante.'+danteDevice:'device'}  description: "${ext2}"`);
                                         if (!dante) this.device.description = `${ext2}`;
-                                        this.setState(`${dante?'dante.'+danteDevice:'device'}.description`, ext2, true);
+                                        this.setState(`${dante?'dante.'+danteDevice+'.device':'device'}.description`, ext2, true);
                                         break;
                                     default:
                                         this.log.warn(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}unknown information: "${ext2}"`);
@@ -729,7 +730,7 @@ class Extron extends utils.Adapter {
                             case 'IPN':             // received a device name
                                 this.log.info(`onStreamData(): received ${dante?'dante ':''}devicename: "${ext2}"`);
                                 if (!dante) this.device.name = `${ext2}`;
-                                this.setState(`${dante?'dante.'+danteDevice:'device'}.name`, ext2, true);
+                                this.setState(`${dante?'dante.'+danteDevice+'.device':'device'}.name`, ext2, true);
                                 break;
 
                             case 'PNO':            // received Part Number
@@ -1451,7 +1452,7 @@ class Extron extends utils.Adapter {
         try {
             // get current instance object
             const instanceObj = await this.getForeignObjectAsync(`system.adapter.${this.namespace}`);
-            //this.log.info(`createDatabaseAsync(): ${JSON.stringify(instanceObj)}`);
+            //this.log.info(`setInstanceNameAsync(): ${JSON.stringify(instanceObj)}`);
 
             if (typeof instanceObj.common.title != 'undefined') delete instanceObj.common.title; // marked as deprecated so delete if present
             // add deviceName to instance object common.titleLang
@@ -1482,35 +1483,50 @@ class Extron extends utils.Adapter {
     }
 
     /**
+     * called to create a device in database
+     * @param {string | void } deviceName  // default this.devices[this.config.device].model;
+     */
+    async createDeviceCommonAsync(deviceName) {
+        const baseId = deviceName ? `dante.${deviceName}.`:'';
+
+        this.log.info(`createDeviceCommonAsync(): for device: "${deviceName ? deviceName : this.devices[this.config.device].model}"`);
+        try {
+            // create the common section
+            const deviceObj = JSON.parse(JSON.stringify(this.objectTemplates.common));
+            //this.log.warn(`createDeviceCommonAsync(): deviceObj: ${JSON.stringify(deviceObj)}`);
+            //if (!deviceName) deviceObj.name = this.devices[this.config.device].model;
+            for (const element of deviceObj) {
+                /**if (deviceName) {
+                    element._id = element._id.replace('device', deviceName); // if we have a DANTE subdevice change _id from default to deviceName
+                    //this.log.warn(`createDeviceCommonAsync(): current element: ${JSON.stringify(element)}`);
+                }**/
+                await this.setObjectAsync(`${baseId}${element._id}`, element);
+            }
+            this.log.info(`createDeviceCommonAsync(): created common section`);
+        } catch (err) {
+            this.errorHandler(err, 'createDeviceCommonAsync');
+        }
+    }
+
+    /**
      * called to set up the database according device type
-     * {string | void } deviceName  // default this.devices[this.config.device].model;
+     * @param {string | void } deviceName  // default this.devices[this.config.device].model;
      * {string | void } deviceType  // default this.devices[this.config.device].short;
      */
     async createDatabaseAsync(deviceName) {
-        let device = this.config.device;
-        let deviceType = this.devices[device].short;
-        let deviceObjName = this.devices[device].model;
-        let baseId = '';
+        const device = deviceName ? Object.keys(this.devices).find(device => this.devices[device].pno == this.danteDevices[deviceName].pno) : this.config.device;
+        const deviceType = this.devices[device].short;
+        //const deviceObjName = this.devices[device].model;
+        const baseId = deviceName ? `dante.${deviceName}.`:'';
 
-        if (deviceName) {
-            device = Object.keys(this.devices).find(device => this.devices[device].pno == this.danteDevices[deviceName].pno);
-            deviceType = this.devices[device].short;
-            deviceObjName = this.devices[device].model;
-            baseId = `dante.${deviceName}.`;
-        }
         this.log.info(`createDatabaseAsync(): ${deviceName?deviceName:''}start`);
         try {
-            // create the common section
-            for (const element of this.objectTemplates.common) {
-                await this.setObjectAsync(`${baseId}${element._id}`, element);
-            }
-            this.log.debug(`createDatabaseAsync(): create common section`);
-
             // add deviceName to database
-            const deviceObj = this.objectTemplates.common[0];
+            //const deviceObj = this.getObjectAsync(`${this.instance}${deviceName?`dante.${deviceName}`:'device'}`);
+            //const deviceObj = this.objectTemplates.common[0];
             //deviceObj.common.name = this.devices[device].model;
-            deviceObj.common.name = deviceObjName;
-            await this.setObjectAsync(`${baseId}device`, deviceObj);
+            //deviceObj.common.name = deviceObjName;
+            //await this.setObjectAsync(`${baseId?baseId:'device.'}`, deviceObj);
             this.log.debug(`createDatabaseAsync(): set deviceModel`);
 
             // if cp82 or sme211 : create video inputs and outputs
@@ -2285,9 +2301,10 @@ class Extron extends utils.Adapter {
             this.danteDevices[deviceName].deviceType = Object.keys(this.devices).find(device => this.devices[device].pno == partNumber);
             this.danteDevices[deviceName].remoteDeviceType = Object.keys(this.devices).find(device => this.devices[device].pno == partNumber);
             this.danteDevices[deviceName].model = this.devices[this.danteDevices[deviceName].deviceType].model;
+            this.setState(`dante.4{deviceName}.device.pno`, partNumber, true);
         } else {
             this.device.pno = partNumber;
-            this.setState('device.pno', partNumber, true);
+            this.setState(`device.pno`, partNumber, true);
         }
     }
 
@@ -3878,14 +3895,16 @@ class Extron extends utils.Adapter {
         try {
             this.setState(`dante.available`, JSON.stringify(deviceList), true);
             for (const deviceName of deviceList) {
-                if (typeof this.danteDevices[deviceName] == 'undefined')
+                if (typeof this.danteDevices[deviceName] == 'undefined') {
                     this.danteDevices[deviceName] = {
                         'connectionState' :'AVAILABLE',
                         'deviceActive': false,
                         'danteName': deviceName,
                         'remoteDeviceType': '',
-                        'friendlyName': 'Das Ding' + Math.floor(Math.random() * 100)
+                        'friendlyName': ''
                     };
+                }
+                this.createDeviceCommonAsync(deviceName);
             }
         } catch (err) {
             this.errorHandler(err, 'setDanteDevices');
@@ -4908,7 +4927,7 @@ class Extron extends utils.Adapter {
                                 sendBack.push({'label': this.devices[deviceKey].description[sysLang] || this.devices[deviceKey].description.en, 'value': deviceKey});
                             }
                         }
-                        this.log.debug(`onMessage send back getRemoteDeviceTypes: (lang: ${sysLang}) `);
+                        this.log.debug(`onMessage send back getRemoteDeviceTypes: (lang: ${sysLang}) "${sendBack}"`);
                         this.sendTo(obj.from, obj.command, sendBack, obj.callback);
                         break;
 
