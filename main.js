@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20250116 mschlgl
+ *      last edit 20250122 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -95,6 +95,10 @@ class Extron extends utils.Adapter {
                 await this.setInstanceNameAsync();
                 await this.createDeviceCommonAsync();
                 await this.createDatabaseAsync();
+                for (const device of this.config.remoteDevices) {
+                    await this.createDeviceCommonAsync(device.danteName);
+                    //await this.createDatabaseAsync(device.danteName);
+                }
                 await this.createStatesListAsync();
 
                 // In order to get state updates, you need to subscribe to them. The following line adds a subscription for our variable we have created above.
@@ -523,26 +527,18 @@ class Extron extends utils.Adapter {
      * @param {string | Uint8Array | any} data
      * @param {string | void} device
      */
-    streamSend(data, device = '') {
+    streamSend(data, device='') {
         try {
-            if (device !== '') if ((this.devices[this.config.device].model.includes('Plus')||this.devices[this.config.device].model.includes('XMP') )) { // DANTE control only on DMP plus / XMP series
+            if (device != '') if ((this.devices[this.config.device].model.includes('Plus')||this.devices[this.config.device].model.includes('XMP') )) { // DANTE control only on DMP plus / XMP series
                 data = data.replace('\r','|');  // for DANTE relayed messages replace '\r' with '|'
-                data = `{dante@${device}:${data}}\r`;   // format DANTe relay message
+                data = `{dante@${device}:${data}}\r`;   // format DANTE relay message
             }
             if (this.streamAvailable) {
-                this.setState('info.connection', true, true);
+                this.setState(device != ''?`dante.${device}.info.connection`:'info.connection', true, true);
                 if (!this.fileSend) this.log.debug(`streamSend(): Extron sends data to the ${this.config.type} stream: "${this.decodeBufferToLog(data)}"`);
                 this.streamAvailable = this.stream.write(data);
-                /*switch (this.config.type) {
-                    case 'ssh' :
-                        this.streamAvailable = this.stream.write(data);
-                        break;
-                    case 'telnet' :
-                        this.streamAvailable = this.net.write(data);
-                        break;
-                }*/
             } else {
-                this.setState('info.connection', false, true);
+                this.setState(device != ''?`dante.${device}.info.connection`:'info.connection', false, true);
                 if (!this.fileSend) {
                     const bufSize = this.sendBuffer.push(data);
                     this.log.warn(`streamSend(): Extron push data to the send buffer: "${this.decodeBufferToLog(data)}" new buffersize:${bufSize}`);
@@ -648,8 +644,9 @@ class Extron extends utils.Adapter {
                     // lookup the command
                     // const matchArray = answer.match(/([A-Z][a-z]+[A-Z]|\w{3})(\d*)\*?,? ?(.*)/i);    // initial separation detecting eg. "DsG60000*-10"
                     const matchArray = answer.match(/({(dante)@(.*)})?([A-Z][a-z]{1,3}[A-Z]|E|\w{3})([\w-]*|\d*),?\*? ?(.*)/i); // extended to detect DANTE remote responses eg. "{dante@AXI44-92efe7}DsG60000*-10"
+                    //matchArray[           0        1    2      3                 4                      5              6
                     if (matchArray) {       // if any match
-                        //this.log.debug(`onStreamData(): ${matchArray}`);
+                        this.log.debug(`onStreamData() matchArray: "${matchArray}"`);
                         const command = matchArray[4].toUpperCase();
                         const dante = matchArray[2]?(matchArray[2] == 'dante'): false;
                         const danteDevice = matchArray[3];
@@ -678,11 +675,14 @@ class Extron extends utils.Adapter {
                                     case '00' :
                                         this.log.debug(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}detailed firmware version: "${ext2}"`);
                                         break;
+
                                     case '01' :
                                         this.log.debug(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}firmware version: "${ext2}"`);
-                                        if (!dante) this.device.version = `${ext2}`;
-                                        this.setState(`${dante?'dante.'+danteDevice+'.device':'device'}.version`, ext2, true);
-                                        this.log.debug(`onStreamData(): set ${dante?`dante.${danteDevice}.version`:'device'}.version: "${ext2}"`);
+                                        if (dante) this.danteDevices[danteDevice].version = `${ext2}`;
+                                        else this.device.version = `${ext2}`;
+                                        this.log.debug(`onStreamData(): set ${dante?`dante.${danteDevice}.`:''}device.version: "${ext2}"`);
+                                        if (dante) this.setState(`dante.${danteDevice}.device.version`, ext2, true);
+                                        else this.setState(`device.version`, ext2, true);
                                         break;
 
                                     case '02' :
@@ -713,14 +713,18 @@ class Extron extends utils.Adapter {
                             case 'INF':
                                 switch (ext1) {
                                     case '01' :
-                                        this.log.info(`onStreamData(): received ${dante?'dante.'+danteDevice:'device'} model: "${ext2}"`);
-                                        if (!dante) this.device.model = `${ext2}`;
-                                        this.setState(`${dante?'dante.'+danteDevice+'.device':'device'}.model`, ext2, true);
+                                        this.log.info(`onStreamData(): received ${dante?`dante.${danteDevice}`:'device'}} model: "${ext2}"`);
+                                        if (dante) this.danteDevices[danteDevice].model = `${ext2}`;
+                                        else this.device.model = `${ext2}`;
+                                        this.log.debug(`onStreamData(): set ${dante?`dante.${danteDevice}.`:''}device.model: "${ext2}"`);
+                                        this.setState(`${dante?`dante.${danteDevice}.`:''}device.model`, ext2, true);
                                         break;
                                     case '02' :
-                                        this.log.info(`onStreamData(): received ${dante?'dante.'+danteDevice:'device'}  description: "${ext2}"`);
-                                        if (!dante) this.device.description = `${ext2}`;
-                                        this.setState(`${dante?'dante.'+danteDevice+'.device':'device'}.description`, ext2, true);
+                                        this.log.info(`onStreamData(): received ${dante?`dante.${danteDevice}`:'device'}  description: "${ext2}"`);
+                                        if (dante) this.danteDevices[danteDevice].description = `${ext2}`;
+                                        else this.device.description = `${ext2}`;
+                                        this.log.debug(`onStreamData(): set ${dante?`dante.${danteDevice}.`:''}device.description: "${ext2}"`);
+                                        this.setState(`${dante?`dante.${danteDevice}.`:''}device.description`, ext2, true);
                                         break;
                                     default:
                                         this.log.warn(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}unknown information: "${ext2}"`);
@@ -729,8 +733,10 @@ class Extron extends utils.Adapter {
 
                             case 'IPN':             // received a device name
                                 this.log.info(`onStreamData(): received ${dante?'dante ':''}devicename: "${ext2}"`);
-                                if (!dante) this.device.name = `${ext2}`;
-                                this.setState(`${dante?'dante.'+danteDevice+'.device':'device'}.name`, ext2, true);
+                                if (dante) this.danteDevices[danteDevice].name = `${ext2}`;
+                                else this.device.name = `${ext2}`;
+                                this.log.debug(`onStreamData(): set ${dante?`dante.${danteDevice}.`:''}device.name: "${ext2}"`);
+                                this.setState(`${dante?`dante.${danteDevice}.`:''}device.name`, ext2, true);
                                 break;
 
                             case 'PNO':            // received Part Number
@@ -1105,7 +1111,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             // End file transmission commands
-                            // begn group commands
+                            // begin group commands
                             case 'GRPMZ' :      // delete Group command
                                 this.log.info(`onStreamData(): received group #${ext1} deleted`);
                                 this.grpDelPnd[Number(ext1)] = false;   // flag group deletion confirmation
@@ -1311,7 +1317,7 @@ class Extron extends utils.Adapter {
      * @param {string | void} device
      * cmd = 3CV
      */
-    sendVerboseMode(device = '') {
+    sendVerboseMode(device='') {
         try {
             this.log.debug(`sendVerboseMode(): Extron switching ${device} to verbose mode 3`);
             this.streamSend('W3CV\r', device);
@@ -1329,7 +1335,7 @@ class Extron extends utils.Adapter {
      * @param {string | void} device
      * cmd = CV
      */
-    getVerboseMode(device = '') {
+    getVerboseMode(device='') {
         try {
             this.log.debug(`getVerboseMode(): requesting ${device} verbose mode 3`);
             this.streamSend('WCV\r', device);
@@ -1342,7 +1348,7 @@ class Extron extends utils.Adapter {
      * called when device entered verbose mode
      * @param {string | void} device
      */
-    async setVerboseMode(device = '') {
+    async setVerboseMode(device='') {
         try {
             if (device != '') {
                 this.log.debug(`setVerboseMode(): DANTE device "${device}" set verbose mode`);
@@ -1377,7 +1383,7 @@ class Extron extends utils.Adapter {
      * @param {string | void} device
      * cmd = 1I
      */
-    getModel(device = '') {
+    getModel(device='') {
         try {
             this.log.debug(`getModel(): requesting ${device} model`);
             this.streamSend('1I\r', device);
@@ -1389,12 +1395,13 @@ class Extron extends utils.Adapter {
     /**
      * called to request devicename
      * @param {string | void} device
-     * cmd = CN
+     * cmd = CN, NEXPD when DANTE
      */
-    getDeviceName(device = '') {
+    getDeviceName(device='') {
         try {
             this.log.debug(`getDeviceName(): requesting ${device} name`);
-            this.streamSend('WCN\r', device);
+            if (device != '') this.streamSend('WNEXPD\r', device);
+            else this.streamSend('WCN\r');
         } catch (err) {
             this.errorHandler(err, 'getDeviceName');
         }
@@ -1405,12 +1412,14 @@ class Extron extends utils.Adapter {
      * @param {string | void} device
      * cmd = 2I
      */
-    getDescription(device = '') {
-        try {
-            this.log.debug(`getDescription(): requesting ${device} description`);
-            this.streamSend('2I\r', device);
-        } catch (err) {
-            this.errorHandler(err, 'getDescription');
+    getDescription(device='') {
+        if (device != '' && !this.danteDevices[device].model.startsWith('AXI')) {// AXI devices do not support "2I" SIS command
+            try {
+                this.log.debug(`getDescription(): requesting ${device} description`);
+                this.streamSend('2I\r', device);
+            } catch (err) {
+                this.errorHandler(err, 'getDescription');
+            }
         }
     }
 
@@ -1488,6 +1497,7 @@ class Extron extends utils.Adapter {
      */
     async createDeviceCommonAsync(deviceName) {
         const baseId = deviceName ? `dante.${deviceName}.`:'';
+        const infoObj = JSON.parse(JSON.stringify(this.objectTemplates.info));
 
         this.log.info(`createDeviceCommonAsync(): for device: "${deviceName ? deviceName : this.devices[this.config.device].model}"`);
         try {
@@ -1496,13 +1506,20 @@ class Extron extends utils.Adapter {
             //this.log.warn(`createDeviceCommonAsync(): deviceObj: ${JSON.stringify(deviceObj)}`);
             //if (!deviceName) deviceObj.name = this.devices[this.config.device].model;
             for (const element of deviceObj) {
-                /**if (deviceName) {
-                    element._id = element._id.replace('device', deviceName); // if we have a DANTE subdevice change _id from default to deviceName
-                    //this.log.warn(`createDeviceCommonAsync(): current element: ${JSON.stringify(element)}`);
-                }**/
                 await this.setObjectAsync(`${baseId}${element._id}`, element);
             }
             this.log.info(`createDeviceCommonAsync(): created common section`);
+            if (baseId.includes('dante.')) {
+                for (const element of infoObj) {
+                    element._id = `${baseId}${element._id}`;
+                    await this.setObjectAsync(element._id, element);
+                }
+                this.log.info(`createDeviceCommonAsync(): created ${deviceName} info section`);
+            }
+            if (deviceName){
+                this.log.warn(`createDeviceCommon(): creating ${deviceName} "${JSON.stringify(this.config.remoteDevices.find(device => device.danteName = deviceName))}"`);
+                this.danteDevices[deviceName] = JSON.parse(JSON.stringify(this.config.remoteDevices.find(device => device.danteName = deviceName)));
+            }
         } catch (err) {
             this.errorHandler(err, 'createDeviceCommonAsync');
         }
@@ -1515,7 +1532,9 @@ class Extron extends utils.Adapter {
      */
     async createDatabaseAsync(deviceName) {
         const device = deviceName ? Object.keys(this.devices).find(device => this.devices[device].pno == this.danteDevices[deviceName].pno) : this.config.device;
+        this.log.warn(`createDatabase(): for "${device}"`);
         const deviceType = this.devices[device].short;
+        this.log.warn(`createDatabase(): for "${device}", "${deviceType}"`);
         //const deviceObjName = this.devices[device].model;
         const baseId = deviceName ? `dante.${deviceName}.`:'';
 
@@ -1786,7 +1805,15 @@ class Extron extends utils.Adapter {
         } catch (err) {
             this.errorHandler(err, 'createDatabase');
         }
-        this.log.info(`createDatabaseAsync(): completed`);
+        if (deviceName) {
+            this.danteDevices[deviceName].grpCmdBuf = new Array(65).fill([]);    // buffer for group command while a group deletion is pending
+            this.danteDevices[deviceName].groupTypes = new Array(65);    // prepare array to hold the type of groups
+            this.danteDevices[deviceName].groupTypes.fill(0);
+            this.danteDevices[deviceName].groupMembers = new Array(65);  // prepare array to hold actual group members
+            this.danteDevices[deviceName].groupMembers.fill([]);
+            this.danteDevices[deviceName].grpDelPnd = new Array(65).fill(false); // prepare array to flag group deletions pending
+        }
+        this.log.info(`createDatabaseAsync(): ${deviceName} completed`);
     }
 
     /**
@@ -1846,7 +1873,7 @@ class Extron extends utils.Adapter {
 
                     if (typeof baseId !== 'undefined' && baseId !== null) {
                         // @ts-ignore
-                        if (! ['device','info'].includes(idArray[2])) { // those sections don't need to be handled here
+                        if (! (['device','info'].includes(idArray[2]) || dante)) { // those sections don't need to be handled here
                             switch (stateName) {
                                 case 'mute' :
                                     if (device === 'smd202') this.getMute();
@@ -2279,9 +2306,9 @@ class Extron extends utils.Adapter {
      * cmd = N
      * @param {string | void} device
      */
-    getDevicePartnumber(device = '') {
+    getDevicePartnumber(device='') {
         try {
-            this.log.debug(`getPno(): requesting ${device} partnumber`);
+            this.log.debug(`getDevicePartnumber(): requesting ${device} partnumber`);
             this.streamSend(`N\r`, device);
         } catch (err) {
             this.errorHandler(err, 'getDevicePartnumber');
@@ -2301,11 +2328,45 @@ class Extron extends utils.Adapter {
             this.danteDevices[deviceName].deviceType = Object.keys(this.devices).find(device => this.devices[device].pno == partNumber);
             this.danteDevices[deviceName].remoteDeviceType = Object.keys(this.devices).find(device => this.devices[device].pno == partNumber);
             this.danteDevices[deviceName].model = this.devices[this.danteDevices[deviceName].deviceType].model;
-            this.setState(`dante.4{deviceName}.device.pno`, partNumber, true);
+            this.setState(`dante.${deviceName}.device.pno`, partNumber, true);
+            this.setState(`dante.${deviceName}.device.model`, this.danteDevices[deviceName].model, true);
+            //this.setState(`dante.${deviceName}.device.type`, this.danteDevices[deviceName].deviceType, true);
         } else {
             this.device.pno = partNumber;
             this.setState(`device.pno`, partNumber, true);
         }
+        this.log.debug(`setDevicePartnumber(): ${deviceName} "${partNumber}"`);
+    }
+
+    /**
+     * request device model
+     * cmd = 1I
+     * @param {string | void} device
+     */
+    getDeviceModel(device='') {
+        try {
+            this.log.debug(`getPno(): requesting ${device} model`);
+            this.streamSend(`1I\r`, device);
+        } catch (err) {
+            this.errorHandler(err, 'getDeviceModel');
+        }
+    }
+
+    /**
+     * set device model
+     * cmd = INF01
+     * @param {string} deviceName
+     * @param {string} deviceModel
+     */
+    setDeviceModel(deviceName, deviceModel) {
+        if (deviceName != '') {
+            this.danteDevices[deviceName].model = deviceModel;
+            this.setState(`dante.${deviceName}.device.model`, deviceModel, true);
+        } else {
+            this.device.model = deviceModel;
+            this.setState(`device.model`, deviceModel, true);
+        }
+        this.log.debug(`setDeviceModel(): ${deviceName} "${deviceModel}"`);
     }
 
     /** END device config control */
@@ -2378,16 +2439,17 @@ class Extron extends utils.Adapter {
      * Send the mute status to the device
      * @param {string} baseId
      * @param {string | boolean | number} value
+     * @param {string | void} device
      * cmd = M[oid]*[0/1]AU
      */
-    sendMuteStatus(baseId, value) {
+    sendMuteStatus(baseId, value, device = '') {
         try {
             const oid = this.id2oid(baseId);
             if (oid) {
                 const sendData = `WM${oid}*${Number(value)>0 ? '1' : '0'}AU\r`;
-                const grpId = this.checkGrpMember(oid);
-                if (grpId && this.grpDelPnd[grpId]) this.queueGrpCmd(grpId, sendData);
-                else this.streamSend(sendData);
+                const grpId = this.checkGrpMember(oid, device);
+                if (grpId && this.grpDelPnd[grpId]) this.queueGrpCmd(grpId, sendData, device);
+                else this.streamSend(sendData, device);
             }
         } catch (err) {
             this.errorHandler(err, 'sendMuteStatus');
@@ -2397,13 +2459,14 @@ class Extron extends utils.Adapter {
     /**
      * request the mute status from device
      * @param {string} baseId
+     * @param {string | void} device
      * cmd = M[oid]AU
      */
-    getMuteStatus(baseId) {
+    getMuteStatus(baseId, device = '') {
         try {
             const oid = this.id2oid(baseId);
             if (oid) {
-                this.streamSend(`WM${oid}AU\r`);
+                this.streamSend(`WM${oid}AU\r`, device);
             }
         } catch (err) {
             this.errorHandler(err, 'getMuteStatus');
@@ -2414,10 +2477,11 @@ class Extron extends utils.Adapter {
      * Send the gain level to the device
      * @param {string} id
      * @param {string | any} value
+     * @param {string | void} deviceName
      * cmd = G[oid]*[value]AU
      * cmd = H[oid]*[value]AU on inputs with digital source
      */
-    sendGainLevel(id, value) {
+    sendGainLevel(id, value, deviceName = '') {
         try {
             let oid = this.id2oid(id);
             const device = this.devices[this.config.device].short;
@@ -2425,7 +2489,7 @@ class Extron extends utils.Adapter {
                 let sendData = `WG${oid}*${value.devValue}AU\r`;
                 const grpId = this.checkGrpMember(oid);
                 if (grpId && this.grpDelPnd[grpId]) this.queueGrpCmd(grpId, sendData);
-                else this.streamSend(sendData);
+                else this.streamSend(sendData, deviceName);
                 if ( device === 'sme211') { // on SME211 we have stereo controls
                     switch (Number(oid)) {
                         case 40000 :
@@ -2442,7 +2506,7 @@ class Extron extends utils.Adapter {
                             break;
                     }
                     sendData = `WG${oid}*${value.devValue}AU\r`;
-                    this.streamSend(sendData);
+                    this.streamSend(sendData, deviceName);
                 }
             }
         } catch (err) {
@@ -2454,15 +2518,16 @@ class Extron extends utils.Adapter {
      * Send the gain level to the device
      * @param {string} id
      * @param {string | any} value
+     * @param {string | void} deviceName
      * cmd = H[oid]*[value]AU on inputs with digital source
      */
-    sendDigGainLevel(id, value) {
+    sendDigGainLevel(id, value, deviceName = '') {
         try {
             let oid = this.id2oid(id);
             const device = this.devices[this.config.device].short;
             if (oid) {
                 let sendData = `WH${oid}*${value.devValue}AU\r`;
-                this.streamSend(sendData);
+                this.streamSend(sendData, deviceName);
                 if ( device === 'sme211') { // on SME211 we have stereo controls
                     switch (Number(oid)) {
                         case 40000 :
@@ -2479,7 +2544,7 @@ class Extron extends utils.Adapter {
                             break;
                     }
                     sendData = `WH${oid}*${value.devValue}AU\r`;
-                    this.streamSend(sendData);
+                    this.streamSend(sendData, deviceName);
                 }
             }
         } catch (err) {
@@ -2490,14 +2555,15 @@ class Extron extends utils.Adapter {
     /**
      * get the gain level from device
      * @param {string} id
+     * @param {string | void} device
      * cmd = G[oid]AU
      * cmd = H[oid]AU on inputs with digital source
      */
-    getGainLevel(id) {
+    getGainLevel(id, device = '') {
         try {
             const oid = this.id2oid(id);
             if (oid) {
-                this.streamSend(`WG${oid}AU\r`);
+                this.streamSend(`WG${oid}AU\r`, device);
             }
         } catch (err) {
             this.errorHandler(err, 'getGainLevel');
@@ -2507,13 +2573,14 @@ class Extron extends utils.Adapter {
     /**
      * get the gain level from device
      * @param {string} id
+     * @param {string | void} device
      * cmd = H[oid]AU on inputs with digital source
      */
-    getDigGainLevel(id) {
+    getDigGainLevel(id, device = '') {
         try {
             const oid = this.id2oid(id);
             if (oid) {
-                this.streamSend(`WH${oid}AU\r`);
+                this.streamSend(`WH${oid}AU\r`, device);
             }
         } catch (err) {
             this.errorHandler(err, 'getDigGainLevel');
@@ -2571,34 +2638,35 @@ class Extron extends utils.Adapter {
     /**
      * get the i/o name from device
      * @param {string} Id
+     * @param {string | void} device
      * cmd = [ioNumber]{ioType}
      */
-    getIOName(Id) {
+    getIOName(Id, device='') {
         try {
             const ioType = Id.split('.')[3];
             const ioNumber = Number(Id.split('.')[4]);
             switch (ioType) {
                 case 'inputs' :
-                    this.streamSend(`W${ioNumber}NI\r`);
+                    this.streamSend(`W${ioNumber}NI\r`,device);
                     break;
                 case 'auxInputs' :
-                    this.streamSend(`W${ioNumber+12}NI\r`);
+                    this.streamSend(`W${ioNumber+12}NI\r`,device);
                     break;
                 case 'virtualReturns' :
-                    this.streamSend(`W${ioNumber}NL\r`);
+                    this.streamSend(`W${ioNumber}NL\r`,device);
                     break;
                 case 'expansionInputs':
-                    this.streamSend(`WA${ioNumber}EXPD\r`);
+                    this.streamSend(`WA${ioNumber}EXPD\r`,device);
                     //this.streamSend(`W${ioNumber}NE\r`);
                     break;
                 case 'outputs' :
-                    this.streamSend(`W${ioNumber}NO\r`);
+                    this.streamSend(`W${ioNumber}NO\r`,device);
                     break;
                 case 'auxOutputs' :
-                    this.streamSend(`W${ioNumber+8}NO\r`);
+                    this.streamSend(`W${ioNumber+8}NO\r`,device);
                     break;
                 case 'expansionOutputs' :
-                    this.streamSend(`W${ioNumber}NX\r`);
+                    this.streamSend(`W${ioNumber}NX\r`,device);
                     break;
             }
         } catch (err) {
@@ -2610,33 +2678,34 @@ class Extron extends utils.Adapter {
      * send the i/o name to device
      * @param {string} Id
      * @param {string} name
+     * @param {string | void} device
      * cmd = [ioNumber],[ioName]{ioType}
      */
-    sendIOName(Id, name) {
+    sendIOName(Id, name, device='') {
         try {
             const ioType = Id.split('.')[3];
             const ioNumber = Number(Id.split('.')[4]);
             switch (ioType) {
                 case 'inputs' :
-                    this.streamSend(`W${ioNumber},${name}NI\r`);
+                    this.streamSend(`W${ioNumber},${name}NI\r`,device);
                     break;
                 case 'auxInputs' :
-                    this.streamSend(`W${ioNumber+12},${name}NI\r`);
+                    this.streamSend(`W${ioNumber+12},${name}NI\r`,device);
                     break;
                 case 'virtualReturns' :
-                    this.streamSend(`W${ioNumber},${name}NL\r`);
+                    this.streamSend(`W${ioNumber},${name}NL\r`,device);
                     break;
                 case 'expansionInputs':
-                    this.streamSend(`WA${ioNumber}*${name}EXPD\r`);
+                    this.streamSend(`WA${ioNumber}*${name}EXPD\r`,device);
                     break;
                 case 'outputs' :
-                    this.streamSend(`W${ioNumber},${name}NO\r`);
+                    this.streamSend(`W${ioNumber},${name}NO\r`,device);
                     break;
                 case 'auxOutputs' :
-                    this.streamSend(`W${ioNumber+8},${name}NO\r`);
+                    this.streamSend(`W${ioNumber+8},${name}NO\r`,device);
                     break;
                 case 'expansionOutputs' :
-                    this.streamSend(`W${ioNumber},${name}NX\r`);
+                    this.streamSend(`W${ioNumber},${name}NX\r`,device);
                     break;
             }
         } catch (err) {
@@ -2648,10 +2717,11 @@ class Extron extends utils.Adapter {
      * set the i/o name from device
      * @param {string} IO
      * @param {string} name
+     * @param {string | void} device
      */
-    setIOName(IO, name) {
+    setIOName(IO, name, device='') {
         try {
-            const id = this.oid2id(IO);
+            const id = this.oid2id(IO, device);
             if (id) {
                 this.setState(`${id}`, `${name}`, true);
             }
@@ -3084,20 +3154,26 @@ class Extron extends utils.Adapter {
      * queue group commands during group deletion pending
      * @param {number} group
      * @param {string} cmd
+     * @param {string | void} device
      */
-    queueGrpCmd(group, cmd) {
-        this.log.info(`queueGrpCmd(): pushing "${this.decodeBufferToLog(cmd)}" to group #${group} buffer`);
-        this.grpCmdBuf[group].push(cmd); // push command to buffer
+    queueGrpCmd(group, cmd, device='') {
+        const _grpCmdBuf = device==''?this.grpCmdBuf:this.danteDevices[device].grpCmdBuf;
+
+        this.log.info(`queueGrpCmd(): pushing "${this.decodeBufferToLog(cmd)}" to ${device} group #${group} buffer`);
+        _grpCmdBuf[group].push(cmd); // push command to buffer
     }
 
     /**
      * send group command buffer
      * @param {number} group
+     * @param {string | void} device
      */
-    sendGrpCmdBuf(group) {
-        this.log.info(`sendGrpCmdBuf: processing ${this.grpCmdBuf[group].length} queued commands on group "${group}"`);
-        while (this.grpCmdBuf[group].length > 0) {
-            this.streamSend(this.grpCmdBuf[group].shift());
+    sendGrpCmdBuf(group, device='') {
+        const _grpCmdBuf = device==''?this.grpCmdBuf:this.danteDevices[device].grpCmdBuf;
+
+        this.log.info(`sendGrpCmdBuf: processing ${_grpCmdBuf[group].length} queued commands on group "${group}"`);
+        while (_grpCmdBuf[group].length > 0) {
+            this.streamSend(_grpCmdBuf[group].shift(), device);
         }
     }
 
@@ -3105,14 +3181,15 @@ class Extron extends utils.Adapter {
      * check group membership of given oid
      * @param {string} oid
      * @returns {number} grpId
+     * @param {string | void} device
      */
-    checkGrpMember(oid) {
+    checkGrpMember(oid, device='') {
         let grpId = 0;
         let grpMembers = [];
         for (let grpIdx=1; grpIdx<65; grpIdx++) {
             grpId = 0;
             //this.log.debug(`checkGrpMember(): ${grpIdx} ${this.groupMembers[grpIdx]}`);
-            grpMembers = this.groupMembers[grpIdx];
+            grpMembers = device==''?this.groupMembers[grpIdx]:this.danteDevices[device].groupMembers[grpIdx];
             if (grpMembers.includes(oid)) {
                 grpId = grpIdx;
                 break;
@@ -3124,40 +3201,42 @@ class Extron extends utils.Adapter {
     /**
      * get all member OID's of a given group from device
      * @param {number} group
+     * @param {string | void} device
      * cmd = O[group]GRPM
      */
-    getGroupMembers(group) {
+    getGroupMembers(group, device='') {
         const cmd = `WO${group}GRPM\r`;
         if (this.grpDelPnd[group] == false) {
             try {
-                this.streamSend(cmd); // send comman
+                this.streamSend(cmd, device); // send comman
             }
             catch (err) {
                 this.errorHandler(err, 'getGroupMembers');
             }
         } else {
-            this.queueGrpCmd(group,cmd); // push command to buffer
+            this.queueGrpCmd(group,cmd, device); // push command to buffer
         }
     }
 
     /** add member OID to group on device
      * @param {number} group
      * @param {string} baseId
+     * @param {string | void} device
      * cmd = O[group]*[oid]GRPM
     */
-    sendGroupMember(group, baseId) {
+    sendGroupMember(group, baseId, device='') {
         const oid = this.id2oid(baseId);
         const cmd = `WO${group}*${oid}GRPM\r`;
         if (oid) {
-            if (this.grpDelPnd[group] == false) {
+            if (device==''?this.grpDelPnd[group] == false:this.danteDevices[device].grpDelPnd[group] == false) {
                 try {
-                    this.streamSend(cmd); // send comman
+                    this.streamSend(cmd, device); // send comman
                 }
                 catch (err) {
                     this.errorHandler(err, 'sendGroupMember');
                 }
             } else {
-                this.queueGrpCmd(group,cmd); // push command to buffer
+                this.queueGrpCmd(group,cmd, device); // push command to buffer
             }
         }
     }
@@ -3165,35 +3244,37 @@ class Extron extends utils.Adapter {
     /** store group members in database
      * @param {number} group
      * @param {array} members
+     * @param {string | void} device
      */
-    setGroupMembers(group, members) {
+    setGroupMembers(group, members, device='') {
         const stateMembers = [];
+        const _groupMembers = device==''?this.groupMembers:this.danteDevices[device].groupMembers;
         try {
             //if ((members === undefined) || (members.length === 0)) {
             if (members === undefined) {
-                this.log.debug(`setGroupMembers(): no member for group ${group}`);
+                this.log.debug(`setGroupMembers(): no member for ${device} group ${group}`);
             } else {
-                this.log.debug(`setGroupMembers(): group #${group} curMembers: "${this.groupMembers[group]}"`);
+                this.log.debug(`setGroupMembers(): ${device} group #${group} curMembers: "${_groupMembers[group]}"`);
                 if (members.length == 1) { // add single member to group
-                    if(this.groupMembers[group].includes(members[0])) {
-                        this.log.debug(`setGroupMembers(): OID "${members[0]}" already included with group ${group}`);
+                    if(_groupMembers[group].includes(members[0])) {
+                        this.log.debug(`setGroupMembers(): OID "${members[0]}" already included with ${device} group ${group}`);
                     } else {
                         if (members[0] != '') {
-                            this.groupMembers[group].push(members[0]);
-                            this.log.info(`setGroupMembers(): added OID "${members[0]}" to group ${group} now holding "${this.groupMembers[group]}"`);
+                            _groupMembers[group].push(members[0]);
+                            this.log.info(`setGroupMembers(): added OID "${members[0]}" to ${device} group ${group} now holding "${_groupMembers[group]}"`);
                         } else {
-                            this.groupMembers[group] = [];
-                            this.log.info(`setGroupMembers(): deleted members of group "${group}"`);
+                            _groupMembers[group] = [];
+                            this.log.info(`setGroupMembers(): deleted members of ${device} group "${group}"`);
                         }
                     }
                 } else {    // replace list of members
-                    this.groupMembers[group] = [];
-                    for (const member of members) this.groupMembers[group].push(member);
+                    _groupMembers[group] = [];
+                    for (const member of members) _groupMembers[group].push(member);
                 }
-                for (const member of this.groupMembers[group]) stateMembers.push(this.oid2id(member));
-                this.setState(`groups.${group.toString().padStart(2,'0')}.members`, this.groupMembers[group].length == 0?'':`${stateMembers}`, true);
-                this.setState(`groups.${group.toString().padStart(2,'0')}.deleted`, this.groupMembers[group].length == 0?true:false, true);
-                this.log.info(`setGroupMembers(): group ${group} now has members:"${this.groupMembers[group]}"`);
+                for (const member of _groupMembers[group]) stateMembers.push(this.oid2id(member));
+                this.setState(`${device!=''?`dante.${device}.`:''}groups.${group.toString().padStart(2,'0')}.members`, _groupMembers[group].length == 0?'':`${stateMembers}`, true);
+                this.setState(`${device!=''?`dante.${device}.`:''}groups.${group.toString().padStart(2,'0')}.deleted`, _groupMembers[group].length == 0?true:false, true);
+                this.log.info(`setGroupMembers(): ${device} group ${group} now has members:"${_groupMembers[group]}"`);
             }
         } catch (err) {
             this.errorHandler(err, 'setGroupMembers');
@@ -3202,16 +3283,21 @@ class Extron extends utils.Adapter {
 
     /** clear group on device
      * @param {number} group
+     * @param {string | void} device
      * cmd = Z[group]GRPM
      */
-    sendDeleteGroup(group) {
+    sendDeleteGroup(group, device='') {
         const cmd = `WZ${group}GRPM\r`;
+        const _grpDelPnd = device==''?this.grpDelPnd:this.danteDevices[device].grpDelPnd;
+        const _grpCmdBuf = device==''?this.grpCmdBuf:this.danteDevices[device].grpCmdBuf;
         try {
-            if (this.grpDelPnd[group] == false) {
-                this.streamSend(cmd);
-                this.grpDelPnd[group] = true;   // flag group deletion command has been sent
-                this.grpCmdBuf[group] = []; // clear command buffer for the group
-            } else this.grpCmdBuf[group].push(cmd);
+            if (_grpDelPnd[group] == false) {
+                this.streamSend(cmd, device);
+                _grpDelPnd[group] = true;   // flag group deletion command has been sent
+                _grpCmdBuf[group] = []; // clear command buffer for the group
+            } else {
+                _grpCmdBuf[group].push(cmd);
+            }
         }
         catch (err) {
             this.errorHandler(err, 'sendDeleteGroup');
@@ -3220,31 +3306,38 @@ class Extron extends utils.Adapter {
 
     /** get group fader level from device
      * @param {number} group
+     * @param {string | void} device
      * cmd = D[group]GRPM
      */
-    getGroupLevel(group) {
+    getGroupLevel(group, device='') {
         const cmd = `WD${group}GRPM\r`;
-        if (this.grpDelPnd[group] == false) {
+        const _grpDelPnd = device==''?this.grpDelPnd:this.danteDevices[device].grpDelPnd;
+        const _groupTypes = device==''?this.groupTypes:this.danteDevices[device].groupTypes;
+
+        if (_grpDelPnd[group] == false){
             try {
-                if (this.groupTypes[group] == 0) this.getGroupType(group);
-                this.streamSend(cmd); // send command
+                if (_groupTypes[group] == 0) this.getGroupType(group,device);
+                this.streamSend(cmd, device); // send command
             }
             catch (err) {
                 this.errorHandler(err, 'getGroupLevel');
             }
         } else {
-            this.queueGrpCmd(group,cmd); // push command to buffer
+            this.queueGrpCmd(group,cmd,device); // push command to buffer
         }
     }
 
     /** send group fader level to device
      * @param {number} group
      * @param {number} level
+     * @param {string | void} device
      * cmd = D[group]*[level]GRPM
      */
-    sendGroupLevel(group, level) {
+    sendGroupLevel(group, level, device='') {
+        const _groupTypes = device==''?this.groupTypes:this.danteDevices[device].grouupTypes;
+        const _grpDelPnd = device==''?this.grpDelPnd:this.danteDevices[device].grpDelPnd;
         let cmd = '';
-        switch (this.groupTypes[group]) {
+        switch (_groupTypes[group]) {
             case 6: // gain group
                 cmd = `WD${group}*${this.calculateFaderValue(level, 'lin').devValue}GRPM\r`;
                 break;
@@ -3255,42 +3348,45 @@ class Extron extends utils.Adapter {
                 this.log.info(`sendGroupLevel(): meter groups not supported`);
                 break;
             default:
-                this.log.error(`sendGroupLevel() groupType "${this.groupTypes[group]}" for group "${group}" not supported`);
+                this.log.error(`sendGroupLevel() groupType "${_groupTypes[group]}" for ${device} group "${group}" not supported`);
         }
-        if (cmd != '')
-            if (this.grpDelPnd[group] == false) {
+        if (cmd != '') {
+            if (_grpDelPnd[group] == false) {
                 try {
-                    this.streamSend(cmd); // send command
+                    this.streamSend(cmd, device); // send command
                 }
                 catch (err) {
                     this.errorHandler(err, 'sendGroupLevel');
                 }
             } else {
-                this.queueGrpCmd(group,cmd); // push command to buffer
+                this.queueGrpCmd(group,cmd, device); // push command to buffer
             }
+        }
     }
 
     /** store group level in database
      * @param {number} group
      * @param {number} level
+     * @param {string | void} device
      */
-    setGroupLevel(group, level) {
+    setGroupLevel(group, level, device='') {
+        const _groupTypes = device==''?this.groupTypes:this.danteDevices[device].grouupTypes;
+        const baseId = device==''?'':`dante.${device}`;
         try {
-            switch (this.groupTypes[group]) {
+            switch (_groupTypes[group]) {
                 case 6 :     // gain group
-                    this.setState(`groups.${group.toString().padStart(2,'0')}.level_db`, Number(this.calculateFaderValue(level, 'dev').logValue), true);
-                    this.setState(`groups.${group.toString().padStart(2,'0')}.level`, Number(this.calculateFaderValue(level, 'dev').linValue), true);
+                    this.setState(`${baseId}.groups.${group.toString().padStart(2,'0')}.level_db`, Number(this.calculateFaderValue(level, 'dev').logValue), true);
+                    this.setState(`${baseId}.groups.${group.toString().padStart(2,'0')}.level`, Number(this.calculateFaderValue(level, 'dev').linValue), true);
                     break;
                 case 12 :    // mute group
-                    this.setState(`groups.${group.toString().padStart(2,'0')}.level_db`, level?1:0, true);
-                    this.setState(`groups.${group.toString().padStart(2,'0')}.level`, level?1:0, true);
+                    this.setState(`${baseId}.groups.${group.toString().padStart(2,'0')}.level_db`, level?1:0, true);
+                    this.setState(`${baseId}.groups.${group.toString().padStart(2,'0')}.level`, level?1:0, true);
                     break;
                 case 21 :   // meter group
                     this.log.info(`setGroupLevel(): meter groups not supported`);
                     break;
                 default:
-                    this.log.warn(`setGroupLevel() groupType ${this.groupTypes[group]} on group "${group}" not supported`);
-
+                    this.log.warn(`setGroupLevel(): ${device} groupType "${_groupTypes[group]}" on group "${group}" not supported`);
             }
         } catch (err) {
             this.errorHandler(err, 'setGroupLevel');
@@ -3299,50 +3395,56 @@ class Extron extends utils.Adapter {
 
     /** get group type from device
      * @param {number} group
+     * @param {string | void} device
      * cmd = P[group]GRPM
      */
-    getGroupType(group) {
+    getGroupType(group, device='') {
         const cmd = `WP${group}GRPM\r`;
-        if (this.grpDelPnd[group] == false) {
+        const _grpDelPnd = device==''?this.grpDelPnd:this.danteDevices[device].grpDelPnd;
+        if (_grpDelPnd[group] == false) {
             try {
-                this.streamSend(cmd); // send command
+                this.streamSend(cmd, device); // send command
             }
             catch (err) {
                 this.errorHandler(err, 'getGroupType');
             }
         } else {
-            this.queueGrpCmd(group,cmd); // push command to buffer
+            this.queueGrpCmd(group,cmd, device); // push command to buffer
         }
     }
 
     /** send group type to device
      * @param {number} group
      * @param {number} type
+     * @param {string | void} device
      * cmd = P[group]*[type]GRPM
      */
-    sendGroupType(group, type) {
+    sendGroupType(group, type, device='') {
         const cmd = `WP${group}*${type}GRPM\r`;
-        if (this.grpDelPnd[group] == false) {
+        const _grpDelPnd = device==''?this.grpDelPnd:this.danteDevices[device].grpDelPnd;
+        if (_grpDelPnd[group] == false) {
             try {
-                this.streamSend(cmd); // send command
+                this.streamSend(cmd, device); // send command
             }
             catch (err) {
                 this.errorHandler(err, 'sendGroupType');
             }
         } else {
-            this.queueGrpCmd(group,cmd); // push command to buffer
-            this.setGroupType(group,type); // already store new type value
+            this.queueGrpCmd(group,cmd, device); // push command to buffer
+            this.setGroupType(group,type,device); // already store new type value
         }
     }
 
     /** store group type in database
      * @param {number} group
      * @param {number} type
+     * @param {string | void} device
      */
-    setGroupType(group, type) {
-        this.groupTypes[Number(group)] = Number(type);
+    setGroupType(group, type, device = '') {
+        if (device == '') this.groupTypes[Number(group)] = Number(type);
+        else this.danteDevices[device].groupTypes[Number(group)] = Number(type);
         try {
-            this.setState(`groups.${group.toString().padStart(2,'0')}.type`, type, true);
+            this.setState(`${device!=''?`dante.${device}.`:''}groups.${group.toString().padStart(2,'0')}.type`, type, true);
         } catch (err) {
             this.errorHandler(err, 'setGroupType');
         }
@@ -3350,19 +3452,22 @@ class Extron extends utils.Adapter {
 
     /** get group level limits from device
      * @param {number} group
+     * @param {string | void} device
      * cmd = L[group]GRPM
      */
-    getGroupLimits(group) {
+    getGroupLimits(group, device='') {
         const cmd = `WL${group}GRPM\r`;
-        if (this.grpDelPnd[group] == false) {
+        const _grpDelPnd = device==''?this.grpDelPnd:this.danteDevices[device].grpDelPnd;
+
+        if (_grpDelPnd[group] == false) {
             try {
-                this.streamSend(cmd); // send command
+                this.streamSend(cmd, device); // send command
             }
             catch (err) {
                 this.errorHandler(err, 'getGroupLimits');
             }
         } else {
-            this.queueGrpCmd(group,cmd); // push command to buffer
+            this.queueGrpCmd(group,cmd, device); // push command to buffer
         }
     }
 
@@ -3370,19 +3475,22 @@ class Extron extends utils.Adapter {
      * @param {number} group
      * @param {number} upper
      * @param {number} lower
+     * @param {string | void} device
      * cmd = L[group]*[upper]*[lower]GRPM
     */
-    sendGroupLimits(group, upper, lower) {
+    sendGroupLimits(group, upper, lower, device='') {
         const cmd = `WL${group}*${upper}*${lower}GRPM\r`;
-        if (this.grpDelPnd[group] == false) {
+        const _grpDelPnd = device==''?this.grpDelPnd:this.danteDevices[device].grpDelPnd;
+
+        if (_grpDelPnd[group] == false) {
             try {
-                this.streamSend(cmd); // send command
+                this.streamSend(cmd, device); // send command
             }
             catch (err) {
                 this.errorHandler(err, 'sendGroupLimits');
             }
         } else {
-            this.queueGrpCmd(group,cmd); // push command to buffer
+            this.queueGrpCmd(group,cmd, device); // push command to buffer
         }
     }
 
@@ -3390,11 +3498,12 @@ class Extron extends utils.Adapter {
      * @param {number} group
      * @param {number} upper
      * @param {number} lower
+     * @param {string | void} device
      */
-    setGroupLimits(group, upper, lower) {
+    setGroupLimits(group, upper, lower, device='') {
         try {
-            this.setState(`groups.${group.toString().padStart(2,'0')}.upperLimit`, upper, true);
-            this.setState(`groups.${group.toString().padStart(2,'0')}.lowerLimit`, lower, true);
+            this.setState(`${device!=''?`dante.${device}.`:''}groups.${group.toString().padStart(2,'0')}.upperLimit`, upper, true);
+            this.setState(`${device!=''?`dante.${device}.`:''}groups.${group.toString().padStart(2,'0')}.lowerLimit`, lower, true);
         } catch (err) {
             this.errorHandler(err, 'setGroupLimits');
         }
@@ -3402,48 +3511,54 @@ class Extron extends utils.Adapter {
 
     /** get group name from device
      * @param {number} group
+     * @param {string | void} device
      * cmd = N[group]GRPM
      */
-    getGroupName(group) {
+    getGroupName(group, device='') {
         const cmd = `WN${group}GRPM\r`;
-        if (this.grpDelPnd[group] == false) {
+        const _grpDelPnd = device==''?this.grpDelPnd:this.danteDevices[device].grpDelPnd;
+
+        if (_grpDelPnd[group] == false) {
             try {
-                this.streamSend(cmd); // send command
+                this.streamSend(cmd,device); // send command
             }
             catch (err) {
                 this.errorHandler(err, 'getGroupName');
             }
         } else {
-            this.queueGrpCmd(group,cmd); // push command to buffer
+            this.queueGrpCmd(group,cmd,device); // push command to buffer
         }
     }
 
     /** send group name to device
      * @param {number} group
      * @param {string} name
+     * @param {string | void} device
      * cmd = N[group]*[name]GRPM
      */
-    sendGroupName(group, name) {
+    sendGroupName(group, name, device='') {
         const cmd = `WN${group}*${name}GRPM\r`;
-        if (this.grpDelPnd[group] == false) {
+        const _grpDelPnd = device==''?this.grpDelPnd:this.danteDevices[device].grpDelPnd;
+        if (_grpDelPnd[group] == false) {
             try {
-                this.streamSend(cmd); // send command
+                this.streamSend(cmd,device); // send command
             }
             catch (err) {
                 this.errorHandler(err, 'sendGroupName');
             }
         } else {
-            this.queueGrpCmd(group,cmd); // push command to buffer
+            this.queueGrpCmd(group,cmd,device); // push command to buffer
         }
     }
 
     /** store group name in database
      * @param {number} group
      * @param {string} name
+     * @param {string | void} device
     */
-    setGroupName(group, name) {
+    setGroupName(group, name, device='') {
         try {
-            this.setState(`groups.${group.toString().padStart(2,'0')}.name`, name, true);
+            this.setState(`${device!=''?`dante.${device}.`:''}groups.${group.toString().padStart(2,'0')}.name`, name, true);
         } catch (err) {
             this.errorHandler(err, 'setGroupName');
         }
@@ -3942,6 +4057,7 @@ class Extron extends utils.Adapter {
     */
     setDanteConnection(deviceName, state) {
         try {
+            this.log.debug(`setDanteConnections(): set dante.${deviceName}.info.connection ${state}`);
             this.setState(`dante.${deviceName}.info.connection`, state, true);
             this.danteDevices[deviceName].connectionState = state ? 'CONNECTED' : 'AVAILABLE';
         } catch (err) {
@@ -3965,10 +4081,12 @@ class Extron extends utils.Adapter {
     */
     setDanteConnections(deviceList) {
         try {
+            this.log.debug(`setDanteConnections(): "${JSON.stringify(deviceList)}"`);
             this.setState(`dante.connected`, JSON.stringify(deviceList), true);
-            if (deviceList.length > 1) for (const deviceName of deviceList) {
+            if (deviceList.length) for (const deviceName of deviceList) {
                 this.danteDevices[deviceName].connectionState = 'CONNECTED';
-                //this.setState(`dante.${deviceName}.info.connection`, true, true);
+                this.log.debug(`setDanteConnections(): set dante.${deviceName}.info.connection TRUE`);
+                this.setState(`dante.${deviceName}.info.connection`, true, true);
             }
         } catch (err) {
             this.errorHandler(err, 'setDanteConnections');
@@ -3988,7 +4106,7 @@ class Extron extends utils.Adapter {
     /**
      * determine the database id from ${dante?'"'+danteDevice+'" ':''}OID e.g. 20002 -> in.inputs.01.mixPoints.O03
      * @param {string} oid
-     * @param {string} deviceName
+     * @param {string | void} deviceName
      * returns: String with complete base id to mixPoint or the gainBlock
      * @returns {string}
      */
@@ -4012,7 +4130,7 @@ class Extron extends utils.Adapter {
                 const val = Number(oid.slice(3,7));
                 if (whatstr === 'N') {  // Input/Output naming
                     if (oid.slice(1,4) == 'EXPD') { // DANTE devicename
-                        retId = 'device.name';
+                        retId = `dante.${deviceName}.device.name`;
                     } else
                         switch (oid.slice(1,3)) {
                             case 'MI' :
@@ -4546,7 +4664,7 @@ class Extron extends utils.Adapter {
                     if ((state.val === undefined) || (state.val === null)) state.val = '';
                     this.log.info(`onStateChange(): Extron state ${id} changed: ${state.val} (ack = ${state.ack})`);
                     // extron.[n].[idType].[grpId].[number].[block]
-                    //   0     1    2     3       4        5
+                    //   0     1     2        3       4        5
                     // extron.[n].device.name
                     // extron.[n].in.Inputs.01.preMix
                     // extron.[n].in.auxInputs.01.mixPoints.A01.gain.level
@@ -4557,11 +4675,11 @@ class Extron extends utils.Adapter {
                     //   0     1    2       3          4     5       6        7
                     const baseId = id.slice(0, id.lastIndexOf('.'));
                     const idArray = id.split('.');
-                    const dante = idArray[1] == 'dante';
-                    const device = !dante ? this.devices[this.config.device].short : idArray[2];
-                    const idType = !dante ? idArray[2] : idArray[4];
+                    const dante = idArray[2] == 'dante';
+                    const device = dante ? idArray[3] : this.devices[this.config.device].short;
+                    const idType = dante ? idArray[4] : idArray[2];
                     const idGrp = Number(!dante ? idArray[3]: idArray[5]);
-                    const idBlock = !dante ? idArray[5] : idArray[7];
+                    const idBlock = dante ? idArray[7] : idArray[5];
                     const stateName = id.slice(id.lastIndexOf('.') + 1);
                     const timeStamp = Date.now();
                     let stateTime = this.stateBuf[0];
@@ -4754,7 +4872,7 @@ class Extron extends utils.Adapter {
                                 if (this.checkName(`${state.val}`)) {
                                     switch (idType) {
                                         case 'device':
-                                            this.getDeviceName();
+                                            this.getDeviceName(dante?device:'');
                                             break;
 
                                         case 'groups':
@@ -4832,7 +4950,7 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'model':
-                                this.getModel();
+                                this.getModel(dante?device:'');
                                 break;
 
                             case 'pno':
