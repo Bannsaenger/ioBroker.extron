@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20250122 mschlgl
+ *      last edit 20250131 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -4112,7 +4112,12 @@ class Extron extends utils.Adapter {
      */
     oid2id(oid, deviceName = '') {
         const device = deviceName == ''? this.devices[this.config.device].short : deviceName;
+        const whatstr = oid.slice(0,1);
+        const what = Number(whatstr);
+        const where = Number(oid.slice(1,3));
+        const val = Number(oid.slice(3,7));
         let retId = '';
+
         try {
             if (oid.length < 2) {
                 retId = `ply.players.${oid}.common.`;
@@ -4124,10 +4129,6 @@ class Extron extends utils.Adapter {
                 } else retId = `groups.${oid}.`;
             }
             else {
-                const whatstr = oid.slice(0,1);
-                const what = Number(whatstr);
-                const where = Number(oid.slice(1,3));
-                const val = Number(oid.slice(3,7));
                 if (whatstr === 'N') {  // Input/Output naming
                     if (oid.slice(1,4) == 'EXPD') { // DANTE devicename
                         retId = `dante.${deviceName}.device.name`;
