@@ -2,7 +2,7 @@
  *
  *      iobroker extron (SIS) Adapter
  *
- *      Copyright (c) 2020-2024, Bannsaenger <bannsaenger@gmx.de>
+ *      Copyright (c) 2020-2025, Bannsaenger <bannsaenger@gmx.de>
  *
  *      CC-NC-BY 4.0 License
  *
@@ -656,21 +656,19 @@ class Extron extends utils.Adapter {
                         this.log.debug(`onStreamData(): ${dante?'"'+danteDevice+'" ':''}command "${command}", ext1 "${ext1}", ext2 "${ext2}"`);
 
                         this.pollCount = 0;     // reset pollcounter as valid data has been received
-                        //this.timers.timeoutQueryStatus.refresh();   // refresh poll timer
 
                         switch (command) {
-                            case 'E':
-                                // Error handling
+                            case 'E':       // Error handling
                                 this.log.warn(`onStreamData(): Error response from ${dante?'danteDevice '+danteDevice:'device'} '${command}${ext1}': ${errCodes[command+ext1]}}`);
                                 break;
 
-                            case 'VRB':
+                            case 'VRB':     // verbose mode change
                                 this.log.info(`onStreamData(): ${dante?'danteDevice '+danteDevice:'device'} entered verbose mode: "${ext1}"`);
                                 if (dante) this.setVerboseMode(danteDevice);
                                 else this.setVerboseMode();
                                 break;
 
-                            case 'VER':             // received a Version (answer to status query)
+                            case 'VER':     // received a Version (answer to status query)
                                 switch (ext1) {
                                     case '00' :
                                         this.log.debug(`onStreamData(): received ${dante?'"'+danteDevice+'" ':''}detailed firmware version: "${ext2}"`);
@@ -710,7 +708,7 @@ class Extron extends utils.Adapter {
                                 }
                                 break;
 
-                            case 'INF':
+                            case 'INF':     // received device information
                                 switch (ext1) {
                                     case '01' :
                                         this.log.info(`onStreamData(): received ${dante?`dante.${danteDevice}`:'device'}} model: "${ext2}"`);
@@ -970,12 +968,12 @@ class Extron extends utils.Adapter {
                                 this.setPlayMode(ext1, ext2);
                                 break;
 
-                            case 'CPLYA':           //received a file association to a player
+                            case 'CPLYA':           //received a file association change
                                 this.log.info(`onStreamData(): received filename for Player: "${ext1}" value: "${ext2}"`);
                                 this.setFileName(ext1, ext2);
                                 break;
 
-                            case 'CPLYM':           //received a set repeat mode command
+                            case 'CPLYM':           //received a set repeat mode change
                                 this.log.info(`onStreamData(): received repeat mode ${command} for Player: "${ext1}" value: "${ext2}"`);
                                 this.setRepeatMode(ext1, ext2);
                                 break;
@@ -986,7 +984,7 @@ class Extron extends utils.Adapter {
                                     this.setState('player.hdmistatus',Number(ext2), true);
                                 }
                                 break;
-                            case 'IN1':             // received a tie command from CrossPoint
+                            case 'IN1':             // received a tie change from CrossPoint
                             case 'IN2':
                             case 'IN3':
                             case 'IN4':
@@ -998,12 +996,12 @@ class Extron extends utils.Adapter {
                                 this.setTie(command, ext2);
                                 break;
 
-                            case 'LOUT':            // received a tie command for loop out
+                            case 'LOUT':            // received a tie change for loop out
                                 this.log.info(`onStreamData(): received tie command input "${ext1}" to loop output`);
                                 this.setState(`connections.3.tie`, Number(ext1), true);
                                 break;
 
-                            case 'VMT':             // received a video mute
+                            case 'VMT':             // received a video mute change
                                 if (device === 'sme211') {
                                     this.log.info(`onStreamData(): received video mute change "${ext1}"`);
                                     this.setState(`connections.1.mute`, Number(ext1), true);
@@ -1014,12 +1012,12 @@ class Extron extends utils.Adapter {
                                 break;
 
                             // Begin SMD202 specific commands
-                            case 'PLYRS' :          // received video playing
+                            case 'PLYRS' :          // received video play change
                                 this.log.info(`onStreamData(): received video playmode for player "${ext1}" value "${ext2}"`);
                                 this.setPlayVideo(`player.`,ext1, 2-Number(ext2));
                                 break;
 
-                            case 'PLYRE' :           // received Video paused
+                            case 'PLYRE' :           // received Video pause change
                                 this.log.info(`onStreamData(): received video paused for player "${ext1}" value "${ext2}"`);
                                 this.setPlayVideo(`player.`, ext1, 2);
                                 break;
@@ -1029,48 +1027,48 @@ class Extron extends utils.Adapter {
                                 this.setPlayVideo(`player.`, ext1, 0);
                                 break;
 
-                            case 'PLYRR' :          // received loop state
+                            case 'PLYRR' :          // received loop state change
                                 this.log.info(`onStreamData(): received video loop mode for player "${ext1}" value "${ext2}"`);
                                 this.setLoopVideo(`player.`,ext1, ext2);
                                 break;
 
-                            case 'PLYRU' :          // received video filepath
+                            case 'PLYRU' :          // received video filepath change
                                 this.log.info(`onStreamData(): received video video filepath for player "${ext1}" value "${ext2}"`);
                                 this.setVideoFile(`player.`,ext2);
                                 this.getChannel();
                                 break;
 
-                            case 'PLYRY' :
+                            case 'PLYRY' :          // received paymode change
                                 this.log.info(`onStreamData(): received video playmode for player "${ext1}" value "${ext2}"`);
                                 this.setPlayVideo(`player.`,ext1, Number(ext2));
                                 break;
 
-                            case 'PLYRL' :
+                            case 'PLYRL' :          // received playlist change
                                 this.log.info(`onStreamData(): received current playlist for player "${ext1}" value "${ext2}", requesting filepath`);
                                 this.getVideoFile();
                                 break;
 
-                            case 'TVPRT' :
+                            case 'TVPRT' :          // received TV channelchange
                                 this.log.info(`onStreamData(): received current channel for player "${ext1}" value "${ext2}"`);
                                 this.setChannel(`player.`, ext2);
                                 break;
 
-                            case 'TVPRG' :
+                            case 'TVPRG' :          // received channel list change
                                 this.log.info(`onStreamData(): received Preset list`);
                                 this.setPresets(ext2);
                                 break;
 
-                            case 'AMT'  :
+                            case 'AMT'  :           // received audio mue change
                                 this.log.info(`onStreamData(): received Audio Output mute status value "${ext1}"`);
                                 this.setMute('output.attenuation.', Number(ext1));
                                 break;
 
-                            case 'VOL' :
+                            case 'VOL' :            // received audio attenuation chnange
                                 this.log.info(`onStreamData(): received Audio Output attenuation level value "${Number(`${ext1}${ext2}`)}"`);
                                 this.setVol('output.attenuation.', this.calculateFaderValue(Number(`${ext1}${ext2}`),'logAtt'));
                                 break;
 
-                            case 'SUBTE':
+                            case 'SUBTE':           // received subtitle display change
                                 break;
 
                             // End SMD202 specific commands
@@ -4356,7 +4354,7 @@ class Extron extends utils.Adapter {
             return '';
         }
         this.log.debug(`oid2id(): "${oid}" to "${retId}"`);
-        return deviceName == ''? retId :'dante.'+ deviceName + '.' + retId;
+        return deviceName == ''? retId :`dante.${deviceName}.${retId}`;
     }
 
     /**
