@@ -1,0 +1,5 @@
+Wenn die Fehlermeldung "Extron error in method: [onReady] error: Operation not permitted" erscheint dann
+
+sudo setcap cap_net_admin,cap_net_raw,cap_net_bind_service=+eip $(eval readlink -f `which node`)
+
+ausführen.
