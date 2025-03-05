@@ -1,7 +1,7 @@
 {
     "common": {
         "name": "extron",
-        "version": "0.3.0",
+        "version": "0.2.15",
         "blockedVersions": [
             "0.2.11",
             "0.2.12",
@@ -146,31 +146,31 @@
         "loglevel": "info",
         "mode": "daemon",
         "type": "hardware",
-        "connectionType": "local",
-        "dataSource": "push",
         "tier": 3,
         "compact": true,
-        "message": true,
+        "adminUI": {
+            "config": "json"
+        },
+        "connectionType": "local",
+        "dataSource": "push",
         "messagebox": true,
         "dependencies": [
             {
-                "js-controller": ">=5.0.19"
+                "js-controller": ">=6.0.11"
             }
         ],
         "globalDependencies": [
             {
-                "admin": ">=5.3.2"
+                "admin": ">=7.4.10"
             }
-        ],
-        "adminUI": {
-            "config": "json"
-        }
+        ]
     },
     "protectedNative": [
         "user",
         "pass"
     ],
     "encryptedNative": [
+        "user",
         "pass"
     ],
     "native": {

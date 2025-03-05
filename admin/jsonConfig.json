@@ -16,9 +16,11 @@
                     "validatorNoSaveOnError": true,
                     "manual": false,
                     "noTranslation": false,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
+                    "md": 12,
                     "lg": 6,
+                    "xl": 6,
                     "label": "lblSelectDevice",
                     "help": "hlpSelectDevice"
                 },
@@ -35,9 +37,11 @@
                         "textAlign": "center",
                         "marginTop": "5px"
                     },
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
-                    "lg": 6
+                    "md": 12,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "_deviceHintSelected": {
                     "hidden": "data.device === ''",
@@ -50,24 +54,30 @@
                         "textAlign": "center",
                         "marginTop": "5px"
                     },
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
-                    "lg": 6
+                    "md": 12,
+                    "lg": 6,
+                    "xl": 6
                 },
                 "host": {
                     "type": "text",
                     "maxLength": 255,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
+                    "md": 12,
                     "lg": 6,
+                    "xl": 6,
                     "label": "lblHost",
                     "help": "hlpHost"
                 },
                 "type": {
                     "type": "select",
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
+                    "md": 12,
                     "lg": 6,
+                    "xl": 6,
                     "newLine": true,
                     "options": [
                         {"label": "plain (telnet)", "value": "telnet"},
@@ -79,9 +89,11 @@
                     "type": "number",
                     "min": 1,
                     "max": 65565,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
+                    "md": 12,
                     "lg": 6,
+                    "xl": 6,
                     "label": "lblPort",
                     "help": "hlpPort",
                     "onChange": {
@@ -92,9 +104,11 @@
                 },
                 "user": {
                     "type": "text",
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
+                    "md": 12,
                     "lg": 6,
+                    "xl": 6,
                     "label": "lblUser"
                 },
                 "pass": {
@@ -102,16 +116,20 @@
                     "maxLength": 32,
                     "visible": false,
                     "repeat": false,
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
+                    "md": 12,
                     "lg": 6,
+                    "xl": 6,
                     "label": "lblPassword"
                 },
                 "pollDelay": {
                     "type": "number",
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
+                    "md": 12,
                     "lg": 6,
+                    "xl": 6,
                     "min": 1000,
                     "max": 100000,
                     "step": 100,
@@ -120,9 +138,11 @@
                 },
                 "reconnectDelay": {
                     "type": "number",
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
+                    "md": 12,
                     "lg": 6,
+                    "xl": 6,
                     "min": 3000,
                     "max": 300000,
                     "step": 100,
@@ -131,9 +151,11 @@
                 },
                 "answerTimeout": {
                     "type": "number",
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
+                    "md": 12,
                     "lg": 6,
+                    "xl": 6,
                     "min": 100,
                     "max": 500,
                     "step": 10,
@@ -142,9 +164,11 @@
                 },
                 "inactivityTimeout": {
                     "type": "number",
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
+                    "md": 12,
                     "lg": 6,
+                    "xl": 6,
                     "min": 10000,
                     "max": 100000,
                     "step": 100,
@@ -153,9 +177,11 @@
                 },
                 "stateDelay": {
                     "type": "number",
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
+                    "md": 12,
                     "lg": 6,
+                    "xl": 6,
                     "min": 0,
                     "max": 100000,
                     "step": 1,
@@ -164,9 +190,11 @@
                 },
                 "pushDeviceStatus": {
                     "type": "select",
+                    "xs": 12,
                     "sm": 12,
-                    "md": 6,
+                    "md": 12,
                     "lg": 6,
+                    "xl": 6,
                     "options": [
                         {
                             "label": {
@@ -214,9 +242,11 @@
                 "_getRemoteDevices": {
                     "type": "sendTo",
                     "label": "lblGetRemoteDevices",
+                    "xs": 12,
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
+                    "xl": 12,
                     "style": {"fontSize": 20},
                     "command": "getRemoteDevices",
                     "variant": "outlined",
@@ -226,9 +256,11 @@
                 },
                 "remoteDevices": {
                     "type": "table",
+                    "xs": 12,
                     "sm": 12,
                     "md": 12,
                     "lg": 12,
+                    "xl": 12,
                     "items": [
                         {
                             "attr": "deviceActive",

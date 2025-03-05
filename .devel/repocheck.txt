@@ -1,0 +1,1 @@
+npx @iobroker/repochecker https://github.com/Bannsaenger/ioBroker.extron --local
