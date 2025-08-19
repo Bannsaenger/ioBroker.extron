@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20250131 mschlgl
+ *      last edit 20250506 mschlgl
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -619,7 +619,7 @@ class Extron extends utils.Adapter {
                         stack: 'Please recreate the instance or connect to the correct device',
                     };
                 }
-                return;
+                //return;
             }
             if (this.config.type === 'telnet') {
                 if (data.includes('Password:')) {
@@ -671,10 +671,10 @@ class Extron extends utils.Adapter {
                 } else if (answer.startsWith('TvprG') || this.requestPresets) {
                     this.requestPresets = true;
                     this.presetList += answer;
-                    if (answer.match(/"name":".*"\}\]$/)) {
-                        this.log.debug(`onStreamData(): end of presetList detected`);
+                    if (answer.match(/"name":".*"\}\]$/) || answer.match(/TvprG\[\]/)) {
+                        this.log.debug(`onStreamData: end of presetList detected`);
                         this.requestPresets = false;
-                        this.presetList = this.presetList.match(/(?!TvprG)(\[\{".*"\}\])/)[0];
+                        this.presetList = this.presetList.match(/(?!TvprG)(\[({".*"})*\])|(\[\])/)[0];
                         this.setPresets(this.presetList);
                     }
                 } else {
@@ -1866,10 +1866,12 @@ class Extron extends utils.Adapter {
             // add deviceName to instance object common.titleLang
             switch (typeof instanceObj.common.titleLang) {
                 case 'string': // shold never occur, js-controller issue filed 20240606
+                    //@ts-ignore
                     if (!instanceObj.common.titleLang.includes(this.devices[this.config.device].model)) {
+                        //@ts-ignore
                         instanceObj.common.titleLang = `${this.devices[this.config.device].model}`;
                         this.setForeignObject(`system.adapter.${this.namespace}`, instanceObj);
-                        this.log.debug(`setInstanceNamec(): set titleLang`);
+                        this.log.debug(`setInstanceName(): set titleLang`);
                     }
                     break;
                 case 'object':
@@ -1878,7 +1880,7 @@ class Extron extends utils.Adapter {
                             instanceObj.common.titleLang[key] = `${this.devices[this.config.device].model}`;
                         }
                         this.setForeignObject(`system.adapter.${this.namespace}`, instanceObj);
-                        this.log.debug(`setInstanceNamec(): set titleLang.xx`);
+                        this.log.debug(`setInstanceName(): set titleLang.xx`);
                     }
                     break;
             }
@@ -3966,26 +3968,27 @@ class Extron extends utils.Adapter {
         const _groupTypes = device == '' ? this.groupTypes : this.danteDevices[device].grouupTypes;
         const baseId = device == '' ? '' : `dante.${device}`;
         try {
+            const groupStr = group.toString().padStart(2, '0');
             switch (_groupTypes[group]) {
                 case 6: // gain group
                     this.setState(
-                        `${baseId}.groups.${group.toString().padStart(2, '0')}.level_db`,
+                        `${baseId}.groups.${groupStr}.level_db`,
                         Number(this.calculateFaderValue(level, 'dev').logValue),
                         true,
                     );
                     this.setState(
-                        `${baseId}.groups.${group.toString().padStart(2, '0')}.level`,
+                        `${baseId}.groups.${groupStr}.level`,
                         Number(this.calculateFaderValue(level, 'dev').linValue),
                         true,
                     );
                     break;
                 case 12: // mute group
                     this.setState(
-                        `${baseId}.groups.${group.toString().padStart(2, '0')}.level_db`,
+                        `${baseId}.groups.${groupStr}.level_db`,
                         level ? 1 : 0,
                         true,
                     );
-                    this.setState(`${baseId}.groups.${group.toString().padStart(2, '0')}.level`, level ? 1 : 0, true);
+                    this.setState(`${baseId}.groups.${groupStr}.level`, level ? 1 : 0, true);
                     break;
                 case 21: // meter group
                     this.log.info(`setGroupLevel(): meter groups not supported`);
