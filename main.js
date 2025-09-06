@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20250506 mschlgl
+ *      last edit 20250906 Bannsaenger
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -1866,9 +1866,7 @@ class Extron extends utils.Adapter {
             // add deviceName to instance object common.titleLang
             switch (typeof instanceObj.common.titleLang) {
                 case 'string': // shold never occur, js-controller issue filed 20240606
-                    //@ts-ignore
                     if (!instanceObj.common.titleLang.includes(this.devices[this.config.device].model)) {
-                        //@ts-ignore
                         instanceObj.common.titleLang = `${this.devices[this.config.device].model}`;
                         this.setForeignObject(`system.adapter.${this.namespace}`, instanceObj);
                         this.log.debug(`setInstanceName(): set titleLang`);
@@ -3983,11 +3981,7 @@ class Extron extends utils.Adapter {
                     );
                     break;
                 case 12: // mute group
-                    this.setState(
-                        `${baseId}.groups.${groupStr}.level_db`,
-                        level ? 1 : 0,
-                        true,
-                    );
+                    this.setState(`${baseId}.groups.${groupStr}.level_db`, level ? 1 : 0, true);
                     this.setState(`${baseId}.groups.${groupStr}.level`, level ? 1 : 0, true);
                     break;
                 case 21: // meter group
