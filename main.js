@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20250906 Bannsaenger
+ *      last edit 20250907 Bannsaenger
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -204,8 +204,8 @@ class Extron extends utils.Adapter {
         this.rcvDanteDeviceList = false; // flag on receiving DANTE device list
         this.danteDevices = {}; // store subdevices controlled via DANTE
         this.tmrRes = this.config.tmrRes || 100; // timer resolution, default 100 ms
-        (this.preCheckWithICMP = this.config.preCheckWithICMP === undefined ? true : this.config.preCheckWithICMP), // check the availability of the device with ping
-            (this.tryICMPAfterRetries = this.config.tryICMPAfterRetries || 2); // switch to ICMP (ping) availability check after n tries, -1 = off
+        this.preCheckWithICMP = this.config.preCheckWithICMP === undefined ? true : this.config.preCheckWithICMP; // check the availability of the device with ping
+        this.tryICMPAfterRetries = this.config.tryICMPAfterRetries || 2; // switch to ICMP (ping) availability check after n tries, -1 = off
         this.connectTimeout = this.config.connectTimeout || 3000; // time to wait for connection to complet in ms (defalt 3s)
         this.reConnectTimeout = this.config.reconnectDelay || 10000; // time to wait after a connection failure for a new attempt (default: 10 s)
 
