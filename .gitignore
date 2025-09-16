@@ -24,3 +24,6 @@ main.js.alt
 
 # ioBroker dev-server
 .dev-server/
+
+# by repochecker
+.commitinfo
