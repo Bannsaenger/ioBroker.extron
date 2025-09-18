@@ -222,7 +222,6 @@ class Extron extends utils.Adapter {
         // ping session events
         this.pingSession.on('close', this.onPingClose.bind(this));
         this.pingSession.on('error', this.onPingError.bind(this));
-
         // start central timer/interval handler
         //this.centralIntervalTimer = setInterval(this.centralIntervalTimer.bind(this), this.tmrRes);
         */
@@ -238,13 +237,13 @@ class Extron extends utils.Adapter {
             const device = this.device;
             switch (device.connectionState) {
                 case 'NEW': // Initialize timers etc.
-                /**
-                    if (this.preCheckWithICMP) {
-                        device.connectionState = 'ICMP_CHECKING';
-                        device.timeToWait = this.connectTimeout / this.tmrRes;
-                        this.pingSession.pingHost(device.ipAddress, this.onPingCallback.bind(this));
-                    } else {
-                */
+                    /**
+                        if (this.preCheckWithICMP) {
+                            device.connectionState = 'ICMP_CHECKING';
+                            device.timeToWait = this.connectTimeout / this.tmrRes;
+                            this.pingSession.pingHost(device.ipAddress, this.onPingCallback.bind(this));
+                        } else {
+                    */
                     device.connectionState = 'CONNECTING';
                     device.timeToWait = this.connectTimeout / this.tmrRes;
                     device.connectionAttempt = this.tryICMPAfterRetries;
@@ -506,7 +505,6 @@ class Extron extends utils.Adapter {
         }
     }
     */
-
     /**
      * Is called when the session is closed via session.close
      *
@@ -514,7 +512,6 @@ class Extron extends utils.Adapter {
         this.log.info('onPingClose(): ICMP session is closed');
     }
     */
-
     /**
      * Is used as callback for session.ping
      *
@@ -538,8 +535,8 @@ class Extron extends utils.Adapter {
         } catch (err) {
             this.errorHandler(err, 'onPingCallback');
         }
-    }*/
-
+    }
+    */
     /**
      * called to send data to the stream
      *
