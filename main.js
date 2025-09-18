@@ -219,7 +219,6 @@ class Extron extends utils.Adapter {
             ttl: 128,
         };
         this.pingSession = ping.createSession(this.ping_options);
-
         // ping session events
         this.pingSession.on('close', this.onPingClose.bind(this));
         this.pingSession.on('error', this.onPingError.bind(this));
@@ -244,13 +243,14 @@ class Extron extends utils.Adapter {
                         device.connectionState = 'ICMP_CHECKING';
                         device.timeToWait = this.connectTimeout / this.tmrRes;
                         this.pingSession.pingHost(device.ipAddress, this.onPingCallback.bind(this));
-                    } else {*/
-                        device.connectionState = 'CONNECTING';
-                        device.timeToWait = this.connectTimeout / this.tmrRes;
-                        device.connectionAttempt = this.tryICMPAfterRetries;
-                        this.clientConnect();
+                    } else {
+                */
+                    device.connectionState = 'CONNECTING';
+                    device.timeToWait = this.connectTimeout / this.tmrRes;
+                    device.connectionAttempt = this.tryICMPAfterRetries;
+                    this.clientConnect();
                     //}
-                    break;
+                break;
 
                 case 'CONNECTED': // Handle timers for Alive and GetStatus
                     if (device.timeoutPolling > 0) {
@@ -504,14 +504,16 @@ class Extron extends utils.Adapter {
         } catch (err) {
             this.errorHandler(err, 'onPingError');
         }
-    }*/
+    }
+    */
 
     /**
      * Is called when the session is closed via session.close
      *
     onPingClose() {
         this.log.info('onPingClose(): ICMP session is closed');
-    }*/
+    }
+    */
 
     /**
      * Is used as callback for session.ping
@@ -1868,9 +1870,9 @@ class Extron extends utils.Adapter {
             // add deviceName to instance object common.titleLang
             switch (typeof instanceObj.common.titleLang) {
                 case 'string': // shold never occur, js-controller issue filed 20240606
-                    // @ts-expect-error
+                    // @ts-expect-error shold never occur, js-controller issue filed 20240606
                     if (!instanceObj.common.titleLang.includes(this.devices[this.config.device].model)) {
-                        // @ts-expect-error
+                        // @ts-expect-error shold never occur, js-controller issue filed 20240606
                         instanceObj.common.titleLang = `${this.devices[this.config.device].model}`;
                         this.setForeignObject(`system.adapter.${this.namespace}`, instanceObj);
                         this.log.debug(`setInstanceName(): set titleLang`);
