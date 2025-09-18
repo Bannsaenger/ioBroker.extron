@@ -6,7 +6,7 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20250506 mschlgl
+ *      last edit 20250907 Bannsaenger
  */
 
 // The adapter-core module gives you access to the core ioBroker functions
@@ -204,8 +204,8 @@ class Extron extends utils.Adapter {
         this.rcvDanteDeviceList = false; // flag on receiving DANTE device list
         this.danteDevices = {}; // store subdevices controlled via DANTE
         this.tmrRes = this.config.tmrRes || 100; // timer resolution, default 100 ms
-        (this.preCheckWithICMP = this.config.preCheckWithICMP === undefined ? true : this.config.preCheckWithICMP), // check the availability of the device with ping
-            (this.tryICMPAfterRetries = this.config.tryICMPAfterRetries || 2); // switch to ICMP (ping) availability check after n tries, -1 = off
+        this.preCheckWithICMP = this.config.preCheckWithICMP === undefined ? true : this.config.preCheckWithICMP; // check the availability of the device with ping
+        this.tryICMPAfterRetries = this.config.tryICMPAfterRetries || 2; // switch to ICMP (ping) availability check after n tries, -1 = off
         this.connectTimeout = this.config.connectTimeout || 3000; // time to wait for connection to complet in ms (defalt 3s)
         this.reConnectTimeout = this.config.reconnectDelay || 10000; // time to wait after a connection failure for a new attempt (default: 10 s)
         /**
@@ -1868,9 +1868,7 @@ class Extron extends utils.Adapter {
             // add deviceName to instance object common.titleLang
             switch (typeof instanceObj.common.titleLang) {
                 case 'string': // shold never occur, js-controller issue filed 20240606
-                    //@ts-ignore
                     if (!instanceObj.common.titleLang.includes(this.devices[this.config.device].model)) {
-                        //@ts-ignore
                         instanceObj.common.titleLang = `${this.devices[this.config.device].model}`;
                         this.setForeignObject(`system.adapter.${this.namespace}`, instanceObj);
                         this.log.debug(`setInstanceName(): set titleLang`);
@@ -3985,11 +3983,7 @@ class Extron extends utils.Adapter {
                     );
                     break;
                 case 12: // mute group
-                    this.setState(
-                        `${baseId}.groups.${groupStr}.level_db`,
-                        level ? 1 : 0,
-                        true,
-                    );
+                    this.setState(`${baseId}.groups.${groupStr}.level_db`, level ? 1 : 0, true);
                     this.setState(`${baseId}.groups.${groupStr}.level`, level ? 1 : 0, true);
                     break;
                 case 21: // meter group
