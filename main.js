@@ -224,7 +224,7 @@ class Extron extends utils.Adapter {
         this.pingSession.on('error', this.onPingError.bind(this));
         // start central timer/interval handler
         //this.centralIntervalTimer = setInterval(this.centralIntervalTimer.bind(this), this.tmrRes);
-        */
+         */
     }
 
     /**
@@ -243,13 +243,13 @@ class Extron extends utils.Adapter {
                             device.timeToWait = this.connectTimeout / this.tmrRes;
                             this.pingSession.pingHost(device.ipAddress, this.onPingCallback.bind(this));
                         } else {
-                    */
+                     */
                     device.connectionState = 'CONNECTING';
                     device.timeToWait = this.connectTimeout / this.tmrRes;
                     device.connectionAttempt = this.tryICMPAfterRetries;
                     this.clientConnect();
                     //}
-                break;
+                    break;
 
                 case 'CONNECTED': // Handle timers for Alive and GetStatus
                     if (device.timeoutPolling > 0) {
@@ -419,7 +419,8 @@ class Extron extends utils.Adapter {
     /*
     onClientBanner(message, language) {
         this.log.info(`onClientBanner(): Extron sent back banner: "${message}" in language: "${language}"`);
-    }*/
+    }
+     */
 
     /**
      * called if client is closed
@@ -504,14 +505,14 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'onPingError');
         }
     }
-    */
+     */
     /**
      * Is called when the session is closed via session.close
      *
     onPingClose() {
         this.log.info('onPingClose(): ICMP session is closed');
     }
-    */
+     */
     /**
      * Is used as callback for session.ping
      *
@@ -536,7 +537,7 @@ class Extron extends utils.Adapter {
             this.errorHandler(err, 'onPingCallback');
         }
     }
-    */
+     */
     /**
      * called to send data to the stream
      *
