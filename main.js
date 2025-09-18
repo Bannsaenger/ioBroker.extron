@@ -16,7 +16,7 @@ const utils = require('@iobroker/adapter-core');
 const fs = require('fs');
 const Client = require('ssh2').Client;
 const Net = require('net');
-const ping = require('net-ping');
+//const ping = require('net-ping');
 const path = require('path');
 
 const errCodes = {
@@ -208,7 +208,7 @@ class Extron extends utils.Adapter {
             (this.tryICMPAfterRetries = this.config.tryICMPAfterRetries || 2); // switch to ICMP (ping) availability check after n tries, -1 = off
         this.connectTimeout = this.config.connectTimeout || 3000; // time to wait for connection to complet in ms (defalt 3s)
         this.reConnectTimeout = this.config.reconnectDelay || 10000; // time to wait after a connection failure for a new attempt (default: 10 s)
-
+        /**
         // -------------------------------------------------------------------------------------
         // create a ping session for connection checking
         this.ping_options = {
@@ -226,6 +226,7 @@ class Extron extends utils.Adapter {
 
         // start central timer/interval handler
         //this.centralIntervalTimer = setInterval(this.centralIntervalTimer.bind(this), this.tmrRes);
+        */
     }
 
     /**
@@ -238,16 +239,17 @@ class Extron extends utils.Adapter {
             const device = this.device;
             switch (device.connectionState) {
                 case 'NEW': // Initialize timers etc.
+                /**
                     if (this.preCheckWithICMP) {
                         device.connectionState = 'ICMP_CHECKING';
                         device.timeToWait = this.connectTimeout / this.tmrRes;
                         this.pingSession.pingHost(device.ipAddress, this.onPingCallback.bind(this));
-                    } else {
+                    } else {*/
                         device.connectionState = 'CONNECTING';
                         device.timeToWait = this.connectTimeout / this.tmrRes;
                         device.connectionAttempt = this.tryICMPAfterRetries;
                         this.clientConnect();
-                    }
+                    //}
                     break;
 
                 case 'CONNECTED': // Handle timers for Alive and GetStatus
@@ -299,8 +301,9 @@ class Extron extends utils.Adapter {
                         device.timeToWait--;
                     } else {
                         device.timeToWait = this.reConnectTimeout / this.tmrRes;
-                        this.log.debug(`centralIntervalTimer(): pinging ${device.ipAddress}`);
-                        this.pingSession.pingHost(device.ipAddress, this.onPingCallback.bind(this));
+                        //this.log.debug(`centralIntervalTimer(): pinging ${device.ipAddress}`);
+                        //this.pingSession.pingHost(device.ipAddress, this.onPingCallback.bind(this));
+                        this.device.connectionState = 'ICMP_AVAILABLE';
                     }
                     break;
 
@@ -311,7 +314,6 @@ class Extron extends utils.Adapter {
                     this.clientConnect();
                     break;
             }
-            //}
         } catch (err) {
             this.errorHandler(err, 'centralIntervalTimer');
         }
@@ -494,7 +496,7 @@ class Extron extends utils.Adapter {
      * Is called if a session error occurs
      *
      * @param {any} err Error
-     */
+     *
     onPingError(err) {
         try {
             this.log.error(`ICMP session Server got Error: <${err.toString()}> closing server.`);
@@ -502,14 +504,14 @@ class Extron extends utils.Adapter {
         } catch (err) {
             this.errorHandler(err, 'onPingError');
         }
-    }
+    }*/
 
     /**
      * Is called when the session is closed via session.close
-     */
+     *
     onPingClose() {
         this.log.info('onPingClose(): ICMP session is closed');
-    }
+    }*/
 
     /**
      * Is used as callback for session.ping
@@ -518,7 +520,7 @@ class Extron extends utils.Adapter {
      *  @param {any}   target The target parameter as specified in the request still be the target host and NOT the responding gateway
      *  @param {Date}  sent   An instance of the Date class specifying when the first ping was sent for this request (refer to the Round Trip Time section for more information)
      *  @param {Date}  rcvd   An instance of the Date class specifying when the request completed (refer to the Round Trip Time section for more information)
-     */
+     *
     onPingCallback(error, target, sent, rcvd) {
         try {
             // @ts-expect-error this can be done
@@ -534,7 +536,7 @@ class Extron extends utils.Adapter {
         } catch (err) {
             this.errorHandler(err, 'onPingCallback');
         }
-    }
+    }*/
 
     /**
      * called to send data to the stream
