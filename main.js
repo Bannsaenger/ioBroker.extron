@@ -1868,7 +1868,7 @@ class Extron extends utils.Adapter {
             // add deviceName to instance object common.titleLang
             switch (typeof instanceObj.common.titleLang) {
                 case 'string': // shold never occur, js-controller issue filed 20240606
-                    // @ts-expect-errorts
+                    // @ts-expect-error
                     if (!instanceObj.common.titleLang.includes(this.devices[this.config.device].model)) {
                         // @ts-expect-error
                         instanceObj.common.titleLang = `${this.devices[this.config.device].model}`;
