@@ -1,4 +1,4 @@
-/**
+/*
  *
  *      iobroker extron (SIS) Adapter
  *

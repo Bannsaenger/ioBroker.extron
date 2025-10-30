@@ -15,5 +15,7 @@
             ],
             "url": "https://raw.githubusercontent.com/ioBroker/ioBroker.admin/master/packages/jsonConfig/schemas/jsonConfig.json"
         }
-    ]
+    ],
+    "prettier.prettierPath": "./node_modules/prettier",
+    "prettier.endOfLine": "auto"
 }
