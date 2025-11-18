@@ -6,10 +6,10 @@
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20251021 mschlgl
+ *      last edit 20251118 mschlgl
  */
 
-// The adapter-core module gives you access to the core ioBroker functions
+// The adapter-core module provides access to the core ioBroker functions
 const utils = require('@iobroker/adapter-core');
 
 // Load your modules here, e.g.:
@@ -208,23 +208,6 @@ class Extron extends utils.Adapter {
         this.tryICMPAfterRetries = this.config.tryICMPAfterRetries || -1; // switch to ICMP (ping) availability check after n tries, -1 = off
         this.connectTimeout = this.config.connectTimeout || 3000; // time to wait for connection to complet in ms (defalt 3s)
         this.reConnectTimeout = this.config.reconnectDelay || 10000; // time to wait after a connection failure for a new attempt (default: 10 s)
-        /**
-        // -------------------------------------------------------------------------------------
-        // create a ping session for connection checking
-        this.ping_options = {
-            networkProtocol: ping.NetworkProtocol.IPv4,
-            packetSize: 16,
-            retries: 1,
-            timeout: 1000,
-            ttl: 128,
-        };
-        this.pingSession = ping.createSession(this.ping_options);
-        // ping session events
-        this.pingSession.on('close', this.onPingClose.bind(this));
-        this.pingSession.on('error', this.onPingError.bind(this));
-        // start central timer/interval handler
-        //this.centralIntervalTimer = setInterval(this.centralIntervalTimer.bind(this), this.tmrRes);
-         */
     }
 
     /**
@@ -4097,7 +4080,7 @@ class Extron extends utils.Adapter {
      * send group limits to device
      *
      * @param {number} group the group to handle
-     * @param {number} upper the uppel limit to set
+     * @param {number} upper the upper limit to set
      * @param {number} lower the lower limit to set
      * @param {string | void} device the device to send to
      * cmd = L[group]*[upper]*[lower]GRPM
@@ -4121,7 +4104,7 @@ class Extron extends utils.Adapter {
      * store group limits in databas
      *
      * @param {number} group the group to store
-     * @param {number} upper the uppel limit to store
+     * @param {number} upper the upper limit to store
      * @param {number} lower the lower limit to store
      * @param {string | void} device the device to store for
      */

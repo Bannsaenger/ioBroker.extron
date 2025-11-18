@@ -154,6 +154,9 @@
     "connectionType": "local",
     "dataSource": "push",
     "messagebox": true,
+    "supportedMessages" : {
+      "custom":true
+    },
     "dependencies": [
       {
         "js-controller": ">=6.0.11"
