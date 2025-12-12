@@ -16,7 +16,6 @@ const utils = require('@iobroker/adapter-core');
 const fs = require('fs');
 const Client = require('ssh2').Client;
 const Net = require('net');
-//const ping = require('net-ping');
 const path = require('path');
 
 const errCodes = {
@@ -475,52 +474,6 @@ class Extron extends utils.Adapter {
         this.errorHandler(err, 'onClientError');
     }
 
-    /**
-     * Is called if a session error occurs
-     *
-     * @param {any} err Error
-     *
-    onPingError(err) {
-        try {
-            this.log.error(`ICMP session Server got Error: <${err.toString()}> closing server.`);
-            this.pingSession.close();
-        } catch (err) {
-            this.errorHandler(err, 'onPingError');
-        }
-    }
-     */
-    /**
-     * Is called when the session is closed via session.close
-     *
-    onPingClose() {
-        this.log.info('onPingClose(): ICMP session is closed');
-    }
-     */
-    /**
-     * Is used as callback for session.ping
-     *
-     *  @param {Error} error  Instance of the Error class or a sub-class, or null if no error occurred
-     *  @param {any}   target The target parameter as specified in the request still be the target host and NOT the responding gateway
-     *  @param {Date}  sent   An instance of the Date class specifying when the first ping was sent for this request (refer to the Round Trip Time section for more information)
-     *  @param {Date}  rcvd   An instance of the Date class specifying when the request completed (refer to the Round Trip Time section for more information)
-     *
-    onPingCallback(error, target, sent, rcvd) {
-        try {
-            // @ts-expect-error this can be done
-            const ms = rcvd - sent;
-            if (error) {
-                this.log.debug(`ping: ${target}: ${error.toString()}`);
-            } else {
-                this.log.debug(`ping: ${target}: Alive (ms=${ms})`);
-                // const device = this.devices.find(item => item.ipAddress === target);
-                this.device.connectionState = 'ICMP_AVAILABLE';
-                // reconnect is done in the timer routine
-            }
-        } catch (err) {
-            this.errorHandler(err, 'onPingCallback');
-        }
-    }
-     */
     /**
      * called to send data to the stream
      *
