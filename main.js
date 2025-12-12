@@ -1881,7 +1881,7 @@ class Extron extends utils.Adapter {
         const deviceType = this.devices[device].short;
         this.log.warn(`createDatabase(): for "${device}", "${deviceType}"`);
         //const deviceObjName = this.devices[device].model;
-        const baseId = deviceName ? `dante.${deviceName}` : '';
+        const baseId = deviceName ? `dante.${deviceName}.` : '';
 
         this.log.info(`createDatabaseAsync(): ${deviceName ? deviceName : ''}start`);
         try {
@@ -1896,33 +1896,33 @@ class Extron extends utils.Adapter {
             // if cp82 or sme211 : create video inputs and outputs
             if (deviceType === 'cp82' || deviceType === 'sme211') {
                 for (const element of this.objectTemplates[this.devices[device].objects[1]].connections) {
-                    await this.setObjectAsync(`${baseId}.${element._id}`, element);
+                    await this.setObjectAsync(`${baseId}{element._id}`, element);
                 }
             }
             // if smd202 : create video player
             if (deviceType === 'smd202') {
                 for (const element of this.objectTemplates[this.devices[device].objects[1]].players) {
-                    await this.setObjectAsync(`${baseId}.${element._id}`, element);
+                    await this.setObjectAsync(`${baseId}${element._id}`, element);
                 }
                 for (const element of this.objectTemplates[this.devices[device].objects[1]].outputs) {
-                    await this.setObjectAsync(`${baseId}.${element._id}`, element);
+                    await this.setObjectAsync(`${baseId}${element._id}`, element);
                 }
             }
             // if sme211 : create streaming player
             if (deviceType === 'sme211') {
                 for (const element of this.objectTemplates[this.devices[device].objects[1]].players) {
-                    await this.setObjectAsync(`${baseId}.${element._id}`, element);
+                    await this.setObjectAsync(`${baseId}${element._id}`, element);
                 }
             }
             // if we have a user filesystem on the device
             if (this.devices[device] && this.devices[device].objects.includes('userflash')) {
-                if (this.objectExists(`${baseId}.fs.files`)) {
+                if (this.objectExists(`${baseId}fs.files`)) {
                     this.log.info(`createDatabaseAsync(): delete old .files. branch`);
-                    await this.delObjectAsync(`${baseId}.fs.files`, { recursive: true });
+                    await this.delObjectAsync(`${baseId}fs.files`, { recursive: true });
                 }
                 this.log.info(`createDatabaseAsync(): set user fileSystem`);
                 for (const element of this.objectTemplates.userflash) {
-                    await this.setObjectAsync(`${baseId}.${element._id}`, element);
+                    await this.setObjectAsync(`${baseId}${element._id}`, element);
                 }
                 this.setState('fs.dir', false, true); // reset directory request flag
             }
@@ -1930,7 +1930,7 @@ class Extron extends utils.Adapter {
             if (this.devices[device] && this.devices[device].out) {
                 // at this point the device has outputs
                 this.log.info(`createDatabaseAsync(): set outputs`);
-                await this.setObjectAsync(`${baseId}.out`, {
+                await this.setObjectAsync(`${baseId}out`, {
                     type: 'folder',
                     common: {
                         name: 'All outputs',
@@ -1939,7 +1939,7 @@ class Extron extends utils.Adapter {
                 });
                 for (const outputs of Object.keys(this.devices[device].out)) {
                     // create outputs folder, key name is the folder id
-                    await this.setObjectAsync(`${baseId}.out.${outputs}`, {
+                    await this.setObjectAsync(`${baseId}out.${outputs}`, {
                         type: 'folder',
                         common: {
                             name: this.devices[device].out[outputs].name,
@@ -1948,7 +1948,7 @@ class Extron extends utils.Adapter {
                     });
                     // create the amount of outputs
                     for (let i = 1; i <= this.devices[device].out[outputs].amount; i++) {
-                        const actOutput = `${baseId}.out.${outputs}.${i.toString().padStart(2, '0')}`;
+                        const actOutput = `${baseId}out.${outputs}.${i.toString().padStart(2, '0')}`;
                         // create the output folder
                         await this.setObjectAsync(
                             actOutput,
@@ -1997,7 +1997,7 @@ class Extron extends utils.Adapter {
             if (this.devices[device] && this.devices[device].in) {
                 // at this point the device has inputs
                 this.log.info(`createDatabaseAsync(): set inputs`);
-                await this.setObjectAsync(`${baseId}.in`, {
+                await this.setObjectAsync(`${baseId}in`, {
                     type: 'folder',
                     common: {
                         name: 'All input types',
@@ -2006,7 +2006,7 @@ class Extron extends utils.Adapter {
                 });
                 for (const inputs of Object.keys(this.devices[device].in)) {
                     // create input folder, key name is the folder id
-                    await this.setObjectAsync(`${baseId}.in.${inputs}`, {
+                    await this.setObjectAsync(`${baseId}in.${inputs}`, {
                         type: 'folder',
                         common: {
                             name: this.devices[device].in[inputs].name,
@@ -2015,7 +2015,7 @@ class Extron extends utils.Adapter {
                     });
                     // for each input type create the amount of inputs
                     for (let i = 1; i <= this.devices[device].in[inputs].amount; i++) {
-                        const actInput = `${baseId}.in.${inputs}.${i.toString().padStart(2, '0')}`;
+                        const actInput = `${baseId}in.${inputs}.${i.toString().padStart(2, '0')}`;
                         // create the input folder
                         await this.setObjectAsync(
                             actInput,
@@ -2112,7 +2112,7 @@ class Extron extends utils.Adapter {
             if (this.devices[device] && this.devices[device].ply) {
                 // at this point the device has players
                 this.log.info(`createDatabaseAsync(): set players`);
-                await this.setObjectAsync(`${baseId}.ply`, {
+                await this.setObjectAsync(`${baseId}ply`, {
                     type: 'folder',
                     common: {
                         name: 'All players',
@@ -2121,7 +2121,7 @@ class Extron extends utils.Adapter {
                 });
                 for (const players of Object.keys(this.devices[device].ply)) {
                     // create player folder, key name is the folder id
-                    await this.setObjectAsync(`${baseId}.ply.${players}`, {
+                    await this.setObjectAsync(`${baseId}ply.${players}`, {
                         type: 'folder',
                         common: {
                             name: this.devices[device].ply[players].name,
@@ -2130,7 +2130,7 @@ class Extron extends utils.Adapter {
                     });
                     // create the amount of players
                     for (let i = 1; i <= this.devices[device].ply[players].amount; i++) {
-                        const actPlayer = `${baseId}.ply.${players}.${i}`;
+                        const actPlayer = `${baseId}ply.${players}.${i}`;
                         // create the player folder
                         await this.setObjectAsync(
                             actPlayer,
@@ -2146,7 +2146,7 @@ class Extron extends utils.Adapter {
             // if we have groups on the device
             if (this.devices[device] && this.devices[device].grp) {
                 this.log.info(`createDatabaseAsync(): set groups`);
-                await this.setObjectAsync(`${baseId}.groups`, {
+                await this.setObjectAsync(`${baseId}groups`, {
                     type: 'folder',
                     common: {
                         name: 'All Groups',
@@ -2155,7 +2155,7 @@ class Extron extends utils.Adapter {
                 });
                 // create the amount of groups
                 for (let i = 1; i <= this.devices[device].grp.groups.amount; i++) {
-                    const actGroup = `${baseId}.groups.${i.toString().padStart(2, '0')}`;
+                    const actGroup = `${baseId}groups.${i.toString().padStart(2, '0')}`;
                     // create the group folder
                     await this.setObjectAsync(actGroup, this.objectTemplates[this.devices[device].objects[1]].group);
                     // and the common structure of a group
