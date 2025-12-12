@@ -289,8 +289,6 @@
                             "width": "30%",
                             "title": "ttlRemoteDeviceType",
                             "tooltip": "ttpRemoteDeviceType",
-                            "readOnly": true,
-                            "noClearButton": true,
                             "filter": true,
                             "sort": true,
                             "disabled": "1 === 1",
