@@ -1832,7 +1832,7 @@ class Extron extends utils.Adapter {
      * @param {string | void } deviceName  // default this.devices[this.config.device].model;
      */
     async createDeviceCommonAsync(deviceName) {
-        const baseId = deviceName ? `dante.${deviceName}` : '';
+        const baseId = deviceName ? `dante.${deviceName}.` : '';
         const infoObj = JSON.parse(JSON.stringify(this.objectTemplates.info));
 
         this.log.info(
@@ -1844,12 +1844,12 @@ class Extron extends utils.Adapter {
             //this.log.warn(`createDeviceCommonAsync(): deviceObj: ${JSON.stringify(deviceObj)}`);
             //if (!deviceName) deviceObj.name = this.devices[this.config.device].model;
             for (const element of deviceObj) {
-                await this.setObjectAsync(`${baseId}.${element._id}`, element);
+                await this.setObjectAsync(`${baseId}${element._id}`, element);
             }
             this.log.info(`createDeviceCommonAsync(): created common section`);
             if (baseId.includes('dante.')) {
                 for (const element of infoObj) {
-                    element._id = `${baseId}.${element._id}`;
+                    element._id = `${baseId}${element._id}`;
                     await this.setObjectAsync(element._id, element);
                 }
                 this.log.info(`createDeviceCommonAsync(): created ${deviceName} info section`);
@@ -2278,7 +2278,7 @@ class Extron extends utils.Adapter {
                                     } else {
                                         if (
                                             id.match(/\.inputs\.\d+\.gain\./) &&
-                                            (source = await this.getStateAsync(`${baseId}.source`)) &&
+                                            (source = await this.getStateAsync(`${baseId}source`)) &&
                                             source.val > 0
                                         ) {
                                             this.getDigGainLevel(id); // if analog input assigned to a digital source
@@ -2339,9 +2339,9 @@ class Extron extends utils.Adapter {
                                         //    0    1     2     3     4     5
                                         this.getStreamState(Number(idArray[4]));
                                     } else {
-                                        dynamics = await this.getStateAsync(`${baseId}.type`);
+                                        dynamics = await this.getStateAsync(`${baseId}type`);
                                         if (dynamics) {
-                                            //this.log.info(`getDeviceStatus(): "${baseId}.type": ${dynamics.val}`);
+                                            //this.log.info(`getDeviceStatus(): "${baseId}type": ${dynamics.val}`);
                                             if (Number(dynamics.val) != 0) {
                                                 this.getDspBlockStatus(id);
                                             } else {
@@ -2356,7 +2356,7 @@ class Extron extends utils.Adapter {
                                     break;
 
                                 case 'threshold':
-                                    dynamics = await this.getStateAsync(`${baseId}.type`);
+                                    dynamics = await this.getStateAsync(`${baseId}type`);
                                     if (dynamics) {
                                         //this.log.info(`getDeviceStatus(): dynamics for ${baseId}: ${dynamics.val}`);
                                         if (Number(dynamics.val) != 0) {
@@ -3065,7 +3065,7 @@ class Extron extends utils.Adapter {
      */
     sendSource(baseId, value) {
         try {
-            const oid = this.id2oid(`${baseId}.source`);
+            const oid = this.id2oid(`${baseId}source`);
             if (oid) {
                 this.streamSend(`WD${oid}*${value === '' ? 0 : value}AU\r`);
             }
@@ -3082,7 +3082,7 @@ class Extron extends utils.Adapter {
      */
     getSource(baseId) {
         try {
-            const oid = this.id2oid(`${baseId}.source`);
+            const oid = this.id2oid(`${baseId}source`);
             if (oid) {
                 this.streamSend(`WD${oid}AU\r`);
             }
@@ -3197,7 +3197,7 @@ class Extron extends utils.Adapter {
      */
     getDspBlockType(baseId) {
         try {
-            const oid = this.id2oid(`${baseId}.status`);
+            const oid = this.id2oid(`${baseId}status`);
             if (oid) {
                 this.streamSend(`WY${oid}AU\r`);
             }
@@ -3262,7 +3262,7 @@ class Extron extends utils.Adapter {
      */
     getDspBlockStatus(baseId) {
         try {
-            const oid = this.id2oid(`${baseId}.status`);
+            const oid = this.id2oid(`${baseId}status`);
             if (oid) {
                 this.streamSend(`WE${oid}AU\r`);
             }
@@ -3312,7 +3312,7 @@ class Extron extends utils.Adapter {
      */
     getDynamicsThreshold(baseId) {
         try {
-            const oid = this.id2oid(`${baseId}.status`);
+            const oid = this.id2oid(`${baseId}status`);
             if (oid) {
                 this.streamSend(`WT${oid}AU\r`);
             }
@@ -3906,25 +3906,25 @@ class Extron extends utils.Adapter {
      */
     setGroupLevel(group, level, device = '') {
         const _groupTypes = device == '' ? this.groupTypes : this.danteDevices[device].grouupTypes;
-        const baseId = device == '' ? '' : `dante.${device}`;
+        const baseId = device == '' ? '' : `dante.${device}.`;
         try {
             const groupStr = group.toString().padStart(2, '0');
             switch (_groupTypes[group]) {
                 case 6: // gain group
                     this.setState(
-                        `${baseId}.groups.${groupStr}.level_db`,
+                        `${baseId}groups.${groupStr}.level_db`,
                         Number(this.calculateFaderValue(level, 'dev').logValue),
                         true,
                     );
                     this.setState(
-                        `${baseId}.groups.${groupStr}.level`,
+                        `${baseId}groups.${groupStr}.level`,
                         Number(this.calculateFaderValue(level, 'dev').linValue),
                         true,
                     );
                     break;
                 case 12: // mute group
-                    this.setState(`${baseId}.groups.${groupStr}.level_db`, level ? 1 : 0, true);
-                    this.setState(`${baseId}.groups.${groupStr}.level`, level ? 1 : 0, true);
+                    this.setState(`${baseId}groups.${groupStr}.level_db`, level ? 1 : 0, true);
+                    this.setState(`${baseId}groups.${groupStr}.level`, level ? 1 : 0, true);
                     break;
                 case 21: // meter group
                     this.log.info(`setGroupLevel(): meter groups not supported`);
@@ -5440,7 +5440,7 @@ class Extron extends utils.Adapter {
                                             } else {
                                                 if (
                                                     id.match(/\.inputs\.\d+\.gain\./) &&
-                                                    (source = await this.getStateAsync(`${baseId}.source`)) &&
+                                                    (source = await this.getStateAsync(`${baseId}source`)) &&
                                                     source.val > 0
                                                 ) {
                                                     calcMode = 'linDig';
@@ -5496,7 +5496,7 @@ class Extron extends utils.Adapter {
                                         } else {
                                             if (
                                                 id.match(/\.inputs\.\d+\.gain\./) &&
-                                                (source = await this.getStateAsync(`${baseId}.source`)) &&
+                                                (source = await this.getStateAsync(`${baseId}source`)) &&
                                                 source.val > 0
                                             ) {
                                                 calcMode = 'logDig';
