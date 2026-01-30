@@ -992,7 +992,7 @@
                     "type": "array",
                     "read": true,
                     "write": true,
-                    "def": []
+                    "def": "[]"
                 },
                 "native": {}
             },
@@ -1633,7 +1633,7 @@
                     "type": "array",
                     "read": true,
                     "write": true,
-                    "def": []
+                    "def": "[]"
                 },
                 "native": {}
             },
@@ -2436,7 +2436,7 @@
                     "type": "array",
                     "read": true,
                     "write": true,
-                    "def":[]
+                    "def":"[]"
                 },
                 "native": {}
             },
@@ -3662,7 +3662,7 @@
                 "type": "array",
                 "read": true,
                 "write": true,
-                "def": []
+                "def": "[]"
                 },
             "native": {}
         }
@@ -3686,7 +3686,7 @@
                 "type": "array",
                 "read": true,
                 "write": true,
-                "def" : []
+                "def" : "[]"
             },
             "native": {}
         },
@@ -3700,7 +3700,7 @@
                 "type": "array",
                 "read": true,
                 "write": true,
-                "def": []
+                "def": "[]"
               },
               "native": {}
         }
