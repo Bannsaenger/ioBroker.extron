@@ -2,11 +2,11 @@
  *
  *      iobroker extron (SIS) Adapter
  *
- *      Copyright (c) 2020-2025, Bannsaenger <bannsaenger@gmx.de>
+ *      Copyright (c) 2020-2026, Bannsaenger <bannsaenger@gmx.de>
  *
  *      CC-NC-BY 4.0 License
  *
- *      last edit 20251118 mschlgl
+ *      last edit 20260217 mschlgl
  */
 
 // The adapter-core module provides access to the core ioBroker functions
@@ -1838,7 +1838,7 @@ class Extron extends utils.Adapter {
         const infoObj = JSON.parse(JSON.stringify(this.objectTemplates.info));
 
         this.log.info(
-            `createDeviceCommonAsync(): for device: "${deviceName ? deviceName : this.devices[this.config.device].model}"`,
+            `createDeviceCommonAsync(): for device: ${deviceName ? deviceName : this.devices[this.config.device].model}`,
         );
         try {
             // create the common section
@@ -1858,7 +1858,7 @@ class Extron extends utils.Adapter {
             }
             if (deviceName) {
                 this.log.warn(
-                    `createDeviceCommon(): creating ${deviceName} "${JSON.stringify(this.config.remoteDevices.find(device => (device.danteName = deviceName)))}"`,
+                    `createDeviceCommonAsync(): creating ${deviceName} "${JSON.stringify(this.config.remoteDevices.find(device => (device.danteName = deviceName)))}"`,
                 );
                 this.danteDevices[deviceName] = JSON.parse(
                     JSON.stringify(this.config.remoteDevices.find(device => (device.danteName = deviceName))),
