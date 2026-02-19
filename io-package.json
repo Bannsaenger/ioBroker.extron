@@ -192,7 +192,7 @@
     "preCheckWithICMP": true,
     "tmrRes": 100,
     "tryICMPAfterRetries": 2,
-    "pushDeviceStatus": true,
+    "pushDeviceStatus": false,
     "stateDelay": 50,
     "remoteDevices": []
   },
