@@ -1836,7 +1836,6 @@ class Extron extends utils.Adapter {
     async createDeviceCommonAsync(deviceName) {
         const baseId = deviceName ? `dante.${deviceName}.` : '';
         const infoObj = JSON.parse(JSON.stringify(this.objectTemplates.info));
-
         this.log.info(
             `createDeviceCommonAsync(): for device: ${deviceName ? deviceName : this.devices[this.config.device].model}`,
         );
@@ -1856,12 +1855,12 @@ class Extron extends utils.Adapter {
                 }
                 this.log.info(`createDeviceCommonAsync(): created ${deviceName} info section`);
             }
-            if (deviceName) {
-                this.log.warn(
-                    `createDeviceCommonAsync(): creating ${deviceName} "${JSON.stringify(this.config.remoteDevices.find(device => (device.danteName = deviceName)))}"`,
+            if (deviceName && this.config.remoteDevices.find(device => device.danteName == deviceName)) {
+                this.log.info(
+                    `createDeviceCommonAsync(): creating ${deviceName} "${JSON.stringify(this.config.remoteDevices.find(device => device.danteName == deviceName))}"`,
                 );
                 this.danteDevices[deviceName] = JSON.parse(
-                    JSON.stringify(this.config.remoteDevices.find(device => (device.danteName = deviceName))),
+                    JSON.stringify(this.config.remoteDevices.find(device => device.danteName == deviceName)),
                 );
             }
         } catch (err) {
@@ -1879,9 +1878,8 @@ class Extron extends utils.Adapter {
         const device = deviceName
             ? Object.keys(this.devices).find(device => this.devices[device].pno == this.danteDevices[deviceName].pno)
             : this.config.device;
-        this.log.warn(`createDatabase(): for "${device}"`);
         const deviceType = this.devices[device].short;
-        this.log.warn(`createDatabase(): for "${device}", "${deviceType}"`);
+        this.log.info(`createDatabase(): for "${device}", "${deviceType}"`);
         //const deviceObjName = this.devices[device].model;
         const baseId = deviceName ? `dante.${deviceName}.` : '';
 
