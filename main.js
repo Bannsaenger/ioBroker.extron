@@ -495,7 +495,7 @@ class Extron extends utils.Adapter {
                 }
             }
             if (this.streamAvailable) {
-                this.setState(device != '' ? `dante.${device}.info.connection` : 'info.connection', true, true);
+                //this.setState(device != '' ? `dante.${device}.info.connection` : 'info.connection', true, true);
                 if (!this.fileSend) {
                     this.log.debug(
                         `streamSend(): Extron sends data to the ${this.config.type} stream: "${this.decodeBufferToLog(data)}"`,
@@ -503,7 +503,7 @@ class Extron extends utils.Adapter {
                 }
                 this.streamAvailable = this.stream.write(data);
             } else {
-                this.setState(device != '' ? `dante.${device}.info.connection` : 'info.connection', false, true);
+                //this.setState(device != '' ? `dante.${device}.info.connection` : 'info.connection', false, true);
                 if (!this.fileSend) {
                     const bufSize = this.sendBuffer.push(data);
                     this.log.warn(
@@ -545,7 +545,6 @@ class Extron extends utils.Adapter {
                 if (data.includes(this.devices[this.config.device].pno)) {
                     this.isDeviceChecked = true;
                     this.log.info(`onStreamData(): Device "${this.devices[this.config.device].model}" verified`);
-                    // this.setState('info.connection', true, true);
                     if (this.config.type === 'ssh') {
                         if (!this.isVerboseMode) {
                             // enter the verbose mode
@@ -1520,6 +1519,24 @@ class Extron extends utils.Adapter {
                                     `onStreamData(): received DANTE relay command response: device:"${ext1}", command:"${ext2}"`,
                                 );
                                 break;
+
+                            case 'RECON':
+                                this.log.info(`A change in the current input frequency was detected`);
+                                break;
+
+                            case 'HPLGO':
+                                this.log.info(
+                                    `A hot plug event was detected on output "${ext1}", ${ext2 == '1' ? 'assertion' : 'deassertion'}`,
+                                );
+                                break;
+
+                            case 'HDCPI':
+                                this.log.info(`A change was detected in the HDCP status of input "${ext1}"`);
+                                break;
+
+                            case 'HDCPO':
+                                this.log.info(`A change was detected in the HDCP status of output "${ext1}"`);
+                                break;
                         }
                     } else {
                         if (
@@ -1598,7 +1615,7 @@ class Extron extends utils.Adapter {
         try {
             this.log.debug('onStreamContinue(): Extron stream can continue');
             this.streamAvailable = true;
-            this.setState('info.connection', true, true);
+            //this.setState('info.connection', true, true);
             if (this.fileSend) {
                 this.log.debug(`onStreamContinue(): flushing sendBuffer "${this.sendBuffer.length}"`);
                 while (this.sendBuffer.length && this.streamAvailable) {
@@ -1896,7 +1913,7 @@ class Extron extends utils.Adapter {
             // if cp82 or sme211 : create video inputs and outputs
             if (deviceType === 'cp82' || deviceType === 'sme211') {
                 for (const element of this.objectTemplates[this.devices[device].objects[1]].connections) {
-                    await this.setObjectAsync(`${baseId}{element._id}`, element);
+                    await this.setObjectAsync(`${baseId}${element._id}`, element);
                 }
             }
             // if smd202 : create video player
@@ -2421,6 +2438,10 @@ class Extron extends utils.Adapter {
 
                                 case 'connected':
                                     this.listDanteConnections();
+                                    break;
+
+                                case 'tie':
+                                    this.log.info(`${idType} ${grpId} tie received, but not yet implemented`);
                                     break;
 
                                 default:
@@ -4768,6 +4789,8 @@ class Extron extends utils.Adapter {
      */
     oid2id(oid, deviceName = '') {
         const device = deviceName == '' ? this.devices[this.config.device].short : deviceName;
+        // oid == [what][where][val]
+        // oid ==    3    00    0000
         const whatstr = oid.slice(0, 1);
         const what = Number(whatstr);
         const where = Number(oid.slice(1, 3));
@@ -4878,6 +4901,10 @@ class Extron extends utils.Adapter {
                             if (where === 0) {
                                 // Input Gain Control
                                 retId = `in.videoInputs.${(val + 1).toString().padStart(2, '0')}.premix.`;
+                            }
+                            if (where === 1) {
+                                // Input Mixpoint
+                                retId = `in.videoInputs.${(val + 1).toString().padStart(2, '0')}.mixPoints.`;
                             }
                             break;
 
