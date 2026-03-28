@@ -13,10 +13,10 @@
 const utils = require('@iobroker/adapter-core');
 
 // Load your modules here, e.g.:
-const fs = require('fs');
+const fs = require('node:fs');
 const Client = require('ssh2').Client;
-const Net = require('net');
-const path = require('path');
+const Net = require('node:net');
+const path = require('node:path');
 
 const errCodes = {
     E01: 'Invalid input channel number (out of range)',
