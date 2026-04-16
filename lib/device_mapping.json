@@ -144,7 +144,7 @@
         "connectionType": "network",
         "objects" : [
             "common",
-            "dmp128",
+            "dmp",
             "danterelay",
             "userflash"
         ],
