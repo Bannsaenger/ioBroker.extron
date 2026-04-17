@@ -3652,7 +3652,7 @@ class Extron extends utils.Adapter {
                     ? `${userFile.match(/(\w{3}, \d\d \w* \d* \W*\d\d:\d\d:\d\d)/g)[0]}`
                     : ''; //extract timestamp
                 this.file.fileSize = userFile.match(/(\d+)$/g) ? Number(userFile.match(/(\d+)$/g)[0]) : 0; // extract filesize
-                if (this.devices[this.config.device].short !== 'dmp' || this.file.fileName.match(/.raw$/)) {
+                if (this.devices[this.config.device].short.startsWith('dmp') || this.file.fileName.match(/.raw$/)) {
                     // if DMP only accept .raw AudioFiles
                     i++;
                     filenames.push(this.file.fileName); // add to list of filenames
