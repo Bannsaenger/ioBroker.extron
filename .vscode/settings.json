@@ -22,5 +22,5 @@
         }
     ],
     "prettier.prettierPath": "./node_modules/prettier",
-    "prettier.endOfLine": "crlf"
+    "prettier.endOfLine": "auto"
 }
