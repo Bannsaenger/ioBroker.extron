@@ -10,15 +10,15 @@ export default [
         ignores: [
             '.dev-server/',
             '.vscode/',
-            '*.test.js', 
-            'test/**/*.js', 
-            '*.config.mjs', 
-            'build', 
-            'admin/build', 
+            '*.test.js',
+            'test/**/*.js',
+            '*.config.mjs',
+            'build',
+            'admin/build',
             'admin/words.js',
             'admin/admin.d.ts',
-            '**/adapter-config.d.ts'     
-        ] 
+            '**/adapter-config.d.ts',
+        ],
     },
 
     {
@@ -26,8 +26,7 @@ export default [
         // as this improves maintainability. jsdoc warnings will not block buiuld process.
         rules: {
             // 'jsdoc/require-jsdoc': 'off',
-            'jsdoc/no-types': 'off'
+            'jsdoc/no-types': 'off',
         },
     },
-    
 ];

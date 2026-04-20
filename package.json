@@ -1,80 +1,80 @@
 {
-  "name": "iobroker.extron",
-  "version": "0.3.0",
-  "description": "Extron SIS adapter",
-  "author": {
-    "name": "Bannsaenger",
-    "email": "bannsaenger@gmx.de"
-  },
-  "homepage": "https://github.com/Bannsaenger/ioBroker.extron",
-  "license": "CC-BY-NC-4.0",
-  "keywords": [
-    "ioBroker",
-    "extron"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Bannsaenger/ioBroker.extron.git"
-  },
-  "engines": {
-    "node": ">= 20"
-  },
-  "dependencies": {
-    "@iobroker/adapter-core": "^3.3.2",
-    "ssh2": "^1.17.0"
-  },
-  "devDependencies": {
-    "@types/ssh2": "^1.15.5",
-    "@alcalzone/release-script": "^5.1.1",
-    "@alcalzone/release-script-plugin-iobroker": "^5.1.2",
-    "@alcalzone/release-script-plugin-license": "^5.1.1",
-    "@alcalzone/release-script-plugin-manual-review": "^5.1.1",
-    "@iobroker/adapter-dev": "^1.5.0",
-    "@iobroker/eslint-config": "^2.2.0",
-    "@iobroker/testing": "^5.2.2",
-    "@tsconfig/node20": "^20.1.9",
-    "@types/node": "^24.12.0",
-    "@iobroker/types": "^7.1.0",
-    "eslint": "^9.39.4",
-    "eslint-config-prettier": "^10.1.8",
-    "eslint-plugin-jsdoc": "^54.1.1",
-    "eslint-plugin-prettier": "^5.5.5",
-    "eslint-plugin-react": "^7.37.5",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-unicorn": "^60.0.0",
-    "eslint-plugin-import": "^2.32.0",
-    "prettier": "^3.8.1",
-    "typescript": "~5.9.3",
-    "typescript-eslint": "^8.58.0"
-  },
-  "main": "main.js",
-  "files": [
-    "admin{,/!(src)/**}/!(tsconfig|tsconfig.*).{json,json5}",
-    "admin{,/!(src)/**}/*.{html,css,png,svg,jpg,js}",
-    "lib/",
-    "www/",
-    "io-package.json",
-    "LICENSE",
-    "main.js"
-  ],
-  "scripts": {
-    "test:js": "mocha --config test/mocharc.custom.json \"{!(node_modules|test)/**/*.test.js,*.test.js,test/**/test!(PackageFiles|Startup).js}\"",
-    "test:package": "mocha test/package --exit",
-    "test:integration": "mocha test/integration --exit",
-    "test": "npm run test:js && npm run test:package",
-    "check": "tsc --noEmit -p tsconfig.check.json",
-    "lint": "eslint --ignore-pattern words.js,.dev-server/* .",
-    "translate": "translate-adapter",
-    "release": "release-script patch --all --verbose -p iobroker license",
-    "release-minor": "release-script minor --all --verbose -p iobroker license manual-review",
-    "release-major": "release-script major --all --verbose -p iobroker license changelog manual-review"
-  },
-  "bugs": {
-    "url": "https://github.com/Bannsaenger/ioBroker.extron/issues"
-  },
-  "directories": {
-    "lib": "lib",
-    "test": "test"
-  },
-  "readmeFilename": "README.md"
+    "name": "iobroker.extron",
+    "version": "0.3.0",
+    "description": "Extron SIS adapter",
+    "author": {
+        "name": "Bannsaenger",
+        "email": "bannsaenger@gmx.de"
+    },
+    "homepage": "https://github.com/Bannsaenger/ioBroker.extron",
+    "license": "CC-BY-NC-4.0",
+    "keywords": [
+        "ioBroker",
+        "extron"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/Bannsaenger/ioBroker.extron.git"
+    },
+    "engines": {
+        "node": ">= 20"
+    },
+    "dependencies": {
+        "@iobroker/adapter-core": "^3.3.2",
+        "ssh2": "^1.17.0"
+    },
+    "devDependencies": {
+        "@types/ssh2": "^1.15.5",
+        "@alcalzone/release-script": "^5.1.1",
+        "@alcalzone/release-script-plugin-iobroker": "^5.1.2",
+        "@alcalzone/release-script-plugin-license": "^5.1.1",
+        "@alcalzone/release-script-plugin-manual-review": "^5.1.1",
+        "@iobroker/adapter-dev": "^1.5.0",
+        "@iobroker/eslint-config": "^2.2.0",
+        "@iobroker/testing": "^5.2.2",
+        "@tsconfig/node20": "^20.1.9",
+        "@types/node": "^24.12.0",
+        "@iobroker/types": "^7.1.0",
+        "eslint": "^9.39.4",
+        "eslint-config-prettier": "^10.1.8",
+        "eslint-plugin-jsdoc": "^54.1.1",
+        "eslint-plugin-prettier": "^5.5.5",
+        "eslint-plugin-react": "^7.37.5",
+        "eslint-plugin-react-hooks": "^5.2.0",
+        "eslint-plugin-unicorn": "^60.0.0",
+        "eslint-plugin-import": "^2.32.0",
+        "prettier": "^3.8.1",
+        "typescript": "~5.9.3",
+        "typescript-eslint": "^8.58.0"
+    },
+    "main": "main.js",
+    "files": [
+        "admin{,/!(src)/**}/!(tsconfig|tsconfig.*).{json,json5}",
+        "admin{,/!(src)/**}/*.{html,css,png,svg,jpg,js}",
+        "lib/",
+        "www/",
+        "io-package.json",
+        "LICENSE",
+        "main.js"
+    ],
+    "scripts": {
+        "test:js": "mocha --config test/mocharc.custom.json \"{!(node_modules|test)/**/*.test.js,*.test.js,test/**/test!(PackageFiles|Startup).js}\"",
+        "test:package": "mocha test/package --exit",
+        "test:integration": "mocha test/integration --exit",
+        "test": "npm run test:js && npm run test:package",
+        "check": "tsc --noEmit -p tsconfig.check.json",
+        "lint": "eslint --ignore-pattern words.js,.dev-server/* .",
+        "translate": "translate-adapter",
+        "release": "release-script patch --all --verbose -p iobroker license",
+        "release-minor": "release-script minor --all --verbose -p iobroker license manual-review",
+        "release-major": "release-script major --all --verbose -p iobroker license changelog manual-review"
+    },
+    "bugs": {
+        "url": "https://github.com/Bannsaenger/ioBroker.extron/issues"
+    },
+    "directories": {
+        "lib": "lib",
+        "test": "test"
+    },
+    "readmeFilename": "README.md"
 }

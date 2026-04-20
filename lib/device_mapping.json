@@ -1,8 +1,8 @@
 {
-    "DTP2_CrossPoint_82" : {
-        "model" : "DTP2 CrossPoint 82",
-        "short" : "cp82",
-        "pno" : "60-1812-01",
+    "DTP2_CrossPoint_82": {
+        "model": "DTP2 CrossPoint 82",
+        "short": "cp82",
+        "pno": "60-1812-01",
         "description": {
             "en": "8x2 Presentation Matrix Switcher (DTP2 CrossPoint 82)",
             "de": "8x2 Präsentationskreuzschiene (DTP2 CrossPoint 82)",
@@ -17,62 +17,59 @@
             "zh-cn": "8x2 演示矩阵切换器(DTP2 CrossPoint 82)"
         },
         "connectionType": "network",
-        "objects" : [
-            "common",
-            "cp82"
-        ],
-        "in" : {
-            "inputs" : {
-                "name" : "Mic Inputs",
-                "short" : "I",
-                "amount" : 2
+        "objects": ["common", "cp82"],
+        "in": {
+            "inputs": {
+                "name": "Mic Inputs",
+                "short": "I",
+                "amount": 2
             },
-           "lineInputs" : {
-                "name" : "Line Inputs",
-                "short" : "L",
-                "amount" : 2
+            "lineInputs": {
+                "name": "Line Inputs",
+                "short": "L",
+                "amount": 2
             },
-            "playerInputs" :{
-                "name" : "File player",
-                "short" : "F",
-                "amount" : 2
+            "playerInputs": {
+                "name": "File player",
+                "short": "F",
+                "amount": 2
             },
-            "programInputs" :{
-                "name" : "Program Inputs",
-                "short" : "P",
-                "amount" : 2
+            "programInputs": {
+                "name": "Program Inputs",
+                "short": "P",
+                "amount": 2
             },
-            "videoInputs" :{
-                "name" : "Video Line Inputs",
-                "short" : "S",
-                "amount" : 18
+            "videoInputs": {
+                "name": "Video Line Inputs",
+                "short": "S",
+                "amount": 18
             }
         },
-        "mp" : {
-            "mixPoints" : {
-                "name" : "Mixpoints",
-                "short" : "MP"
+        "mp": {
+            "mixPoints": {
+                "name": "Mixpoints",
+                "short": "MP"
             }
         },
-        "out" : {
-            "outputs" : {
-                "name" : "Output",
-                "short" : "O",
-                "amount" : 8
+        "out": {
+            "outputs": {
+                "name": "Output",
+                "short": "O",
+                "amount": 8
             }
         },
-        "grp" : {
-            "groups" : {
-                "name" : "Groups",
-                "short" : "GRP",
-                "amount" : 10
+        "grp": {
+            "groups": {
+                "name": "Groups",
+                "short": "GRP",
+                "amount": 10
             }
         }
     },
-    "SMD202" : {
-        "model" : "SMD 202",
-        "short" : "smd202",
-        "pno" : "60-1306-01",
+    "SMD202": {
+        "model": "SMD 202",
+        "short": "smd202",
+        "pno": "60-1306-01",
         "description": {
             "en": "H.264 Streaming Media Player and Decoder (SMD 202)",
             "de": "H.264-Player und Dekodierer (SMD 202)",
@@ -87,16 +84,12 @@
             "zh-cn": "H.264 流媒体播放器与解码器(SMD 202)"
         },
         "connectionType": "network",
-        "objects" : [
-            "common",
-            "smd202",
-            "userflash"
-        ]
+        "objects": ["common", "smd202", "userflash"]
     },
-    "SME211" : {
-        "model" : "SME 211",
-        "short" : "sme211",
-        "pno" : "60-1763-01",
+    "SME211": {
+        "model": "SME 211",
+        "short": "sme211",
+        "pno": "60-1763-01",
         "description": {
             "en": "Streaming Media Encoder (SME 211)",
             "de": "Kodierer für Medien-Streaming (SME 211)",
@@ -111,23 +104,19 @@
             "zh-cn": "流媒体编码器(SME 211)"
         },
         "connectionType": "network",
-        "objects" : [
-            "common",
-            "sme211",
-            "userflash"
-        ],
-        "in" : {
-            "inputs" : {
-                "name" : "Inputs",
-                "short" : "I",
-                "amount" : 4
+        "objects": ["common", "sme211", "userflash"],
+        "in": {
+            "inputs": {
+                "name": "Inputs",
+                "short": "I",
+                "amount": 4
             }
         }
     },
-    "DMP128Plus_AT" : {
-        "model" : "DMP 128 Plus AT",
-        "short" : "dmp",
-        "pno" : "60-1511-10",
+    "DMP128Plus_AT": {
+        "model": "DMP 128 Plus AT",
+        "short": "dmp",
+        "pno": "60-1511-10",
         "description": {
             "en": "12x8 ProDSP Processor w/Dante (DMP 128 Plus AT)",
             "de": "12x8 Matrix-Prozessor mit ProDSP und Dante (DMP 128 Plus AT)",
@@ -142,88 +131,83 @@
             "zh-cn": "12x8 ProDSP 处理器 w/Dante(DMP 128 Plus AT)"
         },
         "connectionType": "network",
-        "objects" : [
-            "common",
-            "dmp",
-            "danterelay",
-            "userflash"
-        ],
-        "in" : {
-            "inputs" : {
-                "name" : "Inputs",
-                "short" : "I",
-                "amount" : 12,
-                "dspfunc": ["dsp_flt","dsp_aec","dsp_dyn","dsp_dyn","dsp_dly","dsp_dck","dsp_amx"]
+        "objects": ["common", "dmp", "danterelay", "userflash"],
+        "in": {
+            "inputs": {
+                "name": "Inputs",
+                "short": "I",
+                "amount": 12,
+                "dspfunc": ["dsp_flt", "dsp_aec", "dsp_dyn", "dsp_dyn", "dsp_dly", "dsp_dck", "dsp_amx"]
             },
-            "auxInputs" : {
-                "name" : "Aux Inputs",
-                "short" : "X",
-                "amount" : 8,
-                "dspfunc": ["dsp_flt","dsp_dyn","dsp_duck","dsp_amx"]
+            "auxInputs": {
+                "name": "Aux Inputs",
+                "short": "X",
+                "amount": 8,
+                "dspfunc": ["dsp_flt", "dsp_dyn", "dsp_duck", "dsp_amx"]
             },
-            "virtualReturns" : {
-                "name" : "Virtual Returns",
-                "short" : "R",
-                "amount" : 16,
-                "dspfunc":["dsp_flt","dsp_dyn","dsp_dly"]
+            "virtualReturns": {
+                "name": "Virtual Returns",
+                "short": "R",
+                "amount": 16,
+                "dspfunc": ["dsp_flt", "dsp_dyn", "dsp_dly"]
             },
-            "expansionInputs" : {
-                "name" : "Expansion Bus (AT Inputs)",
-                "short" : "D",
-                "amount" : 48,
-                "dspfunc":["dsp_amx"]
+            "expansionInputs": {
+                "name": "Expansion Bus (AT Inputs)",
+                "short": "D",
+                "amount": 48,
+                "dspfunc": ["dsp_amx"]
             }
         },
-        "mp" : {
-            "mixPoints" : {
-                "name" : "Mixpoints",
-                "short" : "MP"
+        "mp": {
+            "mixPoints": {
+                "name": "Mixpoints",
+                "short": "MP"
             }
         },
-        "out" : {
-            "outputs" : {
-                "name" : "Output",
-                "short" : "O",
-                "amount" : 8,
-                "dspfunc":["dsp_dly","dsp_flt","dsp_dyn"]
+        "out": {
+            "outputs": {
+                "name": "Output",
+                "short": "O",
+                "amount": 8,
+                "dspfunc": ["dsp_dly", "dsp_flt", "dsp_dyn"]
             },
-            "auxOutputs" : {
-                "name" : "Aux Output",
-                "short" : "A",
-                "amount" : 8,
-                "dspfunc":["dsp_flt","dsp_dyn"]
+            "auxOutputs": {
+                "name": "Aux Output",
+                "short": "A",
+                "amount": 8,
+                "dspfunc": ["dsp_flt", "dsp_dyn"]
             },
-            "virtualSendBus" : {
-                "name" : "virtual SendBus",
-                "short" : "V",
-                "amount" : 16
+            "virtualSendBus": {
+                "name": "virtual SendBus",
+                "short": "V",
+                "amount": 16
             },
-            "expansionOutputs" : {
-                "name" : "Expansion Output",
-                "short" : "E",
-                "amount" : 16,
-                "dspfunc":["dsp_dly","dsp_flt","dsp_dyn"]
+            "expansionOutputs": {
+                "name": "Expansion Output",
+                "short": "E",
+                "amount": 16,
+                "dspfunc": ["dsp_dly", "dsp_flt", "dsp_dyn"]
             }
         },
-        "ply" : {
+        "ply": {
             "players": {
-                "name" : "Audio Player",
-                "short" : "P",
-                "amount" : 8
+                "name": "Audio Player",
+                "short": "P",
+                "amount": 8
             }
         },
-        "grp" : {
-            "groups" : {
-                "name" : "Group",
-                "short" : "GRP",
-                "amount" : 64
+        "grp": {
+            "groups": {
+                "name": "Group",
+                "short": "GRP",
+                "amount": 64
             }
         }
     },
-    "DMP128Plus_C_V_AT" : {
-        "model" : "DMP 128 Plus C V AT",
-        "short" : "dmp128",
-        "pno" : "60-1513-10",
+    "DMP128Plus_C_V_AT": {
+        "model": "DMP 128 Plus C V AT",
+        "short": "dmp128",
+        "pno": "60-1513-10",
         "description": {
             "en": "12x8 ProDSP Processor w/AEC, VoIP, and Dante (DMP 128 Plus C V AT)",
             "de": "12x8 Matrix-Prozessoren mit ProDSP, AEC, VoIP und Dante (DMP 128 Plus C V AT)",
@@ -238,81 +222,76 @@
             "zh-cn": "12x8 ProDSP 处理器 w/AEC, VoIP,和但丁(DMP 128 Plus C V AT)"
         },
         "connectionType": "network",
-        "objects" : [
-            "common",
-            "dmp",
-            "danterelay",
-            "userflash"
-        ],
-        "in" : {
-            "inputs" : {
-                "name" : "Inputs",
-                "short" : "I",
-                "amount" : 12
+        "objects": ["common", "dmp", "danterelay", "userflash"],
+        "in": {
+            "inputs": {
+                "name": "Inputs",
+                "short": "I",
+                "amount": 12
             },
-            "auxInputs" : {
-                "name" : "Aux Inputs",
-                "short" : "X",
-                "amount" : 8
+            "auxInputs": {
+                "name": "Aux Inputs",
+                "short": "X",
+                "amount": 8
             },
-            "virtualReturns" : {
-                "name" : "Virtual Returns",
-                "short" : "R",
-                "amount" : 16
+            "virtualReturns": {
+                "name": "Virtual Returns",
+                "short": "R",
+                "amount": 16
             },
-            "expansionInputs" : {
-                "name" : "Expansion Bus (AT Inputs)",
-                "short" : "D",
-                "amount" : 48
+            "expansionInputs": {
+                "name": "Expansion Bus (AT Inputs)",
+                "short": "D",
+                "amount": 48
             }
         },
-        "mp" : {
-            "mixPoints" : {
-                "name" : "Mixpoints",
-                "short" : "MP"
+        "mp": {
+            "mixPoints": {
+                "name": "Mixpoints",
+                "short": "MP"
             }
         },
-        "out" : {
-            "outputs" : {
-                "name" : "Output",
-                "short" : "O",
-                "amount" : 8
+        "out": {
+            "outputs": {
+                "name": "Output",
+                "short": "O",
+                "amount": 8
             },
-            "auxOutputs" : {
-                "name" : "Aux Output",
-                "short" : "A",
-                "amount" : 8
+            "auxOutputs": {
+                "name": "Aux Output",
+                "short": "A",
+                "amount": 8
             },
-            "virtualSendBus" : {
-                "name" : "virtual SendBus",
-                "short" : "V",
-                "amount" : 16
+            "virtualSendBus": {
+                "name": "virtual SendBus",
+                "short": "V",
+                "amount": 16
             },
-            "expansionOutputs" : {
-                "name" : "Expansion Output",
-                "short" : "E",
-                "amount" : 16
+            "expansionOutputs": {
+                "name": "Expansion Output",
+                "short": "E",
+                "amount": 16
             }
         },
-        "ply" : {
+        "ply": {
             "players": {
-                "name" : "Audio Player",
-                "short" : "P",
-                "amount" : 8
+                "name": "Audio Player",
+                "short": "P",
+                "amount": 8
             }
         },
-        "grp" : {
-            "groups" : {
-                "name" : "Groups",
-                "short" : "GRP",
-                "amount" : 64
+        "grp": {
+            "groups": {
+                "name": "Groups",
+                "short": "GRP",
+                "amount": 64
             }
         }
     },
-    "DMP64Plus_C_AT" : {
-        "model" : "DMP 64 Plus AT",
-        "short" : "dmp64",
-        "pno" : "60-1823-10",        
+    "DMP64Plus_C_AT": {
+        "model": "DMP 64 Plus AT",
+        "short": "dmp64",
+        "pno": "60-1823-10",
         "description": {
             "en": "6x4 Digital Matrix Processor w/ AEC and Dante (DMP 64 Plus C AT)",
             "de": "Digitaler 6x4 Matrix-Prozessor mit AEC und Dante (DMP 64 Plus C AT)",
@@ -327,81 +306,76 @@
             "zh-cn": "6x4 数字矩阵处理器 w/ AEC和但丁(DMP 64 Plus C AT)"
         },
         "connectionType": "network",
-        "objects" : [
-            "common",
-            "dmp",
-            "danterelay",
-            "userflash"
-        ],
-        "in" : {
-            "inputs" : {
-                "name" : "Inputs",
-                "short" : "I",
-                "amount" : 6
+        "objects": ["common", "dmp", "danterelay", "userflash"],
+        "in": {
+            "inputs": {
+                "name": "Inputs",
+                "short": "I",
+                "amount": 6
             },
-            "auxInputs" : {
-                "name" : "Aux Inputs",
-                "short" : "X",
-                "amount" : 8
+            "auxInputs": {
+                "name": "Aux Inputs",
+                "short": "X",
+                "amount": 8
             },
-            "virtualReturns" : {
-                "name" : "Virtual Returns",
-                "short" : "R",
-                "amount" : 16
+            "virtualReturns": {
+                "name": "Virtual Returns",
+                "short": "R",
+                "amount": 16
             },
-            "expansionInputs" : {
-                "name" : "Expansion Bus (AT Inputs)",
-                "short" : "D",
-                "amount" : 48
+            "expansionInputs": {
+                "name": "Expansion Bus (AT Inputs)",
+                "short": "D",
+                "amount": 48
             }
         },
-        "mp" : {
-            "mixPoints" : {
-                "name" : "Mixpoints",
-                "short" : "MP"
+        "mp": {
+            "mixPoints": {
+                "name": "Mixpoints",
+                "short": "MP"
             }
         },
-        "out" : {
-            "outputs" : {
-                "name" : "Output",
-                "short" : "O",
-                "amount" : 4
+        "out": {
+            "outputs": {
+                "name": "Output",
+                "short": "O",
+                "amount": 4
             },
-            "auxOutputs" : {
-                "name" : "Aux Output",
-                "short" : "A",
-                "amount" : 8
+            "auxOutputs": {
+                "name": "Aux Output",
+                "short": "A",
+                "amount": 8
             },
-            "virtualSendBus" : {
-                "name" : "virtual SendBus",
-                "short" : "V",
-                "amount" : 16
+            "virtualSendBus": {
+                "name": "virtual SendBus",
+                "short": "V",
+                "amount": 16
             },
-            "expansionOutputs" : {
-                "name" : "Expansion Output",
-                "short" : "E",
-                "amount" : 16
+            "expansionOutputs": {
+                "name": "Expansion Output",
+                "short": "E",
+                "amount": 16
             }
         },
-        "ply" : {
+        "ply": {
             "players": {
-                "name" : "Audio Player",
-                "short" : "P",
-                "amount" : 8
+                "name": "Audio Player",
+                "short": "P",
+                "amount": 8
             }
         },
-        "grp" : {
-            "groups" : {
-                "name" : "Group",
-                "short" : "GRP",
-                "amount" : 64
+        "grp": {
+            "groups": {
+                "name": "Group",
+                "short": "GRP",
+                "amount": 64
             }
         }
     },
-    "XMP240_C_AT" : {
-        "model" : "XMP 240 C AT",
-        "short" : "xmp240cat",
-        "pno" : "60-1836-01",
+    "XMP240_C_AT": {
+        "model": "XMP 240 C AT",
+        "short": "xmp240cat",
+        "pno": "60-1836-01",
         "description": {
             "en": "Dante Audio Matrix Processor with AEC (XMP 240 C AT)",
             "de": "Matrixprozessor mit 24 AEC-Kanälen und Dante (XMP 240 C AT)",
@@ -416,53 +390,49 @@
             "zh-cn": "带有AEC(XMP 240 C AT)的但丁音频矩阵处理器"
         },
         "connectionType": "network",
-        "objects" : [
-            "common",
-            "xmp",
-            "danterelay"
-        ],
-        "in" : {
-            "virtualReturns" : {
-                "name" : "Virtual Returns",
-                "short" : "R",
-                "amount" : 16
+        "objects": ["common", "xmp", "danterelay"],
+        "in": {
+            "virtualReturns": {
+                "name": "Virtual Returns",
+                "short": "R",
+                "amount": 16
             },
-            "expansionInputs" : {
-                "name" : "Expansion Bus (AT Inputs)",
-                "short" : "D",
-                "amount" : 48
+            "expansionInputs": {
+                "name": "Expansion Bus (AT Inputs)",
+                "short": "D",
+                "amount": 48
             }
         },
-        "mp" : {
-            "mixPoints" : {
-                "name" : "Mixpoints",
-                "short" : "MP"
+        "mp": {
+            "mixPoints": {
+                "name": "Mixpoints",
+                "short": "MP"
             }
         },
-        "out" : {
-            "virtualSendBus" : {
-                "name" : "virtual SendBus",
-                "short" : "V",
-                "amount" : 16
+        "out": {
+            "virtualSendBus": {
+                "name": "virtual SendBus",
+                "short": "V",
+                "amount": 16
             },
-            "expansionOutputs" : {
-                "name" : "Expansion Output",
-                "short" : "E",
-                "amount" : 48
+            "expansionOutputs": {
+                "name": "Expansion Output",
+                "short": "E",
+                "amount": 48
             }
         },
-        "grp" : {
-            "groups" : {
-                "name" : "Groups",
-                "short" : "GRP",
-                "amount" : 64
+        "grp": {
+            "groups": {
+                "name": "Groups",
+                "short": "GRP",
+                "amount": 64
             }
-        }   
+        }
     },
-    "NetPA_U_1002" :{
-        "model" : "NetPA U 1002",
-        "short" : "npa1002",
-        "pno" : "60-1767-01",
+    "NetPA_U_1002": {
+        "model": "NetPA U 1002",
+        "short": "npa1002",
+        "pno": "60-1767-01",
         "description": {
             "en": "100 watt 2 channel low impedance amplifier with DSP and Dante (NetPA U 1002)",
             "de": "Verstärker mit zwei Kanälen mit Dante und DSP 100 W je Kanal (NetPA U 1002)",
@@ -477,57 +447,54 @@
             "zh-cn": "100瓦2信道低阻放大器,配有DSP和但丁(NetPA U 1002)"
         },
         "connectionType": "dante",
-        "objects" : [
-            "common",
-            "netpa"
-        ],
-        "in" : {
-            "inputs" : {
-                "name" : "Inputs",
-                "short" : "I",
-                "amount" : 4
+        "objects": ["common", "netpa"],
+        "in": {
+            "inputs": {
+                "name": "Inputs",
+                "short": "I",
+                "amount": 4
             },
-            "expansionInputs" : {
-                "name" : "Expansion Bus (AT Inputs)",
-                "short" : "D",
-                "amount" : 2
+            "expansionInputs": {
+                "name": "Expansion Bus (AT Inputs)",
+                "short": "D",
+                "amount": 2
             }
         },
-        "mp" : {
-            "mixPoints" : {
-                "name" : "Mixpoints",
-                "short" : "MP"
+        "mp": {
+            "mixPoints": {
+                "name": "Mixpoints",
+                "short": "MP"
             }
         },
-        "out" : {
-            "outputs" : {
-                "name" : "Output",
-                "short" : "O",
-                "amount" : 2
+        "out": {
+            "outputs": {
+                "name": "Output",
+                "short": "O",
+                "amount": 2
             },
-            "ampOutputs" : {
-                "name" : "Amp Output",
-                "short" : "A",
-                "amount" : 2
+            "ampOutputs": {
+                "name": "Amp Output",
+                "short": "A",
+                "amount": 2
             },
-            "expansionOutputs" : {
-                "name" : "Expansion Output",
-                "short" : "E",
-                "amount" : 2
+            "expansionOutputs": {
+                "name": "Expansion Output",
+                "short": "E",
+                "amount": 2
             }
         },
-        "grp" : {
-            "groups" : {
-                "name" : "Groups",
-                "short" : "GRP",
-                "amount" : 32
+        "grp": {
+            "groups": {
+                "name": "Groups",
+                "short": "GRP",
+                "amount": 32
             }
         }
     },
-    "NetPA_U_1004":{
-        "model" : "NetPA U 1004",
-        "short" : "npa1004",
-        "pno" : "60-1766-01",
+    "NetPA_U_1004": {
+        "model": "NetPA U 1004",
+        "short": "npa1004",
+        "pno": "60-1766-01",
         "description": {
             "en": "100 watt 4 channel low impedance amplifier with DSP and Dante (NetPA U 1004)",
             "de": "Verstärker mit vier Kanälen mit Dante und DSP 100 W je Kanal (NetPA U 1004)",
@@ -542,57 +509,54 @@
             "zh-cn": "100瓦4信道低阻放大器,配有DSP和但丁(NetPA U 1004)"
         },
         "connectionType": "dante",
-        "objects" : [
-            "common",
-            "netpa"
-        ],
-        "in" : {
-            "inputs" : {
-                "name" : "Inputs",
-                "short" : "I",
-                "amount" : 4
+        "objects": ["common", "netpa"],
+        "in": {
+            "inputs": {
+                "name": "Inputs",
+                "short": "I",
+                "amount": 4
             },
-            "expansionInputs" : {
-                "name" : "Expansion Bus (AT Inputs)",
-                "short" : "D",
-                "amount" : 4
+            "expansionInputs": {
+                "name": "Expansion Bus (AT Inputs)",
+                "short": "D",
+                "amount": 4
             }
         },
-        "mp" : {
-            "mixPoints" : {
-                "name" : "Mixpoints",
-                "short" : "MP"
+        "mp": {
+            "mixPoints": {
+                "name": "Mixpoints",
+                "short": "MP"
             }
         },
-        "out" : {
-            "outputs" : {
-                "name" : "Output",
-                "short" : "O",
-                "amount" : 4
+        "out": {
+            "outputs": {
+                "name": "Output",
+                "short": "O",
+                "amount": 4
             },
-            "ampOutputs" : {
-                "name" : "Amp Output",
-                "short" : "A",
-                "amount" : 4
+            "ampOutputs": {
+                "name": "Amp Output",
+                "short": "A",
+                "amount": 4
             },
-            "expansionOutputs" : {
-                "name" : "Expansion Output",
-                "short" : "E",
-                "amount" : 4
+            "expansionOutputs": {
+                "name": "Expansion Output",
+                "short": "E",
+                "amount": 4
             }
         },
-        "grp" : {
-            "groups" : {
-                "name" : "Groups",
-                "short" : "GRP",
-                "amount" : 32
+        "grp": {
+            "groups": {
+                "name": "Groups",
+                "short": "GRP",
+                "amount": 32
             }
         }
     },
-    "NetPA_U_2002":{
-        "model" : "NetPA U 2002 SB",
-        "short" : "npa2002",
-        "pno" : "60-1757-10",
+    "NetPA_U_2002": {
+        "model": "NetPA U 2002 SB",
+        "short": "npa2002",
+        "pno": "60-1757-10",
         "description": {
             "en": "200 watt 2 channel low impedance amplifier with DSP and Dante (NetPA U 2002)",
             "de": "Verstärker mit zwei Kanälen mit Dante und DSP 200 W je Kanal (NetPA U 2002)",
@@ -607,57 +571,54 @@
             "zh-cn": "200瓦2信道低阻放大器,配有DSP和但丁(NetPA U 2002)"
         },
         "connectionType": "dante",
-        "objects" : [
-            "common",
-            "netpa"
-        ],
-        "in" : {
-            "inputs" : {
-                "name" : "Inputs",
-                "short" : "I",
-                "amount" : 4
+        "objects": ["common", "netpa"],
+        "in": {
+            "inputs": {
+                "name": "Inputs",
+                "short": "I",
+                "amount": 4
             },
-            "expansionInputs" : {
-                "name" : "Expansion Bus (AT Inputs)",
-                "short" : "D",
-                "amount" : 2
+            "expansionInputs": {
+                "name": "Expansion Bus (AT Inputs)",
+                "short": "D",
+                "amount": 2
             }
         },
-        "mp" : {
-            "mixPoints" : {
-                "name" : "Mixpoints",
-                "short" : "MP"
+        "mp": {
+            "mixPoints": {
+                "name": "Mixpoints",
+                "short": "MP"
             }
         },
-        "out" : {
-            "outputs" : {
-                "name" : "Output",
-                "short" : "O",
-                "amount" : 2
+        "out": {
+            "outputs": {
+                "name": "Output",
+                "short": "O",
+                "amount": 2
             },
-            "ampOutputs" : {
-                "name" : "Amp Output",
-                "short" : "A",
-                "amount" : 2
+            "ampOutputs": {
+                "name": "Amp Output",
+                "short": "A",
+                "amount": 2
             },
-            "expansionOutputs" : {
-                "name" : "Expansion Output",
-                "short" : "E",
-                "amount" : 2
+            "expansionOutputs": {
+                "name": "Expansion Output",
+                "short": "E",
+                "amount": 2
             }
         },
-        "grp" : {
-            "groups" : {
-                "name" : "Groups",
-                "short" : "GRP",
-                "amount" : 32
+        "grp": {
+            "groups": {
+                "name": "Groups",
+                "short": "GRP",
+                "amount": 32
             }
         }
     },
-    "NetPA_U_8001" :{
-        "model" : "NetPA U 8001",
-        "short" : "npa8001",
-        "pno" : "60-1866-01",
+    "NetPA_U_8001": {
+        "model": "NetPA U 8001",
+        "short": "npa8001",
+        "pno": "60-1866-01",
         "description": {
             "en": "800W Mono Subwoofer Amplifier with Dante and DSP (NetPA U 8001)",
             "de": "Mono Subwoofer Verstärker mit Dante und DSP 800 W (NetPA U 8001)",
@@ -672,57 +633,54 @@
             "zh-cn": "800W Mono Subwoofer 带有但丁和DSP的放大器(NetPA U 8001)"
         },
         "connectionType": "dante",
-        "objects" : [
-            "common",
-            "netpa"
-        ],
-        "in" : {
-            "inputs" : {
-                "name" : "Inputs",
-                "short" : "I",
-                "amount" : 2
+        "objects": ["common", "netpa"],
+        "in": {
+            "inputs": {
+                "name": "Inputs",
+                "short": "I",
+                "amount": 2
             },
-            "expansionInputs" : {
-                "name" : "Expansion Bus (AT Inputs)",
-                "short" : "D",
-                "amount" : 2
+            "expansionInputs": {
+                "name": "Expansion Bus (AT Inputs)",
+                "short": "D",
+                "amount": 2
             }
         },
-        "mp" : {
-            "mixPoints" : {
-                "name" : "Mixpoints",
-                "short" : "MP"
+        "mp": {
+            "mixPoints": {
+                "name": "Mixpoints",
+                "short": "MP"
             }
         },
-        "out" : {
-            "outputs" : {
-                "name" : "Output",
-                "short" : "O",
-                "amount" : 1
+        "out": {
+            "outputs": {
+                "name": "Output",
+                "short": "O",
+                "amount": 1
             },
-            "ampOutputs" : {
-                "name" : "Amp Output",
-                "short" : "A",
-                "amount" : 1
+            "ampOutputs": {
+                "name": "Amp Output",
+                "short": "A",
+                "amount": 1
             },
-            "expansionOutputs" : {
-                "name" : "Expansion Output",
-                "short" : "E",
-                "amount" : 2
+            "expansionOutputs": {
+                "name": "Expansion Output",
+                "short": "E",
+                "amount": 2
             }
         },
-        "grp" : {
-            "groups" : {
-                "name" : "Groups",
-                "short" : "GRP",
-                "amount" : 32
+        "grp": {
+            "groups": {
+                "name": "Groups",
+                "short": "GRP",
+                "amount": 32
             }
         }
     },
-    "AXI44_AT":{
-        "model" : "AXI 44 AT",
-        "short" : "axi44",
-        "pno" : "60-1628-11",
+    "AXI44_AT": {
+        "model": "AXI 44 AT",
+        "short": "axi44",
+        "pno": "60-1628-11",
         "description": {
             "en": "Audio expansion interface with Dante DDM AES67 4 inputs 4 outputs (AXI 44 AT)",
             "de": "Dante-Audiointerface mit 4 Eingängen, 4 Ausgängen, DDM und AES67 (AXI 44 AT)",
@@ -737,29 +695,26 @@
             "zh-cn": "与但丁DDM AES67的音频扩展接口 4 投入 4 产出 (AXI 44 AT)"
         },
         "connectionType": "dante",
-        "objects" : [
-            "common",
-            "axi"
-        ],
-        "in" : {
-            "inputs" : {
-                "name" : "Inputs",
-                "short" : "I",
-                "amount" : 4
+        "objects": ["common", "axi"],
+        "in": {
+            "inputs": {
+                "name": "Inputs",
+                "short": "I",
+                "amount": 4
             }
         },
-        "out" : {
-            "outputs" : {
-                "name" : "Output",
-                "short" : "O",
-                "amount" : 4
+        "out": {
+            "outputs": {
+                "name": "Output",
+                "short": "O",
+                "amount": 4
             }
         }
     },
-    "AXI22_AT":{
-        "model" : "AXI 22 AT",
-        "short" : "axi22",
-        "pno" : "60-1627-11",        
+    "AXI22_AT": {
+        "model": "AXI 22 AT",
+        "short": "axi22",
+        "pno": "60-1627-11",
         "description": {
             "en": "Audio expansion interface with Dante DDM AES67 2 inputs 2 outputs (AXI 22 AT)",
             "de": "Dante-Audiointerface mit 2 Eingängen, 2 Ausgängen, DDM und AES67 (AXI 22 AT)",
@@ -774,29 +729,26 @@
             "zh-cn": "与但丁DDM AES67的音频扩展接口 2 输入 2 输出 (AXI 22 AT)"
         },
         "connectionType": "dante",
-        "objects" : [
-            "common",
-            "axi"
-        ],
-        "in" : {
-            "inputs" : {
-                "name" : "Inputs",
-                "short" : "I",
-                "amount" : 2
+        "objects": ["common", "axi"],
+        "in": {
+            "inputs": {
+                "name": "Inputs",
+                "short": "I",
+                "amount": 2
             }
         },
-        "out" : {
-            "outputs" : {
-                "name" : "Output",
-                "short" : "O",
-                "amount" : 2
+        "out": {
+            "outputs": {
+                "name": "Output",
+                "short": "O",
+                "amount": 2
             }
         }
     },
-    "AXI02_AT":{
-        "model" : "AXI 02 AT",
-        "short" : "axi02",
-        "pno" : "60-1753-01",
+    "AXI02_AT": {
+        "model": "AXI 02 AT",
+        "short": "axi02",
+        "pno": "60-1753-01",
         "description": {
             "en": "Audio expansion interface with Dante DDM AES67 2 outputs (AXI 02 AT)",
             "de": "Dante-Audiointerface mit 2 Ausgängen, DDM und AES67 (AXI 02 AT)",
@@ -811,15 +763,12 @@
             "zh-cn": "与但丁DDM AES67 2 输出的音频扩展接口(AXI 02 AT)"
         },
         "connectionType": "dante",
-        "objects" : [
-            "common",
-            "axi"
-        ],
-        "out" : {
-            "outputs" : {
-                "name" : "Output",
-                "short" : "O",
-                "amount" : 2
+        "objects": ["common", "axi"],
+        "out": {
+            "outputs": {
+                "name": "Output",
+                "short": "O",
+                "amount": 2
             }
         }
     }

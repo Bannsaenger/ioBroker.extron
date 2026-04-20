@@ -10,7 +10,7 @@
                     "type": "selectSendTo",
                     "disabled": "originalData.device !== ''",
                     "command": "getDeviceTypes",
-                    "default": "",                    
+                    "default": "",
                     "validator": "data.device !== ''",
                     "validatorErrorText": "errSelectDevice",
                     "validatorNoSaveOnError": true,
@@ -80,8 +80,8 @@
                     "xl": 6,
                     "newLine": true,
                     "options": [
-                        {"label": "plain (telnet)", "value": "telnet"},
-                        {"label": "Secure Shell (ssh)", "value": "ssh"}
+                        { "label": "plain (telnet)", "value": "telnet" },
+                        { "label": "Secure Shell (ssh)", "value": "ssh" }
                     ],
                     "label": "lblType"
                 },
@@ -209,7 +209,7 @@
                                 "pl": "tak: Status urządzenia push",
                                 "uk": "так: статус пристрою Push",
                                 "zh-cn": "是: 按下设备状态"
-                            }, 
+                            },
                             "value": true
                         },
                         {
@@ -225,7 +225,7 @@
                                 "pl": "nie: Pobierz status urządzenia",
                                 "uk": "немає: Отримати статус пристрою",
                                 "zh-cn": "否: 获取设备状态"
-                            }, 
+                            },
                             "value": false
                         }
                     ],
@@ -247,7 +247,7 @@
                     "md": 12,
                     "lg": 12,
                     "xl": 12,
-                    "style": {"fontSize": 20},
+                    "style": { "fontSize": 20 },
                     "command": "getRemoteDevices",
                     "variant": "outlined",
                     "icon": "info",
@@ -293,7 +293,7 @@
                             "sort": true,
                             "disabled": "1 === 1",
                             "command": "getRemoteDeviceTypes",
-                            "default": "",                    
+                            "default": "",
                             "manual": false
                         },
                         {

@@ -5,17 +5,14 @@
     "version": "0.2.0",
     "configurations": [
         {
-           "name": "(extron) main.js --force starten",
+            "name": "(extron) main.js --force starten",
             "type": "node",
             "request": "launch",
             "program": "${workspaceRoot}/main.js",
             "cwd": "${workspaceRoot}",
             "runtimeExecutable": "node",
-            "args": [
-                "--force"
-            ],
-            "runtimeArgs": ["--preserve-symlinks", "--preserve-symlinks-main"
-            ]
+            "args": ["--force"],
+            "runtimeArgs": ["--preserve-symlinks", "--preserve-symlinks-main"]
         },
         {
             "type": "node",

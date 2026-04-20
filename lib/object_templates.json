@@ -69,7 +69,7 @@
             "native": {}
         }
     ],
-    "info":[
+    "info": [
         {
             "_id": "info",
             "type": "channel",
@@ -79,17 +79,17 @@
             "native": {}
         },
         {
-            "_id":"info.connection",
-            "type":"state",
-            "common":{
-                "role":"indicator.connected",
-                "name":"Device or service connected",
-                "type":"boolean",
-                "read":true,
-                "write":true,
-                "def":false
+            "_id": "info.connection",
+            "type": "state",
+            "common": {
+                "role": "indicator.connected",
+                "name": "Device or service connected",
+                "type": "boolean",
+                "read": true,
+                "write": true,
+                "def": false
             },
-            "native":{}
+            "native": {}
         }
     ],
     "dmp": {
@@ -175,13 +175,63 @@
                     "type": "number",
                     "read": true,
                     "write": true,
-                    "min" : 0,
-                    "max" : 48,
+                    "min": 0,
+                    "max": 48,
                     "def": 0,
-                    "states" :   {"0":"Analog", "1":"AT#1", "2":"AT#2", "3":"AT#3", "4":"AT#4", "5":"AT#5", "6":"AT#6", "7":"AT#7", "8":"AT#8", "9":"AT#9", "10":"AT#10", "11":"AT#11", "12":"AT#12", "13":"AT#13", "14":"AT#14", "15":"AT#15", "16":"AT#16", "17":"AT#17", "18":"AT#18", "19":"AT#19", "20":"AT#20", "21":"AT#21", "22":"AT#22", "23":"AT#23", "24":"AT#24", "25":"AT#25", "26":"AT#26", "27":"AT#27", "28":"AT#28", "29":"AT#29", "30":"AT#30", "31":"AT#31", "32":"AT#32", "33":"AT#33", "34":"AT#34", "35":"AT#35", "36":"AT#36", "37":"AT#37", "38":"AT#38", "39":"AT#39", "40":"AT#40", "41":"AT#41", "42":"AT#42", "43":"AT#43", "44":"AT#44", "45":"AT#45", "46":"AT#46", "47":"AT#47", "48":"AT#48"}
+                    "states": {
+                        "0": "Analog",
+                        "1": "AT#1",
+                        "2": "AT#2",
+                        "3": "AT#3",
+                        "4": "AT#4",
+                        "5": "AT#5",
+                        "6": "AT#6",
+                        "7": "AT#7",
+                        "8": "AT#8",
+                        "9": "AT#9",
+                        "10": "AT#10",
+                        "11": "AT#11",
+                        "12": "AT#12",
+                        "13": "AT#13",
+                        "14": "AT#14",
+                        "15": "AT#15",
+                        "16": "AT#16",
+                        "17": "AT#17",
+                        "18": "AT#18",
+                        "19": "AT#19",
+                        "20": "AT#20",
+                        "21": "AT#21",
+                        "22": "AT#22",
+                        "23": "AT#23",
+                        "24": "AT#24",
+                        "25": "AT#25",
+                        "26": "AT#26",
+                        "27": "AT#27",
+                        "28": "AT#28",
+                        "29": "AT#29",
+                        "30": "AT#30",
+                        "31": "AT#31",
+                        "32": "AT#32",
+                        "33": "AT#33",
+                        "34": "AT#34",
+                        "35": "AT#35",
+                        "36": "AT#36",
+                        "37": "AT#37",
+                        "38": "AT#38",
+                        "39": "AT#39",
+                        "40": "AT#40",
+                        "41": "AT#41",
+                        "42": "AT#42",
+                        "43": "AT#43",
+                        "44": "AT#44",
+                        "45": "AT#45",
+                        "46": "AT#46",
+                        "47": "AT#47",
+                        "48": "AT#48"
+                    }
                 },
                 "native": {}
-            },        
+            },
             {
                 "_id": "premix",
                 "type": "channel",
@@ -241,7 +291,7 @@
                     "name": "Matrix of patchable junction points"
                 },
                 "native": {}
-            }            
+            }
         ],
         "auxInputs": [
             {
@@ -317,13 +367,35 @@
                     "type": "number",
                     "read": true,
                     "write": true,
-                    "min" : 0,
-                    "max" : 24,
+                    "min": 0,
+                    "max": 24,
                     "def": 0,
-                    "states" : {"0":"disabled", "1":"Player #1", "2":"Player #2", "3":"Player #3", "4":"Player #4", "5":"Player #5", "6":"Player #6", "7":"Player #7", "8":"Player #8", "9":"USB1L", "10":"USB1R", "11":"USB2L", "12":"USB2R", "17":"VoIp #1", "18":"VoIp #2", "19":"VoIp #3", "20":"VoIp #4", "21":"VoIp #5", "22":"VoIp #6", "23":"VoIp #7", "24":"VoIp #8"}
+                    "states": {
+                        "0": "disabled",
+                        "1": "Player #1",
+                        "2": "Player #2",
+                        "3": "Player #3",
+                        "4": "Player #4",
+                        "5": "Player #5",
+                        "6": "Player #6",
+                        "7": "Player #7",
+                        "8": "Player #8",
+                        "9": "USB1L",
+                        "10": "USB1R",
+                        "11": "USB2L",
+                        "12": "USB2R",
+                        "17": "VoIp #1",
+                        "18": "VoIp #2",
+                        "19": "VoIp #3",
+                        "20": "VoIp #4",
+                        "21": "VoIp #5",
+                        "22": "VoIp #6",
+                        "23": "VoIp #7",
+                        "24": "VoIp #8"
+                    }
                 },
                 "native": {}
-            },        
+            },
             {
                 "_id": "premix",
                 "type": "channel",
@@ -449,7 +521,7 @@
                     "def": -100.0
                 },
                 "native": {}
-            },    
+            },
             {
                 "_id": "mixPoints",
                 "type": "folder",
@@ -523,7 +595,7 @@
                     "def": -100.0
                 },
                 "native": {}
-            },    
+            },
             {
                 "_id": "mixPoints",
                 "type": "folder",
@@ -540,7 +612,7 @@
                 "name": "Player"
             },
             "native": {}
-        },   
+        },
         "players": [
             {
                 "_id": "common",
@@ -555,40 +627,40 @@
                 "_id": "common.playmode",
                 "type": "state",
                 "common": {
-                    "role" : "media.state",
-                    "name" : "if true the player is playing",
-                    "type" : "boolean",
-                    "read" : true,
-                    "write" : true,
-                    "def" : false
+                    "role": "media.state",
+                    "name": "if true the player is playing",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": false
                 },
-                "native" : {}
+                "native": {}
             },
             {
                 "_id": "common.repeatmode",
                 "type": "state",
                 "common": {
-                    "role" : "media.mode.repeat",
-                    "name" : "if true the player is repeating",
-                    "type" : "boolean",
-                    "read" : true,
-                    "write" : true,
-                    "def" : false
+                    "role": "media.mode.repeat",
+                    "name": "if true the player is repeating",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": false
                 },
-                "native" : {}
+                "native": {}
             },
             {
-                "_id" : "common.filename",
-                "type" : "state",
-                "common" : {
-                    "role" : "media.link",
-                    "name" : "filename of currently loaded player file",
-                    "type" : "string",
-                    "read" : true,
-                    "write" : true,
-                    "def" : " "
+                "_id": "common.filename",
+                "type": "state",
+                "common": {
+                    "role": "media.link",
+                    "name": "filename of currently loaded player file",
+                    "type": "string",
+                    "read": true,
+                    "write": true,
+                    "def": " "
                 },
-                "native" :{}
+                "native": {}
             }
         ],
         "output": {
@@ -659,7 +731,7 @@
                     "name": "Common output parameters"
                 },
                 "native": {}
-            },       
+            },
             {
                 "_id": "attenuation.mute",
                 "type": "state",
@@ -777,10 +849,28 @@
                     "min": 0,
                     "max": 16,
                     "def": 0,
-                    "states" : {"0":"disabled", "1":"USB1L", "2":"USB1R", "3":"USB2L", "4":"USB2R", "5":"USB3L", "6":"USB3R", "7":"USB4L", "8":"USB4R","9":"VoIp #1", "10":"VoIp #2", "11":"VoIp #3", "12":"VoIp #4", "13":"VoIp #5", "14":"VoIp #6", "15":"VoIp #7", "16":"VoIp #8"}
+                    "states": {
+                        "0": "disabled",
+                        "1": "USB1L",
+                        "2": "USB1R",
+                        "3": "USB2L",
+                        "4": "USB2R",
+                        "5": "USB3L",
+                        "6": "USB3R",
+                        "7": "USB4L",
+                        "8": "USB4R",
+                        "9": "VoIp #1",
+                        "10": "VoIp #2",
+                        "11": "VoIp #3",
+                        "12": "VoIp #4",
+                        "13": "VoIp #5",
+                        "14": "VoIp #6",
+                        "15": "VoIp #7",
+                        "16": "VoIp #8"
+                    }
                 },
                 "native": {}
-            }    
+            }
         ],
         "expansionOutputs": [
             {
@@ -842,7 +932,7 @@
                     "name": "Common output parameters"
                 },
                 "native": {}
-            },       
+            },
             {
                 "_id": "attenuation.level",
                 "type": "state",
@@ -905,7 +995,7 @@
                     "type": "string",
                     "read": true,
                     "write": true,
-                    "def":""
+                    "def": ""
                 },
                 "native": {}
             },
@@ -918,7 +1008,7 @@
                     "type": "number",
                     "read": true,
                     "write": true,
-                    "states": {"6":"Gain","12":"Mute","21":"Meter"},
+                    "states": { "6": "Gain", "12": "Mute", "21": "Meter" },
                     "def": 6
                 },
                 "native": {}
@@ -959,7 +1049,7 @@
                 "common": {
                     "role": "value",
                     "name": "group level upper limit",
-                    "type":"number",
+                    "type": "number",
                     "read": true,
                     "write": true,
                     "max": 32767,
@@ -974,7 +1064,7 @@
                 "common": {
                     "role": "value",
                     "name": "group level lower limit",
-                    "type":"number",
+                    "type": "number",
                     "read": true,
                     "write": true,
                     "max": 32767,
@@ -1005,7 +1095,7 @@
                     "type": "boolean",
                     "read": true,
                     "write": true,
-                    "def" : true
+                    "def": true
                 },
                 "native": {}
             }
@@ -1094,13 +1184,63 @@
                     "type": "number",
                     "read": true,
                     "write": true,
-                    "min" : 0,
-                    "max" : 48,
+                    "min": 0,
+                    "max": 48,
                     "def": 0,
-                    "states" :   {"0":"Analog", "1":"AT#1", "2":"AT#2", "3":"AT#3", "4":"AT#4", "5":"AT#5", "6":"AT#6", "7":"AT#7", "8":"AT#8", "9":"AT#9", "10":"AT#10", "11":"AT#11", "12":"AT#12", "13":"AT#13", "14":"AT#14", "15":"AT#15", "16":"AT#16", "17":"AT#17", "18":"AT#18", "19":"AT#19", "20":"AT#20", "21":"AT#21", "22":"AT#22", "23":"AT#23", "24":"AT#24", "25":"AT#25", "26":"AT#26", "27":"AT#27", "28":"AT#28", "29":"AT#29", "30":"AT#30", "31":"AT#31", "32":"AT#32", "33":"AT#33", "34":"AT#34", "35":"AT#35", "36":"AT#36", "37":"AT#37", "38":"AT#38", "39":"AT#39", "40":"AT#40", "41":"AT#41", "42":"AT#42", "43":"AT#43", "44":"AT#44", "45":"AT#45", "46":"AT#46", "47":"AT#47", "48":"AT#48"}
+                    "states": {
+                        "0": "Analog",
+                        "1": "AT#1",
+                        "2": "AT#2",
+                        "3": "AT#3",
+                        "4": "AT#4",
+                        "5": "AT#5",
+                        "6": "AT#6",
+                        "7": "AT#7",
+                        "8": "AT#8",
+                        "9": "AT#9",
+                        "10": "AT#10",
+                        "11": "AT#11",
+                        "12": "AT#12",
+                        "13": "AT#13",
+                        "14": "AT#14",
+                        "15": "AT#15",
+                        "16": "AT#16",
+                        "17": "AT#17",
+                        "18": "AT#18",
+                        "19": "AT#19",
+                        "20": "AT#20",
+                        "21": "AT#21",
+                        "22": "AT#22",
+                        "23": "AT#23",
+                        "24": "AT#24",
+                        "25": "AT#25",
+                        "26": "AT#26",
+                        "27": "AT#27",
+                        "28": "AT#28",
+                        "29": "AT#29",
+                        "30": "AT#30",
+                        "31": "AT#31",
+                        "32": "AT#32",
+                        "33": "AT#33",
+                        "34": "AT#34",
+                        "35": "AT#35",
+                        "36": "AT#36",
+                        "37": "AT#37",
+                        "38": "AT#38",
+                        "39": "AT#39",
+                        "40": "AT#40",
+                        "41": "AT#41",
+                        "42": "AT#42",
+                        "43": "AT#43",
+                        "44": "AT#44",
+                        "45": "AT#45",
+                        "46": "AT#46",
+                        "47": "AT#47",
+                        "48": "AT#48"
+                    }
                 },
                 "native": {}
-            },        
+            },
             {
                 "_id": "premix",
                 "type": "channel",
@@ -1160,7 +1300,7 @@
                     "name": "Matrix of patchable junction points"
                 },
                 "native": {}
-            }            
+            }
         ],
         "virtualReturns": [
             {
@@ -1226,7 +1366,7 @@
                     "def": -100.0
                 },
                 "native": {}
-            },    
+            },
             {
                 "_id": "mixPoints",
                 "type": "folder",
@@ -1300,7 +1440,7 @@
                     "def": -100.0
                 },
                 "native": {}
-            },    
+            },
             {
                 "_id": "mixPoints",
                 "type": "folder",
@@ -1378,7 +1518,7 @@
                     "name": "Common output parameters"
                 },
                 "native": {}
-            },       
+            },
             {
                 "_id": "attenuation.mute",
                 "type": "state",
@@ -1483,7 +1623,7 @@
                     "name": "Common output parameters"
                 },
                 "native": {}
-            },       
+            },
             {
                 "_id": "attenuation.level",
                 "type": "state",
@@ -1546,7 +1686,7 @@
                     "type": "string",
                     "read": true,
                     "write": true,
-                    "def":""
+                    "def": ""
                 },
                 "native": {}
             },
@@ -1559,7 +1699,7 @@
                     "type": "number",
                     "read": true,
                     "write": true,
-                    "states": {"6":"Gain","12":"Mute","21":"Meter"},
+                    "states": { "6": "Gain", "12": "Mute", "21": "Meter" },
                     "def": 6
                 },
                 "native": {}
@@ -1600,7 +1740,7 @@
                 "common": {
                     "role": "value",
                     "name": "group level upper limit",
-                    "type":"number",
+                    "type": "number",
                     "read": true,
                     "write": true,
                     "max": 32767,
@@ -1615,7 +1755,7 @@
                 "common": {
                     "role": "value",
                     "name": "group level lower limit",
-                    "type":"number",
+                    "type": "number",
                     "read": true,
                     "write": true,
                     "max": 32767,
@@ -1646,7 +1786,7 @@
                     "type": "boolean",
                     "read": true,
                     "write": true,
-                    "def" : true
+                    "def": true
                 },
                 "native": {}
             }
@@ -1678,7 +1818,17 @@
                     "role": "value",
                     "name": "Tied a/v input for this output",
                     "type": "number",
-                    "states": {"0":"untied", "1":"1 DP","2":"2 HDMI","3":"3 HDMI","4":"4 HDMI","5":"5 HDMI","6":"6 HDMI","7":"7 DTP2","8":"8 DTP2"},
+                    "states": {
+                        "0": "untied",
+                        "1": "1 DP",
+                        "2": "2 HDMI",
+                        "3": "3 HDMI",
+                        "4": "4 HDMI",
+                        "5": "5 HDMI",
+                        "6": "6 HDMI",
+                        "7": "7 DTP2",
+                        "8": "8 DTP2"
+                    },
                     "read": true,
                     "write": true,
                     "def": 0
@@ -1692,7 +1842,7 @@
                     "role": "value",
                     "name": "Video mute status ouf the output",
                     "type": "number",
-                    "states": {"0":"unmute","1":"mute video to black","2":"mute video and sync"},
+                    "states": { "0": "unmute", "1": "mute video to black", "2": "mute video and sync" },
                     "read": true,
                     "write": true,
                     "def": 0
@@ -1710,12 +1860,22 @@
             },
             {
                 "_id": "connections.2.tie",
-               "type": "state",
+                "type": "state",
                 "common": {
                     "role": "value",
                     "name": "Tied a/v input for this output",
                     "type": "number",
-                    "states": {"0":"untied","1":"1 DP","2":"2 HDMI","3":"3 HDMI","4":"4 HDMI","5":"5 HDMI","6":"6 HDMI","7":"7 DTP2","8":"8 DTP2"},
+                    "states": {
+                        "0": "untied",
+                        "1": "1 DP",
+                        "2": "2 HDMI",
+                        "3": "3 HDMI",
+                        "4": "4 HDMI",
+                        "5": "5 HDMI",
+                        "6": "6 HDMI",
+                        "7": "7 DTP2",
+                        "8": "8 DTP2"
+                    },
                     "read": true,
                     "write": true,
                     "def": 0
@@ -1729,7 +1889,7 @@
                     "role": "value",
                     "name": "Video mute status ouf the output",
                     "type": "number",
-                    "states": {"0":"unmute","1":"mute video to black","2":"mute video and sync"},
+                    "states": { "0": "unmute", "1": "mute video to black", "2": "mute video and sync" },
                     "read": true,
                     "write": true,
                     "def": 0
@@ -1752,7 +1912,16 @@
                     "role": "value",
                     "name": "Tied a/v input for this output",
                     "type": "number",
-                    "states": {"1":"1 DP","2":"2 HDMI","3":"3 HDMI","4":"4 HDMI","5":"5 HDMI","6":"6 HDMI","7":"7 DTP2","8":"8 DTP2"},
+                    "states": {
+                        "1": "1 DP",
+                        "2": "2 HDMI",
+                        "3": "3 HDMI",
+                        "4": "4 HDMI",
+                        "5": "5 HDMI",
+                        "6": "6 HDMI",
+                        "7": "7 DTP2",
+                        "8": "8 DTP2"
+                    },
                     "read": true,
                     "write": true,
                     "def": 1
@@ -1760,13 +1929,13 @@
                 "native": {}
             },
             {
-               "_id": "connections.3.mute",
+                "_id": "connections.3.mute",
                 "type": "state",
                 "common": {
                     "role": "value",
                     "name": "Video mute status ouf the output",
                     "type": "number",
-                    "states": {"0":"unmute","1":"mute video to black","2":"mute video and sync"},
+                    "states": { "0": "unmute", "1": "mute video to black", "2": "mute video and sync" },
                     "read": true,
                     "write": true,
                     "def": 0
@@ -1834,7 +2003,7 @@
                     "def": -18.0
                 },
                 "native": {}
-            },        
+            },
             {
                 "_id": "premix",
                 "type": "channel",
@@ -1940,7 +2109,7 @@
                     "def": -18.0
                 },
                 "native": {}
-            },      
+            },
             {
                 "_id": "premix",
                 "type": "channel",
@@ -2046,7 +2215,7 @@
                     "def": -18.0
                 },
                 "native": {}
-            },      
+            },
             {
                 "_id": "premix",
                 "type": "channel",
@@ -2154,7 +2323,7 @@
                 "native": {}
             }
         ],
-        "videoInputs": [                  
+        "videoInputs": [
             {
                 "_id": "premix",
                 "type": "channel",
@@ -2216,10 +2385,10 @@
                     "type": "number",
                     "read": true,
                     "write": true,
-                    "min" : 0,
-                    "max" : 48,
+                    "min": 0,
+                    "max": 48,
                     "def": 0,
-                    "states" : {"0":"Off", "1":"Active"}
+                    "states": { "0": "Off", "1": "Active" }
                 },
                 "native": {}
             }
@@ -2286,7 +2455,7 @@
                     "name": "Common output parameters"
                 },
                 "native": {}
-            },       
+            },
             {
                 "_id": "attenuation.mute",
                 "type": "state",
@@ -2349,7 +2518,7 @@
                     "type": "string",
                     "read": true,
                     "write": true,
-                    "def":""
+                    "def": ""
                 },
                 "native": {}
             },
@@ -2362,7 +2531,7 @@
                     "type": "number",
                     "read": true,
                     "write": true,
-                    "states": {"6":"Gain","12":"Mute","21":"Meter"},
+                    "states": { "6": "Gain", "12": "Mute", "21": "Meter" },
                     "def": 6
                 },
                 "native": {}
@@ -2403,7 +2572,7 @@
                 "common": {
                     "role": "value",
                     "name": "group level upper limit",
-                    "type":"number",
+                    "type": "number",
                     "read": true,
                     "write": true,
                     "max": 32767,
@@ -2418,7 +2587,7 @@
                 "common": {
                     "role": "value",
                     "name": "group level lower limit",
-                    "type":"number",
+                    "type": "number",
                     "read": true,
                     "write": true,
                     "max": 32767,
@@ -2436,7 +2605,7 @@
                     "type": "array",
                     "read": true,
                     "write": true,
-                    "def":"[]"
+                    "def": "[]"
                 },
                 "native": {}
             },
@@ -2449,13 +2618,13 @@
                     "type": "boolean",
                     "read": true,
                     "write": true,
-                    "def" : true
+                    "def": true
                 },
                 "native": {}
             }
         ]
     },
-    "smd202" :{
+    "smd202": {
         "player": {
             "_id": "0",
             "type": "folder",
@@ -2469,71 +2638,71 @@
                 "_id": "player.playmode",
                 "type": "state",
                 "common": {
-                    "role" : "media.state",
-                    "name" : "playmode 0=stop, 1=play, 2=pause",
-                    "type" : "number",
-                    "states" : {"0":"stop", "1":"play", "2":"pause"},
-                    "read" : true,
-                    "write" : true,
+                    "role": "media.state",
+                    "name": "playmode 0=stop, 1=play, 2=pause",
+                    "type": "number",
+                    "states": { "0": "stop", "1": "play", "2": "pause" },
+                    "read": true,
+                    "write": true,
                     "min": 0,
                     "max": 2,
-                    "def" : 0
+                    "def": 0
                 },
-                "native" : {}
+                "native": {}
             },
             {
                 "_id": "player.loopmode",
                 "type": "state",
                 "common": {
-                    "role" : "media.mode.repeat",
-                    "name" : "if true the player is repeating",
-                    "type" : "boolean",
-                    "read" : true,
-                    "write" : true,
-                    "def" : false
+                    "role": "media.mode.repeat",
+                    "name": "if true the player is repeating",
+                    "type": "boolean",
+                    "read": true,
+                    "write": true,
+                    "def": false
                 },
-                "native" : {}
+                "native": {}
             },
             {
-                "_id" : "player.filepath",
-                "type" : "state",
-                "common" : {
-                    "role" : "media.link",
-                    "name" : "filepath of currently loaded player file",
-                    "type" : "string",
-                    "read" : true,
-                    "write" : true,
-                    "def" : ""
+                "_id": "player.filepath",
+                "type": "state",
+                "common": {
+                    "role": "media.link",
+                    "name": "filepath of currently loaded player file",
+                    "type": "string",
+                    "read": true,
+                    "write": true,
+                    "def": ""
                 },
-                "native" :{}
+                "native": {}
             },
             {
-                "_id" : "player.channel",
-                "type" : "state",
-                "common" : {
-                    "role" : "media.playid",
-                    "name" : "channel currently playing",
-                    "type" : "number",
-                    "read" : true,
-                    "write" : true,
+                "_id": "player.channel",
+                "type": "state",
+                "common": {
+                    "role": "media.playid",
+                    "name": "channel currently playing",
+                    "type": "number",
+                    "read": true,
+                    "write": true,
                     "min": 1,
                     "max": 999,
-                    "def" : 1
+                    "def": 1
                 },
-                "native" :{}
+                "native": {}
             },
             {
-                "_id" : "player.presets",
-                "type" : "state",
-                "common" : {
-                    "role" : "list",
-                    "name" : "preset list",
-                    "type" : "array",
-                    "read" : true,
-                    "write" : true,
-                    "def" : ""
+                "_id": "player.presets",
+                "type": "state",
+                "common": {
+                    "role": "list",
+                    "name": "preset list",
+                    "type": "array",
+                    "read": true,
+                    "write": true,
+                    "def": ""
                 },
-                "native" :{}
+                "native": {}
             }
         ],
         "output": {
@@ -2553,7 +2722,7 @@
                     "name": "Common output parameters"
                 },
                 "native": {}
-            },       
+            },
             {
                 "_id": "output.attenuation.mute",
                 "type": "state",
@@ -2599,7 +2768,7 @@
             }
         ]
     },
-    "sme211" :{
+    "sme211": {
         "connection": {
             "_id": "0",
             "type": "folder",
@@ -2625,7 +2794,7 @@
                     "role": "value",
                     "name": "Video mute status ouf the output",
                     "type": "number",
-                    "states": {"0":"unmute","1":"mute video to black","2":"mute video and sync"},
+                    "states": { "0": "unmute", "1": "mute video to black", "2": "mute video and sync" },
                     "read": true,
                     "write": true,
                     "def": 0
@@ -2702,123 +2871,123 @@
                 "name": "Player"
             },
             "native": {}
-        },   
+        },
         "players": [
             {
                 "_id": "player.streammode",
                 "type": "state",
                 "common": {
-                    "role" : "media.state",
-                    "name" : "if true the player is playing",
-                    "type" : "number",
-                    "states" : {"0":"stop", "1":"play", "2":"pause", "3":"waiting"},
-                    "read" : true,
-                    "write" : true,
-                    "def" : 0
+                    "role": "media.state",
+                    "name": "if true the player is playing",
+                    "type": "number",
+                    "states": { "0": "stop", "1": "play", "2": "pause", "3": "waiting" },
+                    "read": true,
+                    "write": true,
+                    "def": 0
                 },
-                "native" : {}
+                "native": {}
             },
             {
                 "_id": "player.hdmistatus",
                 "type": "state",
                 "common": {
-                    "role" : "media.state",
-                    "name" : "HDMI input signal status",
-                    "type" : "number",
-                    "states" : {"0":"off", "1":"on"},
-                    "read" : true,
-                    "write" : true,
-                    "def" : 0
+                    "role": "media.state",
+                    "name": "HDMI input signal status",
+                    "type": "number",
+                    "states": { "0": "off", "1": "on" },
+                    "read": true,
+                    "write": true,
+                    "def": 0
                 },
-                "native" : {}
+                "native": {}
             },
             {
                 "_id": "player.stream.11.status",
                 "type": "state",
                 "common": {
-                    "role" : "media.state",
-                    "name" : "encoder 1 RTSP stream",
+                    "role": "media.state",
+                    "name": "encoder 1 RTSP stream",
                     "type": "number",
-                    "states" : {"0":"disabled", "1":"enabled"},
-                    "read" : true,
-                    "write" : true,
-                    "def" : 0
+                    "states": { "0": "disabled", "1": "enabled" },
+                    "read": true,
+                    "write": true,
+                    "def": 0
                 },
-                "native":{}
+                "native": {}
             },
             {
                 "_id": "player.stream.12.status",
                 "type": "state",
                 "common": {
-                    "role" : "media.state",
-                    "name" : "encoder 1 RTP stream",
+                    "role": "media.state",
+                    "name": "encoder 1 RTP stream",
                     "type": "number",
-                    "states" : {"0":"disabled", "1":"enabled"},
-                    "read" : true,
-                    "write" : true,
-                    "def" : 0
+                    "states": { "0": "disabled", "1": "enabled" },
+                    "read": true,
+                    "write": true,
+                    "def": 0
                 },
-                "native":{}
+                "native": {}
             },
             {
                 "_id": "player.stream.13.status",
                 "type": "state",
                 "common": {
-                    "role" : "media.state",
-                    "name" : "encoder 1 RTMP stream",
+                    "role": "media.state",
+                    "name": "encoder 1 RTMP stream",
                     "type": "number",
-                    "states" : {"0":"disabled", "1":"enabled"},
-                    "read" : true,
-                    "write" : true,
-                    "def" : 0
+                    "states": { "0": "disabled", "1": "enabled" },
+                    "read": true,
+                    "write": true,
+                    "def": 0
                 },
-                "native":{}
+                "native": {}
             },
             {
                 "_id": "player.stream.21.status",
                 "type": "state",
                 "common": {
-                    "role" : "media.state",
-                    "name" : "encoder 2 RTSP stream",
+                    "role": "media.state",
+                    "name": "encoder 2 RTSP stream",
                     "type": "number",
-                    "states" : {"0":"disabled", "1":"enabled"},
-                    "read" : true,
-                    "write" : true,
-                    "def" : 0
+                    "states": { "0": "disabled", "1": "enabled" },
+                    "read": true,
+                    "write": true,
+                    "def": 0
                 },
-                "native":{}
+                "native": {}
             },
             {
                 "_id": "player.stream.22.status",
                 "type": "state",
                 "common": {
-                    "role" : "media.state",
-                    "name" : "encoder 2 RTP stream",
+                    "role": "media.state",
+                    "name": "encoder 2 RTP stream",
                     "type": "number",
-                    "states" : {"0":"disabled", "1":"enabled"},
-                    "read" : true,
-                    "write" : true,
-                    "def" : 0
+                    "states": { "0": "disabled", "1": "enabled" },
+                    "read": true,
+                    "write": true,
+                    "def": 0
                 },
-                "native":{}
+                "native": {}
             },
             {
                 "_id": "player.stream.23.status",
                 "type": "state",
                 "common": {
-                    "role" : "media.state",
-                    "name" : "encoder 2 RTMP stream",
+                    "role": "media.state",
+                    "name": "encoder 2 RTMP stream",
                     "type": "number",
-                    "states" : {"0":"disabled", "1":"enabled"},
-                    "read" : true,
-                    "write" : true,
-                    "def" : 0
+                    "states": { "0": "disabled", "1": "enabled" },
+                    "read": true,
+                    "write": true,
+                    "def": 0
                 },
-                "native":{}
+                "native": {}
             }
         ]
     },
-    "netpa" : {
+    "netpa": {
         "input": {
             "_id": "0",
             "type": "folder",
@@ -2901,13 +3070,63 @@
                     "type": "number",
                     "read": true,
                     "write": true,
-                    "min" : 0,
-                    "max" : 48,
+                    "min": 0,
+                    "max": 48,
                     "def": 0,
-                    "states" :   {"0":"Analog", "1":"AT#1", "2":"AT#2", "3":"AT#3", "4":"AT#4", "5":"AT#5", "6":"AT#6", "7":"AT#7", "8":"AT#8", "9":"AT#9", "10":"AT#10", "11":"AT#11", "12":"AT#12", "13":"AT#13", "14":"AT#14", "15":"AT#15", "16":"AT#16", "17":"AT#17", "18":"AT#18", "19":"AT#19", "20":"AT#20", "21":"AT#21", "22":"AT#22", "23":"AT#23", "24":"AT#24", "25":"AT#25", "26":"AT#26", "27":"AT#27", "28":"AT#28", "29":"AT#29", "30":"AT#30", "31":"AT#31", "32":"AT#32", "33":"AT#33", "34":"AT#34", "35":"AT#35", "36":"AT#36", "37":"AT#37", "38":"AT#38", "39":"AT#39", "40":"AT#40", "41":"AT#41", "42":"AT#42", "43":"AT#43", "44":"AT#44", "45":"AT#45", "46":"AT#46", "47":"AT#47", "48":"AT#48"}
+                    "states": {
+                        "0": "Analog",
+                        "1": "AT#1",
+                        "2": "AT#2",
+                        "3": "AT#3",
+                        "4": "AT#4",
+                        "5": "AT#5",
+                        "6": "AT#6",
+                        "7": "AT#7",
+                        "8": "AT#8",
+                        "9": "AT#9",
+                        "10": "AT#10",
+                        "11": "AT#11",
+                        "12": "AT#12",
+                        "13": "AT#13",
+                        "14": "AT#14",
+                        "15": "AT#15",
+                        "16": "AT#16",
+                        "17": "AT#17",
+                        "18": "AT#18",
+                        "19": "AT#19",
+                        "20": "AT#20",
+                        "21": "AT#21",
+                        "22": "AT#22",
+                        "23": "AT#23",
+                        "24": "AT#24",
+                        "25": "AT#25",
+                        "26": "AT#26",
+                        "27": "AT#27",
+                        "28": "AT#28",
+                        "29": "AT#29",
+                        "30": "AT#30",
+                        "31": "AT#31",
+                        "32": "AT#32",
+                        "33": "AT#33",
+                        "34": "AT#34",
+                        "35": "AT#35",
+                        "36": "AT#36",
+                        "37": "AT#37",
+                        "38": "AT#38",
+                        "39": "AT#39",
+                        "40": "AT#40",
+                        "41": "AT#41",
+                        "42": "AT#42",
+                        "43": "AT#43",
+                        "44": "AT#44",
+                        "45": "AT#45",
+                        "46": "AT#46",
+                        "47": "AT#47",
+                        "48": "AT#48"
+                    }
                 },
                 "native": {}
-            },        
+            },
             {
                 "_id": "premix",
                 "type": "channel",
@@ -2959,7 +3178,7 @@
                     "def": -100.0
                 },
                 "native": {}
-            },    
+            },
             {
                 "_id": "mixPoints",
                 "type": "folder",
@@ -3033,7 +3252,7 @@
                     "def": -100.0
                 },
                 "native": {}
-            },    
+            },
             {
                 "_id": "mixPoints",
                 "type": "folder",
@@ -3111,7 +3330,7 @@
                     "name": "Common output parameters"
                 },
                 "native": {}
-            },       
+            },
             {
                 "_id": "attenuation.mute",
                 "type": "state",
@@ -3216,7 +3435,7 @@
                     "name": "Common output parameters"
                 },
                 "native": {}
-            },       
+            },
             {
                 "_id": "attenuation.mute",
                 "type": "state",
@@ -3274,7 +3493,7 @@
                     "def": 0
                 },
                 "native": {}
-            }    
+            }
         ],
         "expansionOutputs": [
             {
@@ -3336,7 +3555,7 @@
                     "name": "Common output parameters"
                 },
                 "native": {}
-            },       
+            },
             {
                 "_id": "attenuation.level",
                 "type": "state",
@@ -3382,7 +3601,7 @@
             }
         ]
     },
-    "axi" : {
+    "axi": {
         "input": {
             "_id": "0",
             "type": "folder",
@@ -3487,7 +3706,7 @@
                     "name": "Common output parameters"
                 },
                 "native": {}
-            },       
+            },
             {
                 "_id": "attenuation.mute",
                 "type": "state",
@@ -3579,7 +3798,7 @@
             "native": {}
         }
     ],
-    "userflash" : [
+    "userflash": [
         {
             "_id": "fs",
             "type": "channel",
@@ -3598,7 +3817,7 @@
                 "read": true,
                 "write": true,
                 "def": false
-                },
+            },
             "native": {}
         },
         {
@@ -3611,7 +3830,7 @@
                 "read": true,
                 "write": true,
                 "def": ""
-                },
+            },
             "native": {}
         },
         {
@@ -3624,7 +3843,7 @@
                 "read": true,
                 "write": true,
                 "def": ""
-                },
+            },
             "native": {}
         },
         {
@@ -3637,7 +3856,7 @@
                 "read": true,
                 "write": true,
                 "def": 0
-                },
+            },
             "native": {}
         },
         {
@@ -3650,7 +3869,7 @@
                 "read": true,
                 "write": true,
                 "def": 0
-                },
+            },
             "native": {}
         },
         {
@@ -3663,11 +3882,11 @@
                 "read": true,
                 "write": true,
                 "def": "[]"
-                },
+            },
             "native": {}
         }
     ],
-    "danterelay" : [
+    "danterelay": [
         {
             "_id": "dante",
             "type": "folder",
@@ -3686,7 +3905,7 @@
                 "type": "array",
                 "read": true,
                 "write": true,
-                "def" : "[]"
+                "def": "[]"
             },
             "native": {}
         },
@@ -3701,8 +3920,8 @@
                 "read": true,
                 "write": true,
                 "def": "[]"
-              },
-              "native": {}
+            },
+            "native": {}
         }
     ],
     "dsp_dyn": [
@@ -3722,11 +3941,11 @@
                 "role": "value",
                 "name": "type of dyn insert (DSY)",
                 "type": "number",
-                "states": {"0": "none", "1": "cmp", "2":"lin","3":"gate", "4": "agc"},
+                "states": { "0": "none", "1": "cmp", "2": "lin", "3": "gate", "4": "agc" },
                 "read": true,
                 "write": true,
-                "min":0,
-                "max":4,
+                "min": 0,
+                "max": 4,
                 "def": 0
             },
             "native": {}
@@ -3829,19 +4048,19 @@
                 "read": true,
                 "write": true,
                 "def": 0,
-                "states":{"0":"hard knee", "1":"soft knee"}
+                "states": { "0": "hard knee", "1": "soft knee" }
             },
             "native": {}
         }
     ],
-    "dsp_flt" : [
+    "dsp_flt": [
         {
             "_id": "filter",
             "type": "folder",
             "common": {
-                "name":"filter"
+                "name": "filter"
             },
-            "native":{}
+            "native": {}
         },
         {
             "_id": "0",
@@ -3875,10 +4094,23 @@
                 "read": true,
                 "write": true,
                 "def": 0,
-                "states":{"0":"unused", "1":"HP Butterworth","2":"LP Butterworth","3":"Bass","4":"Treble","5":"parametric","6":"notch","7":"HP Linkwitz","8":"LP Linkwitz","9":"LP Bessel", "10":"HP Bessel", "11":"Loudness"},
-                "min":0,
-                "max":11,
-                "step":1
+                "states": {
+                    "0": "unused",
+                    "1": "HP Butterworth",
+                    "2": "LP Butterworth",
+                    "3": "Bass",
+                    "4": "Treble",
+                    "5": "parametric",
+                    "6": "notch",
+                    "7": "HP Linkwitz",
+                    "8": "LP Linkwitz",
+                    "9": "LP Bessel",
+                    "10": "HP Bessel",
+                    "11": "Loudness"
+                },
+                "min": 0,
+                "max": 11,
+                "step": 1
             },
             "native": {}
         },
@@ -3905,45 +4137,54 @@
                 "read": true,
                 "write": true,
                 "def": 0,
-                "states":{"0":"6dB/Oct", "1":"12dB/Oct","2":"18dB/Oct","3":"24dB/Oct","4":"30dB/Oct","5":"36dB/Oct","6":"42dB/Oct","7":"48dB/Oct"},
-                "min" :0,
-                "max":7,
-                "step":1
+                "states": {
+                    "0": "6dB/Oct",
+                    "1": "12dB/Oct",
+                    "2": "18dB/Oct",
+                    "3": "24dB/Oct",
+                    "4": "30dB/Oct",
+                    "5": "36dB/Oct",
+                    "6": "42dB/Oct",
+                    "7": "48dB/Oct"
+                },
+                "min": 0,
+                "max": 7,
+                "step": 1
             },
             "native": {}
         },
         {
             "_id": "cutboost",
             "type": "state",
-            "Common":{
+            "Common": {
                 "role": "value",
                 "name": "Boost/Cut (DSG)",
-                "type" : "number",
+                "type": "number",
                 "read": true,
                 "write": true,
                 "def": 0,
                 "min": -240,
                 "max": 240
             },
-            "native":{}
+            "native": {}
         },
         {
             "_id": "qfactor",
             "type": "state",
-            "Common":{
+            "Common": {
                 "role": "value",
                 "name": "Q-factor (DSQ)",
-                "type" : "number",
+                "type": "number",
                 "read": true,
                 "write": true,
                 "def": 1000,
                 "min": 0,
                 "max": 30000
             },
-            "native":{}
+            "native": {}
         }
     ],
-    "dsp_dly":[
+    "dsp_dly": [
         {
             "_id": "delay.status",
             "type": "state",
@@ -3984,7 +4225,7 @@
                 "def": 0,
                 "min": 0,
                 "max": 3,
-                "states":{"0":"samples", "1":"ms", "2":"ft","3":"m"}
+                "states": { "0": "samples", "1": "ms", "2": "ft", "3": "m" }
             },
             "native": {}
         },
@@ -4000,7 +4241,7 @@
                 "def": 0,
                 "min": 0,
                 "max": 1,
-                "states":{"0":"°F", "1":"°C"}
+                "states": { "0": "°F", "1": "°C" }
             },
             "native": {}
         },
@@ -4020,7 +4261,7 @@
             "native": {}
         }
     ],
-    "dsp_aec":[
+    "dsp_aec": [
         {
             "_id": "aec.status",
             "type": "state",
@@ -4035,7 +4276,7 @@
             "native": {}
         }
     ],
-    "dsp_dck":[
+    "dsp_dck": [
         {
             "_id": "ducker.status",
             "type": "state",
@@ -4110,7 +4351,7 @@
             "native": {}
         }
     ],
-    "dsp_amx":[
+    "dsp_amx": [
         {
             "_id": "automix.status",
             "type": "state",
