@@ -61,7 +61,6 @@ If you are a non commercial organisation or use it for private use you can get a
 
 ### **WORK IN PROGRESS**
 - (copilot) Adapter requires node.js >= 22 now
-
 - (Bannsaenger) updated dependencies and issues from repository checker
 
 ### 0.3.0 (2025-10-28)
