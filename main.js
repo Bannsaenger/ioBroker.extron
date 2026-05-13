@@ -339,7 +339,7 @@ class Extron extends utils.Adapter {
      * @param {string} _instructions Instructions for fullfilment
      * @param {string} _instructionsLang Language for fullfilment
      * @param {Array} _prompts Prompts for fullfilment
-     * @param {Function} finish Finisch for fullfilment
+     * @param {(string) => void} finish Finisch for fullfilment
      */
     onClientKeyboard(_name, _instructions, _instructionsLang, _prompts, finish) {
         try {
