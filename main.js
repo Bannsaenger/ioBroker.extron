@@ -5221,6 +5221,7 @@ class Extron extends utils.Adapter {
                                     } // output OID count starts at 2 on CP82
                                     break;
                                 case 'dynamics':
+                                case 'limiter':
                                     retOid = `640${(idNumber - 1).toString().padStart(2, '0')}`;
                                     break;
                                 case 'delay':
