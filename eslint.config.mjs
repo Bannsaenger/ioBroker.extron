@@ -27,6 +27,7 @@ export default [
         rules: {
             // 'jsdoc/require-jsdoc': 'off',
             'jsdoc/no-types': 'off',
+            'jsdoc/reject-any-type': 'off'
         },
     },
 ];
