@@ -819,7 +819,13 @@ class Extron extends utils.Adapter {
                                 break;
 
                             case 'DSD':
-                                if (ext1.startsWith('400')) {
+                                if (ext1.startsWith('300')) {
+                                    // input source control
+                                    this.log.info(
+                                        `onStreamData(): received source ${command} from ${dante ? `"${danteDevice}" ` : ''}OID: "${ext1}" value: "${ext2}"`,
+                                    );
+                                    this.setSource(ext1, ext2);
+                                } else if (ext1.startsWith('400')) {
                                     // input source control
                                     this.log.info(
                                         `onStreamData(): received source ${command} from ${dante ? `"${danteDevice}" ` : ''}OID: "${ext1}" value: "${ext2}"`,

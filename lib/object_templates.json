@@ -2375,22 +2375,6 @@
                     "def": -18.0
                 },
                 "native": {}
-            },
-            {
-                "_id": "premix.source",
-                "type": "state",
-                "common": {
-                    "role": "value",
-                    "name": "shows the input source",
-                    "type": "number",
-                    "read": true,
-                    "write": true,
-                    "min": 0,
-                    "max": 48,
-                    "def": 0,
-                    "states": { "0": "Off", "1": "Active" }
-                },
-                "native": {}
             }
         ],
         "mixPoints": [
