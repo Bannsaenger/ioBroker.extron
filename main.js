@@ -4883,7 +4883,7 @@ class Extron extends utils.Adapter {
                             // now determine the output
                             if (device === 'cp82') {
                                 // mixpoints on CP82
-                                retId += `O${(val - 1).toString().padStart(2, '0')}.`; // on CP82 mixpooint output OID count starts at 2
+                                retId += `O${(val + 1).toString().padStart(2, '0')}.`; // on CP82 mixpooint output OID count starts at 2
                             } else if (val <= 7) {
                                 // mixpoints on dmp128
                                 // output 1 -8
@@ -5015,7 +5015,7 @@ class Extron extends utils.Adapter {
                                 case 0: // Output attenuation block
                                     if (device === 'cp82') {
                                         // outputs on CP82
-                                        retId = `out.outputs.${(val - 1).toString().padStart(2, '0')}.attenuation.`; // ouput OID starts at 2 on CP82
+                                        retId = `out.outputs.${(val + 1).toString().padStart(2, '0')}.attenuation.`; // ouput OID starts at 2 on CP82
                                     } else if (val <= 7) {
                                         // output 1 - 8
                                         retId = `out.outputs.${(val + 1).toString().padStart(2, '0')}.attenuation.`;
@@ -5222,7 +5222,7 @@ class Extron extends utils.Adapter {
                                 case 'attenuation':
                                     retOid = `600${(idNumber - 1).toString().padStart(2, '0')}`;
                                     if (device === 'cp82') {
-                                        retOid = `600${(idNumber + 1).toString().padStart(2, '0')}`;
+                                        retOid = `600${(idNumber - 1).toString().padStart(2, '0')}`;
                                     } // output OID count starts at 2 on CP82
                                     break;
                                 case 'dynamics':
@@ -5325,7 +5325,7 @@ class Extron extends utils.Adapter {
                     switch (outputType) {
                         case 'O':
                             if (device === 'cp82') {
-                                retOid += (outputNumber + 1).toString().padStart(2, '0'); // output OID count starts at 2 on CP82
+                                retOid += (outputNumber - 1).toString().padStart(2, '0'); // output OID count starts at 2 on CP82
                             } else {
                                 retOid += (outputNumber - 1).toString().padStart(2, '0');
                             }
